@@ -28,7 +28,6 @@ import { lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { SearchLoadingState } from '@/components/tool-invocation-list-view';
 import {
-  MapPin,
   Film,
   Tv,
   Book,
@@ -124,10 +123,6 @@ const ConnectorsSearchResults = lazy(() =>
 const CodeInterpreterView = lazy(() =>
   import('@/components/tool-invocation-list-view').then((module) => ({ default: module.CodeInterpreterView })),
 );
-const NearbySearchSkeleton = lazy(() =>
-  import('@/components/tool-invocation-list-view').then((module) => ({ default: module.NearbySearchSkeleton })),
-);
-
 // Loading component for lazy-loaded components
 const ComponentLoader = () => (
   <div className="flex space-x-2 mt-2">
@@ -530,20 +525,6 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
       // Check if this part has the new state system
       if ('state' in part && part.state) {
         switch ((part as any).type) {
-          // Disabled tool UI blocks replaced with no-op cases
-          case 'tool-find_place_on_map':
-            return null;
-
-          // Maps removed - case 'tool-nearby_places_search'
-
-          
-
-          
-
-          
-
-          
-
           case 'tool-web_search':
             switch (part.state) {
               case 'input-streaming':
@@ -553,7 +534,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
                     <MultiSearch
                       result={part.output || null}
-                      args={part.input ? part.input : {}}
+                      args={(part.input as any) ?? {}}
                       annotations={annotations as DataQueryCompletionPart[]}
                     />
                   </Suspense>
@@ -796,7 +777,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
                     <AcademicPapersCard
                       results={
-                        part.output.results?.map((result) => ({
+                        part.output.results?.map((result: any) => ({
                           ...result,
                           title: result.title || ('name' in result ? String(result.name) : null) || 'Untitled',
                         })) || []
@@ -832,9 +813,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     <RedditSearch
                       result={part.output}
                       args={{
-                        ...part.input,
-                        maxResults: part.input.maxResults || 10,
-                        timeRange: part.input.timeRange || 'week',
+                        query: typeof (part.input as any)?.query === 'string' ? (part.input as any).query : '',
+                        maxResults: (part.input as any)?.maxResults || 10,
+                        timeRange: (part.input as any)?.timeRange || 'week',
                       }}
                     />
                   </Suspense>
@@ -867,22 +848,21 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                         ...part.output,
                         query: part.output.query || '',
                         citations:
-                          part.output.citations?.map((citation) => ({
+                          part.output.citations?.map((citation: any) => ({
                             ...citation,
                             title: citation.title || ('url' in citation ? citation.url : citation.id) || 'Citation',
                             url: 'url' in citation ? citation.url : citation.id,
                           })) || [],
                       }}
                       args={{
-                        ...part.input,
-                        query: part.input.query || '',
-                        startDate: part.input.startDate || '',
-                        endDate: part.input.endDate || '',
-                        includeXHandles: part.input.includeXHandles || [],
-                        excludeXHandles: part.input.excludeXHandles || [],
-                        postFavoritesCount: part.input.postFavoritesCount || 0,
-                        postViewCount: part.input.postViewCount || 0,
-                        maxResults: part.input.maxResults || 20,
+                        query: (part.input as any)?.query || '',
+                        startDate: (part.input as any)?.startDate || '',
+                        endDate: (part.input as any)?.endDate || '',
+                        includeXHandles: (part.input as any)?.includeXHandles || [],
+                        excludeXHandles: (part.input as any)?.excludeXHandles || [],
+                        postFavoritesCount: (part.input as any)?.postFavoritesCount || 0,
+                        postViewCount: (part.input as any)?.postViewCount || 0,
+                        maxResults: (part.input as any)?.maxResults || 20,
                       }}
                     />
                   </Suspense>
@@ -1066,7 +1046,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                             </h4>
                           )}
                           <p className="text-xs text-green-700 dark:text-green-300">
-                            {addedMemory.summary || addedMemory.content || part.input.memory || 'Memory stored'}
+                            {addedMemory.summary || addedMemory.content || (part.input as any)?.memory || 'Memory stored'}
                           </p>
                           {addedMemory.type && (
                             <div className="flex items-center gap-2 mt-2">
@@ -1096,7 +1076,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
                     <ConnectorsSearchResults
                       results={[]}
-                      query={part.input?.query || ''}
+                      query={(part.input as any)?.query || ''}
                       totalResults={0}
                       isLoading={true}
                     />
@@ -1152,11 +1132,11 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   <div key={`${messageIndex}-${partIndex}-tool`} className="space-y-3 w-full overflow-hidden">
                     <Suspense fallback={<ComponentLoader />}>
                       <CodeInterpreterView
-                        code={part.input?.code}
+                        code={(part.input as any)?.code}
                         output={part.output?.message}
                         error={part.output && 'error' in part.output ? String(part.output.error) : undefined}
                         language="python"
-                        title={part.input?.title || 'Code Execution'}
+                        title={(part.input as any)?.title || 'Code Execution'}
                         status={
                           part.output && 'error' in part.output && part.output.error
                             ? 'error'

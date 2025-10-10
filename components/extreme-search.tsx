@@ -104,40 +104,7 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
         enterable: false,
         hideDelay: 100,
         triggerOn: 'mousemove',
-        position: function (
-          pos: [number, number],
-          params: any,
-          dom: HTMLElement,
-          rect: { x: number; y: number; width: number; height: number },
-          size: { contentSize: [number, number]; viewSize: [number, number] },
-        ) {
-          // Ensure tooltip doesn't overlap with axis labels
-          const tooltipWidth = dom.offsetWidth;
-          const tooltipHeight = dom.offsetHeight;
-          const chartWidth = size.viewSize[0];
-          const chartHeight = size.viewSize[1];
 
-          let x = pos[0];
-          let y = pos[1];
-
-          // Keep tooltip within chart bounds and away from edges
-          if (x + tooltipWidth > chartWidth - 20) {
-            x = chartWidth - tooltipWidth - 20;
-          }
-          if (x < 20) {
-            x = 20;
-          }
-
-          // Keep tooltip above the bottom 60px to avoid axis labels
-          if (y + tooltipHeight > chartHeight - 60) {
-            y = pos[1] - tooltipHeight - 20;
-          }
-          if (y < 20) {
-            y = 20;
-          }
-
-          return [x, y];
-        },
       },
       legend: {
         show: true,

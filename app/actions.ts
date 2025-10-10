@@ -222,11 +222,9 @@ const groupTools = {
     'get_weather_data',
     'retrieve',
     'text_translate',
-    'nearby_places_search',
     'track_flight',
     'movie_or_tv_search',
     'trending_movies',
-    'find_place_on_map',
     'trending_tv',
     'datetime'
   ] as const,
@@ -368,19 +366,6 @@ data.mean()  # NO PRINT
 #### DateTime Tool
 - **Usage**: Provide date/time in user's timezone
 - **Context**: Only when user specifically asks for date/time
-
-#### Location-Based Tools
-
-##### Nearby Search
-- **Trigger**: "near <location>", "nearby places", "show me <type> in/near <location>"
-- **Parameters**: Include location and radius, add country for accuracy
-- **Purpose**: Search for places by name or description
-- **Restriction**: Not for general web searches
-
-##### Find Place on Map
-- **Trigger**: "map", "maps", location-related queries
-- **Purpose**: Search for places by name or description
-- **Restriction**: Not for general web searches
 
 #### Translation Tool
 - **Trigger**: "translate" in query
@@ -1771,34 +1756,22 @@ export async function getPaymentHistory() {
 
 export async function getDodoPaymentsProStatus() {
   'use server';
-
-  // Import here to avoid issues with SSR
-  const { getComprehensiveUserData } = await import('@/lib/user-data-server');
-  const userData = await getComprehensiveUserData();
-
-  if (!userData) return { isProUser: false, hasPayments: false };
-
-  const isDodoProUser = userData.proSource === 'dodo' && userData.isProUser;
-
+  // DodoPayments removed: return safe defaults
   return {
-    isProUser: isDodoProUser,
-    hasPayments: Boolean(userData.dodoPayments?.hasPayments),
-    expiresAt: userData.dodoPayments?.expiresAt,
-    source: userData.proSource,
-    daysUntilExpiration: userData.dodoPayments?.daysUntilExpiration,
-    isExpired: userData.dodoPayments?.isExpired,
-    isExpiringSoon: userData.dodoPayments?.isExpiringSoon,
+    isProUser: false,
+    hasPayments: false,
+    expiresAt: null as Date | null,
+    source: 'none' as 'none' | 'polar',
+    daysUntilExpiration: undefined as number | undefined,
+    isExpired: false,
+    isExpiringSoon: false,
   };
 }
 
 export async function getDodoExpirationDate() {
   'use server';
-
-  // Import here to avoid issues with SSR
-  const { getComprehensiveUserData } = await import('@/lib/user-data-server');
-  const userData = await getComprehensiveUserData();
-
-  return userData?.dodoPayments?.expiresAt || null;
+  // DodoPayments removed: no expiration date
+  return null as Date | null;
 }
 
 // Initialize QStash client

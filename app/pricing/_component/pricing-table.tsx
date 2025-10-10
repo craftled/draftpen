@@ -3,7 +3,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { authClient, betterauthClient } from '@/lib/auth-client';
+import { authClient } from '@/lib/auth-client';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -159,40 +159,36 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
     return result;
   };
 
-  const handleCheckout = async (productId: string, slug: string, paymentMethod?: 'dodo' | 'polar') => {
+  const handleCheckout = async (productId: string, slug: string) => {
     if (!user) {
       router.push('/sign-up');
       return;
     }
 
     try {
-      if (paymentMethod === 'dodo') {
-        router.push('/checkout');
-      } else {
-        // Auto-apply discount if available
-        const discountIdToUse = discountConfig.discountId || '';
+      // Auto-apply discount if available
+      const discountIdToUse = discountConfig.discountId || '';
 
-        // TEMPORARY: Force disable all discounts
-        const discountsDisabled = process.env.NEXT_PUBLIC_DISABLE_DISCOUNTS === 'true';
-        
-        // Show special messaging for student discounts
-        if (!discountsDisabled && discountConfig.isStudentDiscount) {
-          toast.success('🎓 Student discount applied automatically!');
-        } else if (!discountsDisabled && discountIdToUse && (discountConfig.enabled || (discountConfig.dev || process.env.NODE_ENV === 'development'))) {
-          toast.success(`💰 Discount "${discountConfig.code}" applied automatically!`);
-        }
+      // TEMPORARY: Force disable all discounts
+      const discountsDisabled = process.env.NEXT_PUBLIC_DISABLE_DISCOUNTS === 'true';
 
-        await authClient.checkout({
-          products: [productId],
-          slug: slug,
-          allowDiscountCodes: true,
-          ...(discountIdToUse !== '' &&
-            !discountsDisabled &&
-            (discountConfig.enabled || (discountConfig.dev || process.env.NODE_ENV === 'development')) && {
-              discountId: discountIdToUse,
-            }),
-        });
+      // Show special messaging for student discounts
+      if (!discountsDisabled && discountConfig.isStudentDiscount) {
+        toast.success('🎓 Student discount applied automatically!');
+      } else if (!discountsDisabled && discountIdToUse && (discountConfig.enabled || (discountConfig.dev || process.env.NODE_ENV === 'development'))) {
+        toast.success(`💰 Discount "${discountConfig.code}" applied automatically!`);
       }
+
+      await authClient.checkout({
+        products: [productId],
+        slug: slug,
+        allowDiscountCodes: true,
+        ...(discountIdToUse !== '' &&
+          !discountsDisabled &&
+          (discountConfig.enabled || (discountConfig.dev || process.env.NODE_ENV === 'development')) && {
+            discountId: discountIdToUse,
+          }),
+      });
     } catch (error) {
       console.error('Checkout failed:', error);
       toast.error('Something went wrong. Please try again.');
@@ -201,12 +197,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
 
   const handleManageSubscription = async () => {
     try {
-      const proSource = getProAccessSource();
-      if (proSource === 'dodo') {
-        await betterauthClient.dodopayments.customer.portal();
-      } else {
-        await authClient.customer.portal();
-      }
+      await authClient.customer.portal();
     } catch (error) {
       console.error('Failed to open customer portal:', error);
       toast.error('Failed to open subscription management');
@@ -230,22 +221,16 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
     );
   };
 
-  // Check if user has active Dodo payments subscription
-  const hasDodoSubscription = () => {
-    return user?.isProUser === true && user?.proSource === 'dodo';
-  };
+  
 
-  // Check if user has any Pro status (Polar or DodoPayments)
+  // Check if user has any Pro status (Polar only)
   const hasProAccess = () => {
-    const polarAccess = hasPolarSubscription();
-    const dodoAccess = hasDodoSubscription();
-    return polarAccess || dodoAccess;
+    return hasPolarSubscription();
   };
 
   // Get the source of Pro access for display
   const getProAccessSource = () => {
     if (hasPolarSubscription()) return 'polar';
-    if (hasDodoSubscription()) return 'dodo';
     return null;
   };
 
@@ -348,59 +333,9 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
 
               {/* Pricing Display */}
               {hasProAccess() ? (
-                // Show user's current pricing method
-                getProAccessSource() === 'dodo' ? (
-                  <div className="flex items-baseline">
-                    <span className="text-4xl font-light">₹{PRICING.PRO_MONTHLY_INR}</span>
-                    <span className="text-muted-foreground ml-2">+GST</span>
-                  </div>
-                ) : (
-                  <div className="flex items-baseline">
-                    <span className="text-4xl font-light">$15</span>
-                    <span className="text-muted-foreground ml-2">/month</span>
-                  </div>
-                )
-              ) : !location.loading && location.isIndia && !discountConfig.isStudentDiscount ? (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* INR Option */}
-                    <div className="p-3 border rounded-lg bg-muted/50">
-                      <div className="space-y-1">
-                        {shouldShowDiscount() ? (
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground line-through">
-                              ₹{PRICING.PRO_MONTHLY_INR}
-                            </span>
-                            <span className="text-xl font-light">
-                              ₹{getDiscountedPrice(PRICING.PRO_MONTHLY_INR, true)}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-xl font-light">₹{PRICING.PRO_MONTHLY_INR}</span>
-                        )}
-                        <div className="text-xs text-muted-foreground">+18% GST</div>
-                        <div className="text-xs">1 month access</div>
-                        <div className="text-xs text-muted-foreground">🇮🇳 UPI, Cards, QR</div>
-                      </div>
-                    </div>
-
-                    {/* USD Option */}
-                    <div className="p-3 border rounded-lg">
-                      <div className="space-y-1">
-                        {shouldShowDiscount() ? (
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground line-through">${PRICING.PRO_MONTHLY}</span>
-                            <span className="text-xl font-light">${getDiscountedPrice(PRICING.PRO_MONTHLY)}</span>
-                          </div>
-                        ) : (
-                          <span className="text-xl font-light">${PRICING.PRO_MONTHLY}</span>
-                        )}
-                        <div className="text-xs text-muted-foreground">USD</div>
-                        <div className="text-xs">Monthly subscription</div>
-                        <div className="text-xs text-muted-foreground">💳 Card payment</div>
-                      </div>
-                    </div>
-                  </div>
+                <div className="flex items-baseline">
+                  <span className="text-4xl font-light">$15</span>
+                  <span className="text-muted-foreground ml-2">/month</span>
                 </div>
               ) : (
                 <div className="flex items-baseline">
@@ -444,7 +379,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
               {hasProAccess() ? (
                 <div className="space-y-4">
                   <Button className="w-full" onClick={handleManageSubscription}>
-                    {getProAccessSource() === 'dodo' ? 'Manage payment' : 'Manage subscription'}
+                    Manage subscription
                   </Button>
                   {getProAccessSource() === 'polar' && subscriptionDetails.subscription && (
                     <p className="text-sm text-muted-foreground text-center">
@@ -453,11 +388,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                         : `Renews ${formatDate(subscriptionDetails.subscription.currentPeriodEnd)}`}
                     </p>
                   )}
-                  {getProAccessSource() === 'dodo' && user?.dodoPayments?.expiresAt && (
-                    <p className="text-sm text-muted-foreground text-center">
-                      Access expires {formatDate(new Date(user.dodoPayments.expiresAt))}
-                    </p>
-                  )}
+
                 </div>
               ) : !location.loading && location.isIndia && !discountConfig.isStudentDiscount ? (
                 !user ? (
@@ -467,21 +398,10 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                   </Button>
                 ) : (
                   <div className="space-y-3">
-                    <Button className="w-full group" onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG, 'dodo')}>
-                      🇮🇳 Pay ₹{getDiscountedPrice(PRICING.PRO_MONTHLY_INR, true)}
-                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full group"
-                      onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG, 'polar')}
-                    >
+                    <Button className="w-full group" onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG)}>
                       💳 Subscribe ${getDiscountedPrice(PRICING.PRO_MONTHLY)}/month
                       <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                     </Button>
-                    <p className="text-xs text-muted-foreground text-center">
-                      One-time payment vs Monthly subscription
-                    </p>
                     {shouldShowDiscount() && discountConfig.discountAvail && (
                       <p className="text-xs text-primary text-center font-medium">{discountConfig.discountAvail}</p>
                     )}

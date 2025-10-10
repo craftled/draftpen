@@ -2,7 +2,6 @@
 export { xSearchTool } from './x-search';
 export { textTranslateTool } from './text-translate';
 export { webSearchTool } from './web-search';
-export { movieTvSearchTool } from './movie-tv-search';
 export { trendingMoviesTool } from './trending-movies';
 export { trendingTvTool } from './trending-tv';
 export { academicSearchTool } from './academic-search';

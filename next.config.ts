@@ -113,20 +113,6 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/s2/favicons',
       },
-      // Google Maps Static API
-      {
-        protocol: 'https',
-        hostname: 'maps.googleapis.com',
-        port: '',
-        pathname: '/**',
-      },
-      // Google Street View Static API
-      {
-        protocol: 'https',
-        hostname: 'maps.googleapis.com',
-        port: '',
-        pathname: '/maps/api/streetview/**',
-      },
       {
         protocol: 'https',
         hostname: 'api.producthunt.com',

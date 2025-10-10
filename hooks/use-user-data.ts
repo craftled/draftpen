@@ -42,15 +42,7 @@ export function useUserData() {
     polarSubscription: userData?.polarSubscription,
     hasPolarSubscription: Boolean(userData?.polarSubscription),
 
-    // DodoPayments details
-    dodoPayments: userData?.dodoPayments,
-    hasDodoPayments: Boolean(userData?.dodoPayments?.hasPayments),
-    dodoExpiresAt: userData?.dodoPayments?.expiresAt,
-    isDodoExpiring: Boolean(userData?.dodoPayments?.isExpiringSoon),
-    isDodoExpired: Boolean(userData?.dodoPayments?.isExpired),
 
-    // Payment history
-    paymentHistory: userData?.paymentHistory || [],
 
     // Rate limiting helpers
     shouldCheckLimits: !isLoading && userData && !userData.isProUser,
@@ -70,21 +62,7 @@ export function useUserData() {
         }
       : { hasSubscription: false },
 
-    // Map dodoPayments to legacy dodoProStatus structure for settings dialog
-    dodoProStatus: userData?.dodoPayments
-      ? {
-          isProUser: userData.proSource === 'dodo' && userData.isProUser,
-          hasPayments: userData.dodoPayments.hasPayments,
-          expiresAt: userData.dodoPayments.expiresAt,
-          mostRecentPayment: userData.dodoPayments.mostRecentPayment,
-          daysUntilExpiration: userData.dodoPayments.daysUntilExpiration,
-          isExpired: userData.dodoPayments.isExpired,
-          isExpiringSoon: userData.dodoPayments.isExpiringSoon,
-          source: userData.proSource,
-        }
-      : null,
 
-    expiresAt: userData?.dodoPayments?.expiresAt,
   };
 }
 

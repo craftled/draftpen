@@ -21,15 +21,8 @@ interface UserContextType {
   polarSubscription: any;
   hasPolarSubscription: boolean;
 
-  // DodoPayments details
-  dodoPayments: any;
-  hasDodoPayments: boolean;
-  dodoExpiresAt: Date | null | undefined;
-  isDodoExpiring: boolean;
-  isDodoExpired: boolean;
-
-  // Payment history
-  paymentHistory: any[];
+  // Payment history (removed with DodoPayments)
+  // paymentHistory?: any[];
 
   // Rate limiting helpers
   shouldCheckLimits: boolean | undefined;
@@ -43,8 +36,6 @@ interface UserContextType {
 
   // Legacy compatibility helpers
   subscriptionData: any;
-  dodoProStatus: any;
-  expiresAt: Date | null | undefined;
 
   // Additional utilities
   isCached: boolean;

@@ -12,7 +12,6 @@ import type {
   // mcpSearchTool,
   extremeSearchTool,
   greetingTool,
-  movieTvSearchTool,
   trendingTvTool,
   createConnectorsSearchTool,
   createMemoryTools,
@@ -106,7 +105,6 @@ type xSearchTool = InferUITool<typeof xSearchTool>;
 type greetingTool = InferUITool<ReturnType<typeof greetingTool>>;
 type webSearch = InferUITool<ReturnType<typeof webSearchTool>>;
 type extremeSearch = InferUITool<ReturnType<typeof extremeSearchTool>>;
-type movieTvSearchTool = InferUITool<typeof movieTvSearchTool>;
 type trendingTvTool = InferUITool<typeof trendingTvTool>;
 type youtubeSearchTool = InferUITool<typeof youtubeSearchTool>;
 type datetimeTool = InferUITool<typeof datetimeTool>;
@@ -129,7 +127,6 @@ export type ChatTools = {
   retrieve: retrieveTool;
 
   // Media & Entertainment
-  movie_or_tv_search: movieTvSearchTool;
   trending_movies: trendingMoviesTool;
   trending_tv: trendingTvTool;
 

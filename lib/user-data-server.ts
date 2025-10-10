@@ -1,16 +1,15 @@
 import 'server-only';
 
-import { eq, and, desc } from 'drizzle-orm';
-import { subscription, payment, user } from './db/schema';
+import { eq } from 'drizzle-orm';
+import { subscription, user } from './db/schema';
 import { db } from './db';
 import { auth } from './auth';
 import { headers } from 'next/headers';
-import { getPaymentsByUserId, getDodoPaymentsExpirationInfo } from './db/queries';
+
 import { getCustomInstructionsByUserId } from './db/queries';
 import type { CustomInstructions } from './db/schema';
 
-// Configurable subscription duration for DodoPayments (in months)
-const DODO_SUBSCRIPTION_DURATION_MONTHS = parseInt(process.env.DODO_SUBSCRIPTION_DURATION_MONTHS || '1');
+
 
 // Single comprehensive user data type
 export type ComprehensiveUserData = {
@@ -22,7 +21,7 @@ export type ComprehensiveUserData = {
   createdAt: Date;
   updatedAt: Date;
   isProUser: boolean;
-  proSource: 'polar' | 'dodo' | 'none';
+  proSource: 'polar' | 'none';
   subscriptionStatus: 'active' | 'canceled' | 'expired' | 'none';
   polarSubscription?: {
     id: string;
@@ -36,16 +35,7 @@ export type ComprehensiveUserData = {
     cancelAtPeriodEnd: boolean;
     canceledAt: Date | null;
   };
-  dodoPayments?: {
-    hasPayments: boolean;
-    expiresAt: Date | null;
-    mostRecentPayment?: Date;
-    daysUntilExpiration?: number;
-    isExpired: boolean;
-    isExpiringSoon: boolean;
-  };
-  // Payment history
-  paymentHistory: any[];
+
 };
 
 // Lightweight user auth type for fast checks
@@ -209,32 +199,10 @@ export async function getLightweightUserAuth(): Promise<LightweightUserAuth | nu
     // Check for active Polar subscription (quick check)
     const hasActivePolarSub = result.some((row) => row.subscriptionStatus === 'active');
 
-    // For DodoPayments, we need to do a quick check
-    // Only fetch the most recent successful payment for quick pro status check
-    let isDodoActive = false;
-    if (!hasActivePolarSub) {
-      const recentDodoPayment = await db
-        .select({
-          createdAt: payment.createdAt,
-        })
-        .from(payment)
-        .where(and(eq(payment.userId, userId), eq(payment.status, 'succeeded')))
-        .orderBy(desc(payment.createdAt))
-        .limit(1)
-        .$withCache();
-
-      if (recentDodoPayment.length > 0) {
-        const paymentDate = new Date(recentDodoPayment[0].createdAt);
-        const subscriptionEndDate = new Date(paymentDate);
-        subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + DODO_SUBSCRIPTION_DURATION_MONTHS);
-        isDodoActive = subscriptionEndDate > new Date();
-      }
-    }
-
     const lightweightData: LightweightUserAuth = {
       userId: result[0].userId,
       email: result[0].email,
-      isProUser: hasActivePolarSub || isDodoActive,
+      isProUser: hasActivePolarSub,
     };
 
     // Cache the result
@@ -302,11 +270,7 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
 
     const userData = userWithSubscriptions[0];
 
-    // Fetch payment data in parallel (still separate as it's less commonly needed)
-    const [dodoPayments, dodoExpirationInfo] = await Promise.all([
-      getPaymentsByUserId({ userId }),
-      getDodoPaymentsExpirationInfo({ userId }),
-    ]);
+
 
     // Process Polar subscriptions from the joined data
     const polarSubscriptions = userWithSubscriptions
@@ -330,34 +294,14 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
       .filter((sub) => sub.status === 'active')
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
 
-    // Process DodoPayments
-    const successfulDodoPayments = dodoPayments
-      .filter((p: any) => p.status === 'succeeded')
-      .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-    const hasDodoPayments = successfulDodoPayments.length > 0;
-    let isDodoActive = false;
-
-    if (hasDodoPayments) {
-      const mostRecentPayment = successfulDodoPayments[0];
-      const paymentDate = new Date(mostRecentPayment.createdAt);
-      const subscriptionEndDate = new Date(paymentDate);
-      subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + DODO_SUBSCRIPTION_DURATION_MONTHS);
-      isDodoActive = subscriptionEndDate > new Date();
-    }
-
     // Determine overall Pro status and source
     let isProUser = false;
-    let proSource: 'polar' | 'dodo' | 'none' = 'none';
+    let proSource: 'polar' | 'none' = 'none';
     let subscriptionStatus: 'active' | 'canceled' | 'expired' | 'none' = 'none';
 
     if (activePolarSubscription) {
       isProUser = true;
       proSource = 'polar';
-      subscriptionStatus = 'active';
-    } else if (isDodoActive) {
-      isProUser = true;
-      proSource = 'dodo';
       subscriptionStatus = 'active';
     } else {
       // Check for expired/canceled Polar subscriptions
@@ -390,7 +334,6 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
       isProUser,
       proSource,
       subscriptionStatus,
-      paymentHistory: dodoPayments,
     };
 
     // Add Polar subscription details if exists
@@ -406,18 +349,6 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
         currentPeriodEnd: activePolarSubscription.currentPeriodEnd,
         cancelAtPeriodEnd: activePolarSubscription.cancelAtPeriodEnd,
         canceledAt: activePolarSubscription.canceledAt,
-      };
-    }
-
-    // Always add DodoPayments details if user has any payments or dodo pro status
-    if (dodoPayments.length > 0 || proSource === 'dodo') {
-      comprehensiveData.dodoPayments = {
-        hasPayments: hasDodoPayments,
-        expiresAt: dodoExpirationInfo?.expirationDate || null,
-        mostRecentPayment: hasDodoPayments ? successfulDodoPayments[0].createdAt : undefined,
-        daysUntilExpiration: dodoExpirationInfo?.daysUntilExpiration,
-        isExpired: dodoExpirationInfo?.isExpired || false,
-        isExpiringSoon: dodoExpirationInfo?.isExpiringSoon || false,
       };
     }
 
@@ -442,7 +373,7 @@ export async function getUserSubscriptionStatus(): Promise<'active' | 'canceled'
   return userData?.subscriptionStatus || 'none';
 }
 
-export async function getProSource(): Promise<'polar' | 'dodo' | 'none'> {
+export async function getProSource(): Promise<'polar' | 'none'> {
   const userData = await getComprehensiveUserData();
   return userData?.proSource || 'none';
 }

@@ -48,6 +48,8 @@ import {
   academicSearchTool,
   youtubeSearchTool,
   retrieveTool,
+  trendingMoviesTool,
+  trendingTvTool,
   datetimeTool,
   greetingTool,
   // mcpSearchTool,
@@ -126,13 +128,13 @@ export async function POST(req: Request) {
 
   // START ALL CRITICAL PARALLEL OPERATIONS IMMEDIATELY
   const isProUser = lightweightUser?.isProUser ?? false;
-  
+
   // 1. Config (needed for streaming) - start immediately
   configPromise = getGroupConfig(group);
-  
+
   // 2. Full user data (needed for usage checks and custom instructions)
   const fullUserPromise = lightweightUser ? getCurrentUser() : Promise.resolve(null);
-  
+
   // 3. Custom instructions (only if enabled and authenticated)
   const customInstructionsPromise = lightweightUser && (isCustomInstructionsEnabled ?? true)
     ? fullUserPromise.then(user => user ? getCachedCustomInstructionsByUserId(user.id) : null)
@@ -156,7 +158,7 @@ export async function POST(req: Request) {
       if (existingChat && existingChat.userId !== lightweightUser.userId) {
         throw new ChatSDKError('forbidden:chat', 'This chat belongs to another user');
       }
-      
+
       // Create chat if it doesn't exist (MUST be sync - other operations depend on it)
       if (!existingChat) {
         await saveChat({
@@ -165,7 +167,7 @@ export async function POST(req: Request) {
           title: 'New Chat',
           visibility: selectedVisibilityType,
         });
-        
+
         // Generate better title in background (non-critical)
         after(async () => {
           try {
@@ -178,7 +180,7 @@ export async function POST(req: Request) {
           }
         });
       }
-      
+
       // Stream tracking in background (non-critical for functionality)
       after(async () => {
         try {
@@ -187,7 +189,7 @@ export async function POST(req: Request) {
           console.error('Background createStreamId failed:', error);
         }
       });
-      
+
       return existingChat;
     });
 
@@ -275,7 +277,7 @@ export async function POST(req: Request) {
       }
 
       customInstructions = customInstructionsResult;
-      
+
       // Save user message BEFORE streaming (critical for conversation history)
       if (user) {
         await saveMessages({
@@ -416,7 +418,6 @@ export async function POST(req: Request) {
             reddit_search: redditSearchTool,
             retrieve: retrieveTool,
 
-            movie_or_tv_search: movieTvSearchTool,
             trending_movies: trendingMoviesTool,
             trending_tv: trendingTvTool,
 
@@ -493,7 +494,7 @@ export async function POST(req: Request) {
         onFinish: async (event) => {
           const processingTime = (Date.now() - requestStartTime) / 1000;
           console.log(`✅ Request completed: ${processingTime.toFixed(2)}s (${event.finishReason})`);
-          
+
           if (user?.id && event.finishReason === 'stop') {
             // Track usage in background
             after(async () => {
@@ -501,7 +502,7 @@ export async function POST(req: Request) {
                 if (!shouldBypassRateLimits(model, user)) {
                   await incrementMessageUsage({ userId: user.id });
                 }
-                
+
                 // Track extreme search usage if used
                 if (group === 'extreme') {
                   const extremeSearchUsed = event.steps?.some((step) =>
