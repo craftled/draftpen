@@ -10,7 +10,6 @@ import {
   extremeSearchUsage,
   messageUsage,
   subscription,
-  payment,
   customInstructions,
   stream,
   lookout,
@@ -21,7 +20,6 @@ import { config } from 'dotenv';
 import { serverEnv } from '@/env/server';
 import { checkout, polar, portal, usage, webhooks } from '@polar-sh/better-auth';
 import { Polar } from '@polar-sh/sdk';
-// DodoPayments removed
 import { eq } from 'drizzle-orm';
 import { invalidateUserCaches } from './performance-cache';
 import { clearUserDataCache } from './user-data-server';
@@ -42,7 +40,6 @@ const polarClient = new Polar({
   ...(process.env.NODE_ENV === 'production' ? {} : { server: 'sandbox' }),
 });
 
-// DodoPayments client removed
 
 export const auth = betterAuth({
   rateLimit: {
@@ -73,7 +70,6 @@ export const auth = betterAuth({
       extremeSearchUsage,
       messageUsage,
       subscription,
-      payment,
       customInstructions,
       stream,
       lookout,
@@ -89,8 +85,7 @@ export const auth = betterAuth({
     autoNamespace: true,
   },
   plugins: [
-    // DodoPayments plugin removed
-    polar({
+        polar({
       client: polarClient,
       createCustomerOnSignUp: true,
       enableCustomerPortal: true,

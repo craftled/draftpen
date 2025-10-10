@@ -20,7 +20,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { CronExpressionParser } from 'cron-parser';
 import { sendLookoutCompletionEmail } from '@/lib/email';
 import { db } from '@/lib/db';
-import { subscription, payment } from '@/lib/db/schema';
+import { subscription } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
 // Import extreme search tool
@@ -44,20 +44,6 @@ async function checkUserIsProById(userId: string): Promise<boolean> {
       return true;
     }
 
-    // Check for Dodo payments (Indian users)
-    const dodoPayments = await db.select().from(payment).where(eq(payment.userId, userId));
-
-    const successfulDodoPayments = dodoPayments
-      .filter((p) => p.status === 'succeeded')
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-    if (successfulDodoPayments.length > 0) {
-      const mostRecentPayment = successfulDodoPayments[0];
-      const paymentDate = new Date(mostRecentPayment.createdAt);
-      const subscriptionEndDate = new Date(paymentDate);
-      subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1); // 1 month duration
-      return subscriptionEndDate > new Date();
-    }
 
     return false;
   } catch (error) {

@@ -1,5 +1,4 @@
 import { createAuthClient } from 'better-auth/react';
-// DodoPayments client removed
 import { polarClient } from '@polar-sh/better-auth';
 
 export const betterauthClient = createAuthClient({

@@ -25,7 +25,6 @@ import {
   createCustomInstructions,
   updateCustomInstructions,
   deleteCustomInstructions,
-  getPaymentsByUserId,
   createLookout,
   getLookoutsByUserId,
   getLookoutById,
@@ -1742,16 +1741,8 @@ export async function getProUserStatusOnly(): Promise<boolean> {
 }
 
 export async function getPaymentHistory() {
-  try {
-    const user = await getUser();
-    if (!user) return null;
-
-    const payments = await getPaymentsByUserId({ userId: user.id });
-    return payments;
-  } catch (error) {
-    console.error('Error getting payment history:', error);
-    return null;
-  }
+  // DodoPayments removed: no payment history
+  return null;
 }
 
 export async function getDodoPaymentsProStatus() {

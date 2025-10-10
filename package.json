@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "fix": "prettier --write .",
-    "knip": "knip"
+    "knip": "knip",
+    "migrate": "drizzle-kit migrate"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "2.0.23",

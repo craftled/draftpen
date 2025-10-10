@@ -1,7 +1,7 @@
 // Performance cache with memory limits and automatic cleanup
 
 import { db } from '@/lib/db';
-import { payment, subscription, user } from './db/schema';
+import { subscription, user } from './db/schema';
 
 interface CacheEntry<T> {
   data: T;
@@ -101,10 +101,6 @@ export const subscriptionCache = new PerformanceCache<any>('subscriptions', 1000
 export const usageCountCache = new PerformanceCache<number>('usage-counts', 2000, 5 * 60 * 1000); // 5 min, 2000 users
 export const proUserStatusCache = new PerformanceCache<boolean>('pro-user-status', 1000, 30 * 60 * 1000); // 30 min, 1000 users
 
-// DodoPayments-specific caches
-export const paymentCache = new PerformanceCache<any>('payments', 1000, 5 * 60 * 1000); // 5 min, 1000 users
-export const paymentExpirationCache = new PerformanceCache<any>('payment-expiration', 1000, 30 * 60 * 1000); // 30 min, 1000 users
-export const dodoProStatusCache = new PerformanceCache<any>('dodo-pro-status', 1000, 30 * 60 * 1000); // 30 min, 1000 users
 
 // Cache key generators
 export const createSessionKey = (token: string) => `session:${token}`;
@@ -114,10 +110,6 @@ export const createMessageCountKey = (userId: string) => `msg-count:${userId}`;
 export const createExtremeCountKey = (userId: string) => `extreme-count:${userId}`;
 export const createProUserKey = (userId: string) => `pro-user:${userId}`;
 
-// DodoPayments cache key generators
-export const createPaymentKey = (userId: string) => `payments:${userId}`;
-export const createPaymentExpirationKey = (userId: string) => `payment-expiration:${userId}`;
-export const createDodoProStatusKey = (userId: string) => `dodo-pro-status:${userId}`;
 
 // Extract session token from headers
 export function extractSessionToken(headers: Headers): string | null {
@@ -146,36 +138,6 @@ export function computeAndCacheProUserStatus(userId: string, subscriptionData: a
   return isProUser;
 }
 
-// DodoPayments cache helpers
-export function getDodoPayments(userId: string) {
-  const cacheKey = createPaymentKey(userId);
-  return paymentCache.get(cacheKey);
-}
-
-export function setDodoPayments(userId: string, payments: any) {
-  const cacheKey = createPaymentKey(userId);
-  paymentCache.set(cacheKey, payments);
-}
-
-export function getDodoPaymentExpiration(userId: string) {
-  const cacheKey = createPaymentExpirationKey(userId);
-  return paymentExpirationCache.get(cacheKey);
-}
-
-export function setDodoPaymentExpiration(userId: string, expirationData: any) {
-  const cacheKey = createPaymentExpirationKey(userId);
-  paymentExpirationCache.set(cacheKey, expirationData);
-}
-
-export function getDodoProStatus(userId: string) {
-  const cacheKey = createDodoProStatusKey(userId);
-  return dodoProStatusCache.get(cacheKey);
-}
-
-export function setDodoProStatus(userId: string, statusData: any) {
-  const cacheKey = createDodoProStatusKey(userId);
-  dodoProStatusCache.set(cacheKey, statusData);
-}
 
 // Cache invalidation helpers
 export function invalidateUserCaches(userId: string) {
@@ -183,13 +145,8 @@ export function invalidateUserCaches(userId: string) {
   usageCountCache.delete(createMessageCountKey(userId));
   usageCountCache.delete(createExtremeCountKey(userId));
   proUserStatusCache.delete(createProUserKey(userId));
-  // Invalidate DodoPayments caches
-  paymentCache.delete(createPaymentKey(userId));
-  paymentExpirationCache.delete(createPaymentExpirationKey(userId));
-  dodoProStatusCache.delete(createDodoProStatusKey(userId));
-
   // Invalidate the db cache
-  db.$cache.invalidate({ tables: [user, subscription, payment] });
+  db.$cache.invalidate({ tables: [user, subscription] });
 }
 
 export function invalidateAllCaches() {
@@ -197,8 +154,5 @@ export function invalidateAllCaches() {
   subscriptionCache.clear();
   usageCountCache.clear();
   proUserStatusCache.clear();
-  // Clear DodoPayments caches
-  paymentCache.clear();
-  paymentExpirationCache.clear();
-  dodoProStatusCache.clear();
+
 }

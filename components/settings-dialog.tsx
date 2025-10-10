@@ -93,7 +93,7 @@ function ProfileSection({ user, subscriptionData, isProUser, isProStatusLoading 
   const { isProUser: fastProStatus, isLoading: fastProLoading } = useIsProUser();
   const isMobile = useMediaQuery('(max-width: 768px)');
 
-  // Use comprehensive Pro status from user data (includes both Polar + DodoPayments)
+  // Use comprehensive Pro status from user data (Polar only)
   const isProUserActive: boolean = user?.isProUser || fastProStatus || false;
   const showProLoading: boolean = Boolean(fastProLoading || isProStatusLoading);
 
@@ -910,16 +910,13 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
   const [isManagingSubscription, setIsManagingSubscription] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
 
-  // Use data from user object (already cached)
-  const paymentHistory = user?.paymentHistory || null;
-  const dodoProStatus = user?.dodoProStatus || null;
 
   useEffect(() => {
     const fetchPolarOrders = async () => {
       try {
         setOrdersLoading(true);
 
-        // Only fetch Polar orders (DodoPayments data comes from user cache)
+        // Fetch Polar orders
         const ordersResponse = await authClient.customer.orders
           .list({
             query: {
@@ -943,30 +940,12 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
   }, []);
 
   const handleManageSubscription = async () => {
-    // Determine the subscription source
-    const getProAccessSource = () => {
-      if (hasActiveSubscription) return 'polar';
-      if (hasDodoProStatus) return 'dodo';
-      return null;
-    };
-
-    const proSource = getProAccessSource();
-
-    console.log('proSource', proSource);
-
     try {
       setIsManagingSubscription(true);
-
-      console.log('Settings Dialog - Provider source:', proSource);
-      console.log('User dodoProStatus:', user?.dodoProStatus);
-      console.log('User full object keys:', Object.keys(user || {}));
-
-      // Open Polar customer portal for subscription management
       console.log('Opening Polar portal');
       await authClient.customer.portal();
     } catch (error) {
       console.error('Subscription management error:', error);
-
       toast.error('Failed to open subscription management');
     } finally {
       setIsManagingSubscription(false);
@@ -976,22 +955,8 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
   // Check for active status from either source
   const hasActiveSubscription =
     subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
-  const hasDodoProStatus = dodoProStatus?.isProUser || (user?.proSource === 'dodo' && user?.isProUser);
-  const isProUserActive = hasActiveSubscription || hasDodoProStatus;
+  const isProUserActive = hasActiveSubscription;
   const subscription = subscriptionData?.subscription;
-
-  // Check if DodoPayments Pro is expiring soon (within 7 days)
-  const getDaysUntilExpiration = () => {
-    if (!dodoProStatus?.expiresAt) return null;
-    const now = new Date();
-    const expiresAt = new Date(dodoProStatus.expiresAt);
-    const diffTime = expiresAt.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
-  };
-
-  const daysUntilExpiration = getDaysUntilExpiration();
-  const isExpiringSoon = daysUntilExpiration !== null && daysUntilExpiration <= 7 && daysUntilExpiration > 0;
 
   return (
     <div className={isMobile ? 'space-y-3' : 'space-y-4'}>
@@ -1008,11 +973,7 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
                     PRO {hasActiveSubscription ? 'Subscription' : 'Membership'}
                   </h3>
                   <p className={cn('opacity-90', isMobile ? 'text-[10px]' : 'text-xs')}>
-                    {hasActiveSubscription
-                      ? subscription?.status === 'active'
-                        ? 'Active'
-                        : subscription?.status || 'Unknown'
-                      : 'Active (DodoPayments)'}
+                    {subscription?.status === 'active' ? 'Active' : subscription?.status || 'Unknown'}
                   </p>
                 </div>
               </div>
@@ -1035,21 +996,8 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
                   <span>Next billing: {new Date(subscription.currentPeriodEnd).toLocaleDateString()}</span>
                 </div>
               )}
-              {hasDodoProStatus && !hasActiveSubscription && (
-                <div className="space-y-1">
-                  <div className="flex gap-4 text-[10px] opacity-75">
-                    <span>₹1500 (One-time payment)</span>
-                    <span>🇮🇳 Indian pricing</span>
-                  </div>
-                  {dodoProStatus?.expiresAt && (
-                    <div className="text-[10px] opacity-75">
-                      <span>Expires: {new Date(dodoProStatus.expiresAt).toLocaleDateString()}</span>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
-            {(hasActiveSubscription || hasDodoProStatus) && (
+            {hasActiveSubscription && (
               <Button
                 variant="secondary"
                 onClick={handleManageSubscription}
@@ -1066,56 +1014,6 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
             )}
           </div>
 
-          {/* Expiration Warning for DodoPayments */}
-          {isExpiringSoon && (
-            <div
-              className={cn(
-                'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg',
-                isMobile ? 'p-3' : 'p-4',
-              )}
-            >
-              <div className="flex items-start gap-2">
-                <div className={cn('bg-yellow-100 dark:bg-yellow-900/40 rounded', isMobile ? 'p-1' : 'p-1.5')}>
-                  <HugeiconsIcon
-                    icon={Crown02Icon}
-                    size={isMobile ? 14 : 16}
-                    color="currentColor"
-                    strokeWidth={1.5}
-                    className={cn('text-yellow-600 dark:text-yellow-500')}
-                  />
-                </div>
-                <div className="flex-1">
-                  <h4
-                    className={cn(
-                      'font-semibold text-yellow-800 dark:text-yellow-200',
-                      isMobile ? 'text-xs' : 'text-sm',
-                    )}
-                  >
-                    Pro Access Expiring Soon
-                  </h4>
-                  <p
-                    className={cn(
-                      'text-yellow-700 dark:text-yellow-300',
-                      isMobile ? 'text-[11px] mt-1' : 'text-xs mt-1',
-                    )}
-                  >
-                    Your Pro access expires in {daysUntilExpiration} {daysUntilExpiration === 1 ? 'day' : 'days'}. Renew
-                    now to continue enjoying unlimited features.
-                  </p>
-                  <Button
-                    asChild
-                    size="sm"
-                    className={cn(
-                      'mt-2 bg-yellow-600 hover:bg-yellow-700 text-white',
-                      isMobile ? 'h-7 text-xs' : 'h-8',
-                    )}
-                  >
-                    <Link href="/pricing">Renew Pro Access</Link>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       ) : (
         <div className={isMobile ? 'space-y-2' : 'space-y-3'}>
@@ -1160,38 +1058,6 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
           </div>
         ) : (
           <div className="space-y-2">
-            {/* Show DodoPayments history */}
-            {paymentHistory && paymentHistory.length > 0 && (
-              <>
-                {paymentHistory.slice(0, 3).map((payment: any) => (
-                  <div key={payment.id} className={cn('bg-muted/30 rounded-lg', isMobile ? 'p-2.5' : 'p-3')}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
-                        <p className={cn('font-medium truncate', isMobile ? 'text-xs' : 'text-sm')}>
-                          Scira Pro (DodoPayments)
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <p className={cn('text-muted-foreground', isMobile ? 'text-[10px]' : 'text-xs')}>
-                            {new Date(payment.createdAt).toLocaleDateString()}
-                          </p>
-                          <Badge variant="secondary" className="text-[8px] px-1 py-0">
-                            🇮🇳 INR
-                          </Badge>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <span className={cn('font-semibold block', isMobile ? 'text-xs' : 'text-sm')}>
-                          ₹{(payment.totalAmount / 100).toFixed(0)}
-                        </span>
-                        <span className={cn('text-muted-foreground', isMobile ? 'text-[9px]' : 'text-xs')}>
-                          {payment.status}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
 
             {/* Show Polar orders */}
             {orders?.result?.items && orders.result.items.length > 0 && (
@@ -1227,8 +1093,7 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
             )}
 
             {/* Show message if no billing history */}
-            {(!paymentHistory || paymentHistory.length === 0) &&
-              (!orders?.result?.items || orders.result.items.length === 0) && (
+            {(!orders?.result?.items || orders.result.items.length === 0) && (
                 <div
                   className={cn(
                     'border rounded-lg text-center bg-muted/20 flex items-center justify-center',
