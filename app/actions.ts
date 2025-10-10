@@ -1741,28 +1741,7 @@ export async function getProUserStatusOnly(): Promise<boolean> {
 }
 
 export async function getPaymentHistory() {
-  // DodoPayments removed: no payment history
   return null;
-}
-
-export async function getDodoPaymentsProStatus() {
-  'use server';
-  // DodoPayments removed: return safe defaults
-  return {
-    isProUser: false,
-    hasPayments: false,
-    expiresAt: null as Date | null,
-    source: 'none' as 'none' | 'polar',
-    daysUntilExpiration: undefined as number | undefined,
-    isExpired: false,
-    isExpiringSoon: false,
-  };
-}
-
-export async function getDodoExpirationDate() {
-  'use server';
-  // DodoPayments removed: no expiration date
-  return null as Date | null;
 }
 
 // Initialize QStash client

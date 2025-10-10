@@ -123,7 +123,7 @@ export default function TermsPage() {
           <ul>
             <li>Our service is hosted on Vercel&apos;s infrastructure</li>
             <li>We integrate with AI technology providers including OpenAI, Anthropic, xAI, and others</li>
-            <li>We use payment processors including Polar and DodoPayments for billing and subscription management</li>
+            <li>We use Polar for billing and subscription management</li>
             <li>These third-party services have their own terms of service and privacy policies</li>
             <li>We are not responsible for the practices or policies of these third-party services</li>
           </ul>
@@ -155,9 +155,6 @@ export default function TermsPage() {
           <ul>
             <li>
               <strong>Polar:</strong> For recurring monthly subscriptions (international users)
-            </li>
-            <li>
-              <strong>DodoPayments:</strong> For one-time payments (primarily for Indian users)
             </li>
           </ul>
           <p>

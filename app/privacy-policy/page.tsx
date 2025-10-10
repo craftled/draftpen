@@ -90,7 +90,7 @@ export default function PrivacyPage() {
           <p>
             <strong>Important Note on Payment Data:</strong> Scira AI does not collect, store, or process any payment
             card details, bank information, UPI details, or other sensitive payment data. All payment information is
-            handled directly by our payment processors (Polar and DodoPayments) and is subject to their respective
+            handled directly by our payment processor (Polar) and is subject to its
             privacy policies and security standards.
           </p>
 
@@ -120,8 +120,8 @@ export default function PrivacyPage() {
                 xAI, and others to process search queries and provide results
               </li>
               <li>
-                <strong>Payment Processors:</strong> We use Polar and DodoPayments to process payments and manage
-                subscriptions. These providers handle all payment data directly and have their own privacy policies
+                <strong>Payment Processor:</strong> We use Polar to process payments and manage
+                subscriptions. This provider handles all payment data directly and has its own privacy policy
                 governing payment information.
               </li>
             </ul>
@@ -135,7 +135,7 @@ export default function PrivacyPage() {
           </ul>
           <p>
             <strong>Payment Data:</strong> When you make a payment, your payment information is transmitted directly to
-            our payment processors (Polar for subscriptions, DodoPayments for one-time payments) and is not stored on
+            our payment processor (Polar) and is not stored on
             our servers. We only receive confirmation of successful payments and subscription status updates.
           </p>
 
