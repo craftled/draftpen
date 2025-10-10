@@ -1,10 +1,10 @@
 import { createAuthClient } from 'better-auth/react';
-import { dodopaymentsClient } from '@dodopayments/better-auth';
+// DodoPayments client removed
 import { polarClient } from '@polar-sh/better-auth';
 
 export const betterauthClient = createAuthClient({
   baseURL: process.env.NODE_ENV === 'production' ? process.env.NEXT_PUBLIC_APP_URL : 'http://localhost:3000',
-  plugins: [dodopaymentsClient()],
+  plugins: [],
 });
 
 export const authClient = createAuthClient({

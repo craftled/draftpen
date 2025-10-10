@@ -50,22 +50,15 @@ A minimalistic AI-powered search engine that helps you find information on the i
 
 ### Entertainment & Media
 
-- **Movie & TV show search**: Get detailed information about movies and TV shows using TMDB API
-- **Trending movies**: Discover trending movies with cast, ratings, and detailed information
-- **Trending TV shows**: Find popular TV shows with comprehensive metadata
+- (Removed) TMDB-dependent features
 
 ### Financial & Data Analysis
 
-- **Stock charts**: Generate interactive stock charts with news integration using yfinance and Tavily
-- **Currency converter**: Convert between currencies with real-time exchange rates using yfinance
-- **Code interpreter**: Write and execute Python code with chart generation capabilities using Daytona sandbox
+- (Removed) Crypto and finance features
 
 ### Location & Travel
 
-- **Weather information**: Get current weather and forecasts for any location using OpenWeather API
-- **Maps & geocoding**: Find places and get coordinates using Google Maps API
-- **Nearby places search**: Discover nearby restaurants, attractions, and services with Google Places API
-- **Flight tracking**: Track real-time flight information using Aviation Stack API
+- (Removed) Flight tracking
 
 ### Productivity & Utilities
 
@@ -101,10 +94,7 @@ A minimalistic AI-powered search engine that helps you find information on the i
 - [Vercel AI SDK](https://sdk.vercel.ai/docs) - AI model integration
 - [Shadcn/UI](https://ui.shadcn.com/) - UI components
 - [Exa.AI](https://exa.ai/) - Web search and content retrieval
-- [Tavily](https://tavily.com/) - Search grounding for reddit search
-- [OpenWeather](https://openweathermap.org/) - Weather data
-- [Daytona](https://daytona.io/) - Code execution sandbox
-- [Google Maps](https://developers.google.com/maps) - Location services
+- (Removed) Tavily, OpenWeather, Daytona, Google Maps
 - [Aviation Stack](https://aviationstack.com/) - Flight tracking
 - [TMDB](https://www.themoviedb.org/) - Movie and TV data
 - [Mem0](https://mem0.ai/) - Memory management
@@ -113,7 +103,7 @@ A minimalistic AI-powered search engine that helps you find information on the i
 
 ### Deploy your own
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,GROQ_API_KEY,GOOGLE_GENERATIVE_AI_API_KEY,DAYTONA_API_KEY,DATABASE_URL,BETTER_AUTH_SECRET,GITHUB_CLIENT_ID,GITHUB_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,TWITTER_CLIENT_ID,TWITTER_CLIENT_SECRET,REDIS_URL,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,MEM0_API_KEY,MEM0_ORG_ID,MEM0_PROJECT_ID,SMITHERY_API_KEY,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_SCIRA_PUBLIC_API_KEY,SCIRA_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,GROQ_API_KEY,GOOGLE_GENERATIVE_AI_API_KEY,DATABASE_URL,BETTER_AUTH_SECRET,GITHUB_CLIENT_ID,GITHUB_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,TWITTER_CLIENT_ID,TWITTER_CLIENT_SECRET,REDIS_URL,ELEVENLABS_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,SMITHERY_API_KEY,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST&envDescription=API%20keys%20and%20configuration)
 
 ## Set Scira as your default search engine
 
@@ -143,37 +133,7 @@ A minimalistic AI-powered search engine that helps you find information on the i
 
 After completing these steps, you should be able to use Scira as your default search engine in Chrome.
 
-### Local development
-
-#### Run via Docker
-
-The application can be run using Docker in two ways:
-
-##### Using Docker Compose (Recommended)
-
-1. Make sure you have Docker and Docker Compose installed on your system
-2. Create a `.env` file based on `.env.example` with your API keys
-3. Run the following command in the project root:
-   ```bash
-   docker compose up
-   ```
-4. The application will be available at `http://localhost:3000`
-
-##### Using Docker Directly
-
-1. Create a `.env` file based on `.env.example` with your API keys
-2. Build the Docker image:
-   ```bash
-   docker build -t scira.app .
-   ```
-3. Run the container:
-   ```bash
-   docker run --env-file .env -p 3000:3000 scira.app
-   ```
-
-The application uses a multi-stage build process to minimize the final image size and implements security best practices. The production image runs on Node.js LTS with Alpine Linux for a minimal footprint.
-
-#### Run with Node.js
+### Local development (Node.js)
 
 To run the application locally without Docker:
 
@@ -181,7 +141,7 @@ To run the application locally without Docker:
    - OpenAI (required)
    - Anthropic (required)
    - Exa (required for web search feature)
-2. Copy `.env.example` to `.env.local` and fill in your API keys
+2. Copy `.env.example` to `.env.local` and fill in your API keys (minimal keys listed below)
 3. Install dependencies:
    ```bash
    pnpm install
@@ -191,6 +151,24 @@ To run the application locally without Docker:
    pnpm dev
    ```
 5. Open `http://localhost:3000` in your browser
+
+### Minimal environment variables
+
+Create `.env.local` at the project root with at least:
+
+```
+DATABASE_URL=postgres://user:pass@host/db
+READ_DB_1=${DATABASE_URL}
+READ_DB_2=${DATABASE_URL}
+UPSTASH_REDIS_REST_URL=https://your-upstash-url
+UPSTASH_REDIS_REST_TOKEN=your-upstash-token
+BETTER_AUTH_SECRET=dev-secret
+
+OPENAI_API_KEY=xxxx
+EXA_API_KEY=xxxx
+PARALLEL_API_KEY=xxxx
+FIRECRAWL_API_KEY=xxxx
+```
 
 # License
 

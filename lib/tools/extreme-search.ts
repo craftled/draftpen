@@ -6,47 +6,17 @@
 // ----> Return all collected sources and research data to the user
 
 import Exa from 'exa-js';
-import { Daytona } from '@daytonaio/sdk';
 import { generateObject, generateText, stepCountIs, tool } from 'ai';
 import type { UIMessageStreamWriter } from 'ai';
 import { z } from 'zod';
 import { serverEnv } from '@/env/server';
 import { scira } from '@/ai/providers';
-import { SNAPSHOT_NAME } from '@/lib/constants';
 import { ChatMessage } from '../types';
 import FirecrawlApp from '@mendable/firecrawl-js';
 import { getTweet } from 'react-tweet/api';
 import { XaiProviderOptions, xai } from '@ai-sdk/xai';
 
-const pythonLibsAvailable = [
-  'pandas',
-  'numpy',
-  'scipy',
-  'keras',
-  'seaborn',
-  'matplotlib',
-  'transformers',
-  'scikit-learn',
-];
-
-const daytona = new Daytona({
-  apiKey: serverEnv.DAYTONA_API_KEY,
-  target: 'us',
-});
-
-const runCode = async (code: string, installLibs: string[] = []) => {
-  const sandbox = await daytona.create({
-    snapshot: SNAPSHOT_NAME,
-  });
-
-  if (installLibs.length > 0) {
-    await sandbox.process.executeCommand(`pip install ${installLibs.join(' ')}`);
-  }
-
-  const result = await sandbox.process.codeRun(code);
-  sandbox.delete();
-  return result;
-};
+// Daytona code execution removed
 
 const exa = new Exa(serverEnv.EXA_API_KEY);
 const firecrawl = new FirecrawlApp({ apiKey: serverEnv.FIRECRAWL_API_KEY });
@@ -347,67 +317,6 @@ ${JSON.stringify(plan)}
       },
     },
     tools: {
-      codeRunner: {
-        description: 'Run Python code in a sandbox',
-        inputSchema: z.object({
-          title: z.string().describe('The title of what you are running the code for'),
-          code: z.string().describe('The Python code to run with proper syntax and imports'),
-        }),
-        execute: async ({ title, code }) => {
-          console.log('Running code:', code);
-          // check if the code has any imports other than the pythonLibsAvailable
-          // and then install the missing libraries
-          const imports = code.match(/import\s+([\w\s,]+)/);
-          const importLibs = imports ? imports[1].split(',').map((lib: string) => lib.trim()) : [];
-          const missingLibs = importLibs.filter((lib: string) => !pythonLibsAvailable.includes(lib));
-
-          if (dataStream) {
-            dataStream.write({
-              type: 'data-extreme_search',
-              data: {
-                kind: 'code',
-                codeId: `code-${Date.now()}`,
-                title: title,
-                code: code,
-                status: 'running',
-              },
-            });
-          }
-          const response = await runCode(code, missingLibs);
-
-          // Extract chart data if present, and if so then map and remove the png with chart.png
-          const charts =
-            response.artifacts?.charts?.map((chart) => {
-              if (chart.png) {
-                const { png, ...chartWithoutPng } = chart;
-                return chartWithoutPng;
-              }
-              return chart;
-            }) || [];
-
-          console.log('Charts:', response.artifacts?.charts);
-
-          if (dataStream) {
-            dataStream.write({
-              type: 'data-extreme_search',
-              data: {
-                kind: 'code',
-                codeId: `code-${Date.now()}`,
-                title: title,
-                code: code,
-                status: 'completed',
-                result: response.result,
-                charts: charts,
-              },
-            });
-          }
-
-          return {
-            result: response.result,
-            charts: charts,
-          };
-        },
-      },
       webSearch: {
         description: 'Search the web for information on a topic',
         inputSchema: z.object({

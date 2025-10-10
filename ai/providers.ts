@@ -31,8 +31,8 @@ const anannas = createOpenAI({
   baseURL: 'https://api.anannas.ai/v1',
   apiKey: process.env.ANANNAS_API_KEY,
   headers: {
-    'HTTP-Referer': 'https://scira.ai',
-    'X-Title': 'Scira AI',
+    'HTTP-Referer': 'https://draftpen.app',
+    'X-Title': 'Draftpen',
     'Content-Type': 'application/json',
   },
 });

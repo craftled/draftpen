@@ -69,15 +69,10 @@ const FlightTracker = lazy(() =>
   import('@/components/flight-tracker').then((module) => ({ default: module.FlightTracker })),
 );
 const InteractiveChart = lazy(() => import('@/components/interactive-charts'));
-const MapComponent = lazy(() =>
-  import('@/components/map-components').then((module) => ({ default: module.MapComponent })),
-);
-const TMDBResult = lazy(() => import('@/components/movie-info'));
+// TMDB removed
 const MultiSearch = lazy(() => import('@/components/multi-search'));
-const NearbySearchMapView = lazy(() => import('@/components/nearby-search-map-view'));
-const TrendingResults = lazy(() => import('@/components/trending-tv-movies-results'));
+// TMDB trending removed
 const AcademicPapersCard = lazy(() => import('@/components/academic-papers'));
-const WeatherChart = lazy(() => import('@/components/weather-chart'));
 const MCPServerList = lazy(() => import('@/components/mcp-server-list'));
 const RedditSearch = lazy(() => import('@/components/reddit-search'));
 const XSearch = lazy(() => import('@/components/x-search'));
@@ -90,7 +85,7 @@ const CryptoCoinsData = lazy(() =>
 const CurrencyConverter = lazy(() =>
   import('@/components/currency_conv').then((module) => ({ default: module.CurrencyConverter })),
 );
-const InteractiveStockChart = lazy(() => import('@/components/interactive-stock-chart'));
+// Stock chart removed
 
 // Simple loader component for stock chart - no useEffect needed
 const StockChartLoader = ({ title }: { title?: string; input?: any }) => {
@@ -535,7 +530,8 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
       // Check if this part has the new state system
       if ('state' in part && part.state) {
         switch (part.type) {
-          case 'tool-find_place_on_map':
+          // Maps removed
+          /* case 'tool-find_place_on_map':
             switch (part.state) {
               case 'input-streaming':
                 return (
@@ -692,9 +688,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   />
                 );
             }
-            break;
+            break; */
 
-          case 'tool-movie_or_tv_search':
+          /* case 'tool-movie_or_tv_search':
             switch (part.state) {
               case 'input-streaming':
                 return (
@@ -718,9 +714,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   </Suspense>
                 );
             }
-            break;
+            break; */
 
-          case 'tool-stock_chart':
+          /* case 'tool-stock_chart':
             switch (part.state) {
               case 'input-streaming':
                 return (
@@ -797,9 +793,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   </Suspense>
                 );
             }
-            break;
+            break; */
 
-          case 'tool-get_weather_data':
+          /* case 'tool-get_weather_data':
             switch (part.state) {
               case 'input-streaming':
                 return (
@@ -873,7 +869,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   </Suspense>
                 );
             }
-            break;
+            break; */
 
           case 'tool-web_search':
             switch (part.state) {
@@ -1101,7 +1097,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
             }
             break;
 
-          case 'tool-trending_movies':
+          /* case 'tool-trending_movies':
             switch (part.state) {
               case 'input-streaming':
                 return (
@@ -1125,9 +1121,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   </Suspense>
                 );
             }
-            break;
+            break; */
 
-          case 'tool-trending_tv':
+          /* case 'tool-trending_tv':
             switch (part.state) {
               case 'input-streaming':
                 return (
@@ -1151,7 +1147,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   </Suspense>
                 );
             }
-            break;
+            break; */
 
           case 'tool-academic_search':
             switch (part.state) {
@@ -1186,7 +1182,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
             }
             break;
 
-          case 'tool-track_flight':
+          /* case 'tool-track_flight':
             switch (part.state) {
               case 'input-streaming':
                 return (
@@ -1229,7 +1225,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   </Suspense>
                 );
             }
-            break;
+            break; */
 
           case 'tool-reddit_search':
             switch (part.state) {
@@ -1537,7 +1533,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
             }
             break;
 
-          case 'tool-nearby_places_search':
+          /* case 'tool-nearby_places_search':
             switch (part.state) {
               case 'input-streaming':
                 return (
@@ -1601,7 +1597,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   </Suspense>
                 );
             }
-            break;
+            break; */
 
           case 'tool-currency_converter':
             switch (part.state) {
@@ -1937,7 +1933,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
             }
             break;
 
-          case 'tool-coin_ohlc':
+          /* case 'tool-coin_ohlc':
             switch (part.state) {
               case 'input-streaming':
                 return (
@@ -1961,9 +1957,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   </Suspense>
                 );
             }
-            break;
+            break; */
 
-          case 'tool-coin_data':
+          /* case 'tool-coin_data':
             switch (part.state) {
               case 'input-streaming':
                 return (
@@ -1987,9 +1983,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   </Suspense>
                 );
             }
-            break;
+            break; */
 
-          case 'tool-coin_data_by_contract':
+          /* case 'tool-coin_data_by_contract':
             switch (part.state) {
               case 'input-streaming':
                 return (
@@ -2013,7 +2009,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   </Suspense>
                 );
             }
-            break;
+            break; */
 
           case 'tool-greeting':
             switch (part.state) {

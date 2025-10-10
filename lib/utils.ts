@@ -38,7 +38,6 @@ export type SearchGroupId =
 export const searchProviderInfo = {
   parallel: 'Parallel AI',
   exa: 'Exa',
-  tavily: 'Tavily',
   firecrawl: 'Firecrawl',
 } as const;
 

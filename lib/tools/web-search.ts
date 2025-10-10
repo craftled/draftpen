@@ -6,7 +6,7 @@ import { UIMessageStreamWriter } from 'ai';
 import { ChatMessage } from '../types';
 import Parallel from 'parallel-web';
 import FirecrawlApp, { SearchResultWeb, SearchResultNews, SearchResultImages, Document } from '@mendable/firecrawl-js';
-import { tavily, type TavilyClient } from '@tavily/core';
+// Tavily removed
 
 const extractDomain = (url: string | null | undefined): string => {
   if (!url || typeof url !== 'string') return '';
@@ -608,17 +608,15 @@ class ExaSearchStrategy implements SearchStrategy {
 
 // Search provider factory
 const createSearchStrategy = (
-  provider: 'exa' | 'parallel' | 'tavily' | 'firecrawl',
+  provider: 'exa' | 'parallel' | 'firecrawl',
   clients: {
     exa: Exa;
     parallel: Parallel;
     firecrawl: FirecrawlApp;
-    tvly: TavilyClient;
   },
 ): SearchStrategy => {
   const strategies = {
     parallel: () => new ParallelSearchStrategy(clients.parallel, clients.firecrawl),
-    tavily: () => new TavilySearchStrategy(clients.tvly),
     firecrawl: () => new FirecrawlSearchStrategy(clients.firecrawl),
     exa: () => new ExaSearchStrategy(clients.exa),
   };
@@ -628,7 +626,7 @@ const createSearchStrategy = (
 
 export function webSearchTool(
   dataStream?: UIMessageStreamWriter<ChatMessage> | undefined,
-  searchProvider: 'exa' | 'parallel' | 'tavily' | 'firecrawl' = 'parallel',
+  searchProvider: 'exa' | 'parallel' | 'firecrawl' = 'parallel',
 ) {
   return tool({
     description: `This is the default tool of the app to be used to search the web for information with multiple queries, max results, search depth, topics, and quality.
@@ -680,7 +678,6 @@ export function webSearchTool(
         exa: new Exa(serverEnv.EXA_API_KEY),
         parallel: new Parallel({ apiKey: serverEnv.PARALLEL_API_KEY }),
         firecrawl: new FirecrawlApp({ apiKey: serverEnv.FIRECRAWL_API_KEY }),
-        tvly: tavily({ apiKey: serverEnv.TAVILY_API_KEY }),
       };
 
       console.log('Queries:', queries);

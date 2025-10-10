@@ -130,7 +130,7 @@ const ChatInterface = memo(
       false,
     );
 
-    const [searchProvider, _] = useLocalStorage<'exa' | 'parallel' | 'tavily' | 'firecrawl'>(
+    const [searchProvider, _] = useLocalStorage<'exa' | 'parallel' | 'firecrawl'>(
       'scira-search-provider',
       'parallel',
     );

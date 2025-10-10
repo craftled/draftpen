@@ -218,7 +218,7 @@ function SearchProviderSelector({
   className,
 }: {
   value: string;
-  onValueChange: (value: 'exa' | 'parallel' | 'tavily' | 'firecrawl') => void;
+  onValueChange: (value: 'exa' | 'parallel' | 'firecrawl') => void;
   disabled?: boolean;
   className?: string;
 }) {
@@ -295,7 +295,7 @@ function PreferencesSection({
   setIsCustomInstructionsEnabled?: (value: boolean | ((val: boolean) => boolean)) => void;
 }) {
   const isMobile = useMediaQuery('(max-width: 768px)');
-  const [searchProvider, setSearchProvider] = useLocalStorage<'exa' | 'parallel' | 'tavily' | 'firecrawl'>(
+  const [searchProvider, setSearchProvider] = useLocalStorage<'exa' | 'parallel' | 'firecrawl'>(
     'scira-search-provider',
     'parallel',
   );
@@ -306,16 +306,14 @@ function PreferencesSection({
   const enabled = isCustomInstructionsEnabled ?? true;
   const setEnabled = setIsCustomInstructionsEnabled ?? (() => { });
 
-  const handleSearchProviderChange = (newProvider: 'exa' | 'parallel' | 'tavily' | 'firecrawl') => {
+  const handleSearchProviderChange = (newProvider: 'exa' | 'parallel' | 'firecrawl') => {
     setSearchProvider(newProvider);
     toast.success(
       `Search provider changed to ${newProvider === 'exa'
         ? 'Exa'
         : newProvider === 'parallel'
           ? 'Parallel AI'
-          : newProvider === 'tavily'
-            ? 'Tavily'
-            : 'Firecrawl'
+          : 'Firecrawl'
       }`,
     );
   };
