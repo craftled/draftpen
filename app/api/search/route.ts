@@ -42,25 +42,12 @@ import { v4 as uuidv4 } from 'uuid';
 import { geolocation } from '@vercel/functions';
 
 import {
-  stockChartTool,
-  currencyConverterTool,
   xSearchTool,
   textTranslateTool,
   webSearchTool,
-  movieTvSearchTool,
-  trendingMoviesTool,
-  trendingTvTool,
   academicSearchTool,
   youtubeSearchTool,
   retrieveTool,
-  weatherTool,
-  codeInterpreterTool,
-  findPlaceOnMapTool,
-  nearbyPlacesSearchTool,
-  flightTrackerTool,
-  coinDataTool,
-  coinDataByContractTool,
-  coinOhlcTool,
   datetimeTool,
   greetingTool,
   // mcpSearchTool,
@@ -422,12 +409,6 @@ export async function POST(req: Request) {
         },
         tools: (() => {
           const baseTools = {
-            stock_chart: stockChartTool,
-            currency_converter: currencyConverterTool,
-            coin_data: coinDataTool,
-            coin_data_by_contract: coinDataByContractTool,
-            coin_ohlc: coinOhlcTool,
-
             x_search: xSearchTool,
             web_search: webSearchTool(dataStream, searchProvider),
             academic_search: academicSearchTool,
@@ -439,13 +420,7 @@ export async function POST(req: Request) {
             trending_movies: trendingMoviesTool,
             trending_tv: trendingTvTool,
 
-            find_place_on_map: findPlaceOnMapTool,
-            nearby_places_search: nearbyPlacesSearchTool,
-            get_weather_data: weatherTool,
-
             text_translate: textTranslateTool,
-            code_interpreter: codeInterpreterTool,
-            track_flight: flightTrackerTool,
             datetime: datetimeTool,
             extreme_search: extremeSearchTool(dataStream),
             greeting: greetingTool(timezone),

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { signIn } from '@/lib/auth-client';
 import { Loader2 } from 'lucide-react';
@@ -118,11 +118,12 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
 
   const content = (
     <>
-      {/* Compact Header */}
-      <div className="mb-6">
-        <h2 className="text-lg font-medium text-foreground mb-1">Sign in to continue</h2>
-        <p className="text-sm text-muted-foreground">Save conversations and sync across devices</p>
-      </div>
+      <DialogHeader className="mb-6 p-0 text-left">
+        <DialogTitle className="text-lg font-medium text-foreground">Sign in to continue</DialogTitle>
+        <DialogDescription className="text-sm text-muted-foreground">
+          Save conversations and sync across devices
+        </DialogDescription>
+      </DialogHeader>
 
       {/* Auth Options */}
       <div className="space-y-2 mb-4">

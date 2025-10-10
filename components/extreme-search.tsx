@@ -26,7 +26,8 @@ import {
 } from 'lucide-react';
 import { TextShimmer } from '@/components/core/text-shimmer';
 import { Skeleton } from '@/components/ui/skeleton';
-import ReactECharts, { EChartsOption } from 'echarts-for-react';
+import ReactECharts from 'echarts-for-react';
+import type { EChartsOption } from 'echarts';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import { DataExtremeSearchPart } from '@/lib/types';

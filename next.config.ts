@@ -25,6 +25,7 @@ const nextConfig: NextConfig = {
       '@hugeicons/react',
       '@hugeicons/core-free-icons',
       'date-fns',
+      'recharts',
     ],
     serverActions: {
       bodySizeLimit: '20mb',

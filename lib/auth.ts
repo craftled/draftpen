@@ -53,6 +53,14 @@ export const auth = betterAuth({
     enabled: true,
     maxAge: 5 * 60,
   },
+  onAPIError: {
+    throw: true,
+    errorURL: "/auth/error",
+    onError: (error) => {
+      // Avoid leaking multi-line messages into headers; log succinctly
+      console.error("[Better Auth]:", (error as any)?.message ?? error);
+    },
+  },
   database: drizzleAdapter(db, {
     provider: 'pg',
     schema: {
