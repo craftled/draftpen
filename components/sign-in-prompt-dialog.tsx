@@ -14,10 +14,12 @@ interface SignInPromptDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+type Provider = 'github' | 'google' | 'twitter' | 'microsoft';
+
 interface SignInButtonProps {
-  provider: 'github' | 'google' | 'twitter' | 'microsoft';
+  provider: Provider;
   loading: boolean;
-  setLoading: (loading: boolean) => void;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const SignInButton = ({ provider, loading, setLoading }: SignInButtonProps) => {
@@ -115,6 +117,14 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
   const [twitterLoading, setTwitterLoading] = useState(false);
   const [microsoftLoading, setMicrosoftLoading] = useState(false);
   const isMobile = useIsMobile();
+  const enabledProviders: Provider[] = ['google'];
+
+  const loadingState = {
+    github: [githubLoading, setGithubLoading] as const,
+    google: [googleLoading, setGoogleLoading] as const,
+    twitter: [twitterLoading, setTwitterLoading] as const,
+    microsoft: [microsoftLoading, setMicrosoftLoading] as const,
+  } satisfies Record<Provider, readonly [boolean, (loading: boolean) => void]>;
 
   const content = (
     <>
@@ -127,10 +137,12 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
 
       {/* Auth Options */}
       <div className="space-y-2 mb-4">
-        <SignInButton provider="github" loading={githubLoading} setLoading={setGithubLoading} />
-        <SignInButton provider="google" loading={googleLoading} setLoading={setGoogleLoading} />
-        <SignInButton provider="twitter" loading={twitterLoading} setLoading={setTwitterLoading} />
-        <SignInButton provider="microsoft" loading={microsoftLoading} setLoading={setMicrosoftLoading} />
+        {enabledProviders.map((provider) => {
+          const [loading, setLoading] = loadingState[provider];
+          return (
+            <SignInButton key={provider} provider={provider} loading={loading} setLoading={setLoading} />
+          );
+        })}
       </div>
 
       {/* Divider */}
@@ -173,10 +185,12 @@ export function SignInPromptDialog({ open, onOpenChange }: SignInPromptDialogPro
           <div className="overflow-y-auto pt-4">
             {/* Auth Options */}
             <div className="space-y-2 mb-4">
-              <SignInButton provider="github" loading={githubLoading} setLoading={setGithubLoading} />
-              <SignInButton provider="google" loading={googleLoading} setLoading={setGoogleLoading} />
-              <SignInButton provider="twitter" loading={twitterLoading} setLoading={setTwitterLoading} />
-              <SignInButton provider="microsoft" loading={microsoftLoading} setLoading={setMicrosoftLoading} />
+              {enabledProviders.map((provider) => {
+                const [loading, setLoading] = loadingState[provider];
+                return (
+                  <SignInButton key={provider} provider={provider} loading={loading} setLoading={setLoading} />
+                );
+              })}
             </div>
 
             {/* Divider */}

@@ -50,6 +50,7 @@ import { PRICING, SEARCH_LIMITS } from '@/lib/constants';
 
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { SciraLogo } from '@/components/logos/scira-logo';
+import { SiteFooter } from '@/components/site-footer';
 
 export default function AboutPage() {
   const router = useRouter();
@@ -1169,45 +1170,7 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-      {/* Footer */}
-      <footer className="border-t border-border py-12 px-4">
-        <div className="container max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <SciraLogo className="size-8" />
-              <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} Scira. All rights reserved.</p>
-            </div>
-
-            <div className="flex items-center gap-6">
-              <Link href="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Terms
-              </Link>
-              <Link
-                href="/privacy-policy"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Privacy Policy
-              </Link>
-              <div className="flex items-center gap-2">
-                <Link
-                  href="https://x.com/sciraai"
-                  className="p-2 text-muted-foreground hover:text-foreground transition-colors"
-                  target="_blank"
-                >
-                  <XLogoIcon className="h-4 w-4" />
-                </Link>
-                <Link
-                  href="https://git.new/scira"
-                  className="p-2 text-muted-foreground hover:text-foreground transition-colors"
-                  target="_blank"
-                >
-                  <GithubLogoIcon className="h-4 w-4" />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

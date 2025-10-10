@@ -129,7 +129,7 @@ export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
     {
       id: 'crypto' as const,
       name: 'Crypto',
-      description: 'Cryptocurrency research powered by CoinGecko',
+      description: 'Cryptocurrency research',
       icon: Bitcoin02Icon,
       show: true,
     },

@@ -48,8 +48,6 @@ import {
   academicSearchTool,
   youtubeSearchTool,
   retrieveTool,
-  trendingMoviesTool,
-  trendingTvTool,
   datetimeTool,
   greetingTool,
   // mcpSearchTool,
@@ -418,8 +416,6 @@ export async function POST(req: Request) {
             reddit_search: redditSearchTool,
             retrieve: retrieveTool,
 
-            trending_movies: trendingMoviesTool,
-            trending_tv: trendingTvTool,
 
             text_translate: textTranslateTool,
             datetime: datetimeTool,

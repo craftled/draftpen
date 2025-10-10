@@ -33,11 +33,8 @@ import {
   Book,
   Cloud,
   DollarSign,
-  TrendingUpIcon,
-  Plane,
   User2,
   Server,
-  XCircle,
   Loader2,
   Clock,
   Globe,
@@ -48,7 +45,6 @@ import {
   Play as PlayIcon,
   Info,
   Code,
-  Copy,
 } from 'lucide-react';
 import {
   RedditLogoIcon,
@@ -61,58 +57,20 @@ import {
 } from '@phosphor-icons/react';
 import { getModelConfig } from '@/ai/providers';
 import { ComprehensiveUserData } from '@/lib/user-data-server';
-import { Spinner } from '../ui/spinner';
 
 // Lazy load tool components
-const FlightTracker = lazy(() =>
-  import('@/components/flight-tracker').then((module) => ({ default: module.FlightTracker })),
-);
 const InteractiveChart = lazy(() => import('@/components/interactive-charts'));
-// TMDB removed
 const MultiSearch = lazy(() => import('@/components/multi-search'));
-// TMDB trending removed
 const AcademicPapersCard = lazy(() => import('@/components/academic-papers'));
-const MCPServerList = lazy(() => import('@/components/mcp-server-list'));
 const RedditSearch = lazy(() => import('@/components/reddit-search'));
 const XSearch = lazy(() => import('@/components/x-search'));
 const ExtremeSearch = lazy(() =>
   import('@/components/extreme-search').then((module) => ({ default: module.ExtremeSearch })),
 );
-const CryptoCoinsData = lazy(() =>
-  import('@/components/crypto-coin-data').then((module) => ({ default: module.CoinData })),
-);
 const CurrencyConverter = lazy(() =>
   import('@/components/currency_conv').then((module) => ({ default: module.CurrencyConverter })),
 );
-// Stock chart removed
 
-// Simple loader component for stock chart - no useEffect needed
-const StockChartLoader = ({ title }: { title?: string; input?: any }) => {
-  return (
-    <div className="flex flex-col gap-3 w-full mt-4">
-      <Badge
-        variant="secondary"
-        className={cn(
-          'w-fit flex items-center gap-3 px-4 py-2 rounded-full transition-colors duration-200',
-          'bg-blue-200 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
-        )}
-      >
-        <TrendingUpIcon className="h-4 w-4" />
-        <span className="font-medium">{title || 'Loading Stock Chart'}</span>
-        <Spinner className="size-5" />
-      </Badge>
-    </div>
-  );
-};
-const CryptoChart = lazy(() =>
-  import('@/components/crypto-charts').then((module) => ({ default: module.CryptoChart })),
-);
-const OnChainCryptoComponents = lazy(() =>
-  import('@/components/onchain-crypto-components').then((module) => ({ default: module.OnChainTokenPrice })),
-);
-const CryptoTickers = lazy(() =>
-  import('@/components/crypto-charts').then((module) => ({ default: module.CryptoTickers })),
-);
 
 const YouTubeSearchResults = lazy(() =>
   import('@/components/youtube-search-results').then((module) => ({ default: module.YouTubeSearchResults })),
@@ -141,22 +99,6 @@ const ComponentLoader = () => (
   </div>
 );
 
-// Error component for tool errors
-const ToolErrorDisplay = ({ errorText, toolName }: { errorText: string; toolName: string }) => (
-  <div className="w-full my-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950">
-    <div className="p-4">
-      <div className="flex items-start gap-3">
-        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900 flex items-center justify-center">
-          <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
-        </div>
-        <div className="flex-1">
-          <h3 className="text-sm font-medium text-red-900 dark:text-red-100">{toolName} failed</h3>
-          <p className="text-xs text-red-700 dark:text-red-300 mt-1">{errorText}</p>
-        </div>
-      </div>
-    </div>
-  </div>
-);
 
 interface MessagePartRendererProps {
   part: ChatMessage['parts'][number];
@@ -1532,7 +1474,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
       prevProps.chatId === nextProps.chatId &&
       isEqual(prevProps.annotations, nextProps.annotations);
 
-    // Debug logging (can be removed in production)
+    // Debug logging
     if (!areEqual) {
       console.log('MessagePartRenderer re-rendering');
     }

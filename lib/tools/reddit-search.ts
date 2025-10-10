@@ -1,6 +1,5 @@
 import { tool } from 'ai';
 import { z } from 'zod';
-// Tavily removed. Reddit search provider disabled for now.
 
 export const redditSearchTool = tool({
   description: 'Search Reddit content (disabled).',

@@ -16,7 +16,6 @@ import FirecrawlApp from '@mendable/firecrawl-js';
 import { getTweet } from 'react-tweet/api';
 import { XaiProviderOptions, xai } from '@ai-sdk/xai';
 
-// Daytona code execution removed
 
 const exa = new Exa(serverEnv.EXA_API_KEY);
 const firecrawl = new FirecrawlApp({ apiKey: serverEnv.FIRECRAWL_API_KEY });

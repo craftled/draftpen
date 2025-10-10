@@ -56,9 +56,6 @@ A minimalistic AI-powered search engine that helps you find information on the i
 
 - (Removed) Crypto and finance features
 
-### Location & Travel
-
-- (Removed) Flight tracking
 
 ### Productivity & Utilities
 
@@ -94,16 +91,14 @@ A minimalistic AI-powered search engine that helps you find information on the i
 - [Vercel AI SDK](https://sdk.vercel.ai/docs) - AI model integration
 - [Shadcn/UI](https://ui.shadcn.com/) - UI components
 - [Exa.AI](https://exa.ai/) - Web search and content retrieval
-- (Removed) Tavily, OpenWeather, Daytona, Google Maps
-- [Aviation Stack](https://aviationstack.com/) - Flight tracking
-- [TMDB](https://www.themoviedb.org/) - Movie and TV data
+- (Removed) Tavily, OpenWeather
 - [Mem0](https://mem0.ai/) - Memory management
 - [Better Auth](https://github.com/better-auth/better-auth) - Authentication
 - [Drizzle ORM](https://orm.drizzle.team/) - Database management
 
 ### Deploy your own
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,GROQ_API_KEY,GOOGLE_GENERATIVE_AI_API_KEY,DATABASE_URL,BETTER_AUTH_SECRET,GITHUB_CLIENT_ID,GITHUB_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,TWITTER_CLIENT_ID,TWITTER_CLIENT_SECRET,REDIS_URL,ELEVENLABS_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,SMITHERY_API_KEY,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST&envDescription=API%20keys%20and%20configuration)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,GROQ_API_KEY,GOOGLE_GENERATIVE_AI_API_KEY,DATABASE_URL,BETTER_AUTH_SECRET,GITHUB_CLIENT_ID,GITHUB_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,TWITTER_CLIENT_ID,TWITTER_CLIENT_SECRET,REDIS_URL,ELEVENLABS_API_KEY,EXA_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,SMITHERY_API_KEY,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST&envDescription=API%20keys%20and%20configuration)
 
 ## Set Scira as your default search engine
 

@@ -3,7 +3,6 @@ import type {
   academicSearchTool,
   redditSearchTool,
   retrieveTool,
-  trendingMoviesTool,
   textTranslateTool,
   xSearchTool,
   webSearchTool,
@@ -12,7 +11,6 @@ import type {
   // mcpSearchTool,
   extremeSearchTool,
   greetingTool,
-  trendingTvTool,
   createConnectorsSearchTool,
   createMemoryTools,
   SearchMemoryTool,
@@ -99,13 +97,11 @@ export type MessageMetadata = z.infer<typeof messageMetadataSchema>;
 type academicSearchTool = InferUITool<typeof academicSearchTool>;
 type redditSearchTool = InferUITool<typeof redditSearchTool>;
 type retrieveTool = InferUITool<typeof retrieveTool>;
-type trendingMoviesTool = InferUITool<typeof trendingMoviesTool>;
 type textTranslateTool = InferUITool<typeof textTranslateTool>;
 type xSearchTool = InferUITool<typeof xSearchTool>;
 type greetingTool = InferUITool<ReturnType<typeof greetingTool>>;
 type webSearch = InferUITool<ReturnType<typeof webSearchTool>>;
 type extremeSearch = InferUITool<ReturnType<typeof extremeSearchTool>>;
-type trendingTvTool = InferUITool<typeof trendingTvTool>;
 type youtubeSearchTool = InferUITool<typeof youtubeSearchTool>;
 type datetimeTool = InferUITool<typeof datetimeTool>;
 type createConnectorsSearchTool = InferUITool<ReturnType<typeof createConnectorsSearchTool>>;
@@ -125,10 +121,6 @@ export type ChatTools = {
   youtube_search: youtubeSearchTool;
   reddit_search: redditSearchTool;
   retrieve: retrieveTool;
-
-  // Media & Entertainment
-  trending_movies: trendingMoviesTool;
-  trending_tv: trendingTvTool;
 
   // Location & Maps (removed)
 

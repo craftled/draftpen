@@ -8,6 +8,8 @@ import Link from 'next/link';
 
 type AuthProvider = 'github' | 'google' | 'twitter' | 'microsoft';
 
+const ENABLED_PROVIDERS: AuthProvider[] = ['google'];
+
 interface AuthIconProps extends React.ComponentProps<'svg'> {}
 
 /**
@@ -64,7 +66,7 @@ interface SignInButtonProps {
   title: string;
   provider: AuthProvider;
   loading: boolean;
-  setLoading: (loading: boolean) => void;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
   callbackURL: string;
   icon: React.ReactNode;
 }
@@ -112,6 +114,20 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
   const [twitterLoading, setTwitterLoading] = useState(false);
   const [microsoftLoading, setMicrosoftLoading] = useState(false);
 
+  const loadingState = {
+    github: [githubLoading, setGithubLoading] as const,
+    google: [googleLoading, setGoogleLoading] as const,
+    twitter: [twitterLoading, setTwitterLoading] as const,
+    microsoft: [microsoftLoading, setMicrosoftLoading] as const,
+  } satisfies Record<AuthProvider, readonly [boolean, React.Dispatch<React.SetStateAction<boolean>>]>;
+
+  const providerMeta: Record<AuthProvider, { title: string; icon: React.ReactNode }> = {
+    github: { title: 'GitHub', icon: <AuthIcons.Github className="w-4 h-4" /> },
+    google: { title: 'Google', icon: <AuthIcons.Google className="w-4 h-4" /> },
+    twitter: { title: 'X', icon: <AuthIcons.Twitter className="w-4 h-4" /> },
+    microsoft: { title: 'Microsoft', icon: <AuthIcons.Microsoft className="w-4 h-4" /> },
+  };
+
   return (
     <div className="w-full max-w-[380px] mx-auto">
       <div className="space-y-6">
@@ -121,38 +137,22 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
         </div>
 
         <div className="space-y-2">
-          <SignInButton
-            title="GitHub"
-            provider="github"
-            loading={githubLoading}
-            setLoading={setGithubLoading}
-            callbackURL="/"
-            icon={<AuthIcons.Github className="w-4 h-4" />}
-          />
-          <SignInButton
-            title="Google"
-            provider="google"
-            loading={googleLoading}
-            setLoading={setGoogleLoading}
-            callbackURL="/"
-            icon={<AuthIcons.Google className="w-4 h-4" />}
-          />
-          <SignInButton
-            title="X"
-            provider="twitter"
-            loading={twitterLoading}
-            setLoading={setTwitterLoading}
-            callbackURL="/"
-            icon={<AuthIcons.Twitter className="w-4 h-4" />}
-          />
-          <SignInButton
-            title="Microsoft"
-            provider="microsoft"
-            loading={microsoftLoading}
-            setLoading={setMicrosoftLoading}
-            callbackURL="/"
-            icon={<AuthIcons.Microsoft className="w-4 h-4" />}
-          />
+          {ENABLED_PROVIDERS.map((provider) => {
+            const [loading, setLoading] = loadingState[provider];
+            const { title, icon } = providerMeta[provider];
+
+            return (
+              <SignInButton
+                key={provider}
+                title={title}
+                provider={provider}
+                loading={loading}
+                setLoading={setLoading}
+                callbackURL="/"
+                icon={icon}
+              />
+            );
+          })}
         </div>
 
         <div className="pt-6 space-y-4">

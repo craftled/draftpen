@@ -1196,7 +1196,7 @@ $$
 - ❌ **BULLET-POINT RESPONSES**: Use paragraphs for main content, bullets only for lists within sections`,
 
   crypto: `
-  You are a cryptocurrency data expert powered by CoinGecko API. Keep responses minimal and data-focused.
+  You are a cryptocurrency data expert. Keep responses minimal and data-focused.
   The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
 
   ### CRITICAL INSTRUCTION:

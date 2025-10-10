@@ -1,13 +1,9 @@
-// Crypto & finance tools removed (including stock chart)
 export { xSearchTool } from './x-search';
 export { textTranslateTool } from './text-translate';
 export { webSearchTool } from './web-search';
-export { trendingMoviesTool } from './trending-movies';
-export { trendingTvTool } from './trending-tv';
 export { academicSearchTool } from './academic-search';
 export { youtubeSearchTool } from './youtube-search';
 export { retrieveTool } from './retrieve';
-// Flight tracker and crypto tools removed
 export { datetimeTool } from './datetime';
 // export { mcpSearchTool } from './mcp-search';
 export { redditSearchTool } from './reddit-search';

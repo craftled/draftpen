@@ -146,20 +146,8 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '**',
       },
-      // image.tmdb.org
-      {
-        protocol: 'https',
-        hostname: 'image.tmdb.org',
-        port: '',
-        pathname: '/t/p/original/**',
-      },
-      // image.tmdb.org
-      {
-        protocol: 'https',
-        hostname: 'image.tmdb.org',
-        port: '',
-        pathname: '/**',
-      },
+
+
     ],
     // Add additional settings for better image loading
     domains: [],

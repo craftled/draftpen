@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ExternalLink } from 'lucide-react';
 import { SciraLogo } from '@/components/logos/scira-logo';
+import { SiteFooter } from '@/components/site-footer';
 
 const container = {
   hidden: { opacity: 0 },
@@ -189,36 +190,7 @@ export default function PrivacyPage() {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="py-10 mt-10">
-        <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-        <div className="container max-w-3xl mx-auto px-4 pt-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-background border flex items-center justify-center">
-                <SciraLogo className="size-4 opacity-80" />
-              </div>
-              <div className="text-sm text-muted-foreground">
-                © {new Date().getFullYear()} Scira AI by Zaid Mukaddam
-              </div>
-            </div>
-            <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <Link href="/" className="hover:text-foreground transition-colors">
-                Home
-              </Link>
-              <Link href="/about" className="hover:text-foreground transition-colors">
-                About
-              </Link>
-              <Link href="/terms" className="hover:text-foreground transition-colors">
-                Terms
-              </Link>
-              <Link href="/privacy-policy" className="text-foreground font-medium">
-                Privacy
-              </Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
