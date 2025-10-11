@@ -33,6 +33,15 @@ export const metadata: Metadata = {
     'open source ai writing software',
     'AI',
   ],
+  // Explicit icon links for wide browser support
+  icons: {
+    icon: '/icon.png',
+    apple: '/apple-icon.png',
+    shortcut: '/favicon.ico',
+    other: [
+      { rel: 'mask-icon', url: '/favicon.svg', color: '#111111' },
+    ],
+  },
   robots: {
     index: true,
     follow: true,

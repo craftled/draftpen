@@ -2,25 +2,18 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Scira - AI-powered Search Engine',
-    short_name: 'Scira',
-    description:
-      'A minimalistic AI-powered search engine that helps you find information on the internet using advanced AI models like GPT-4, Claude, and Grok',
+    name: 'Draftpen - AI-first content writing software',
+    short_name: 'Draftpen',
+    description: 'Draftpen is an AI-first content writing software that helps you write better content faster.',
     start_url: '/',
     display: 'standalone',
-    categories: ['search', 'ai', 'productivity'],
+    categories: ['writing', 'ai', 'productivity'],
     background_color: '#171717',
     icons: [
       {
-        src: '/icon-maskable.png',
-        sizes: '1024x1024',
+        src: '/icon-192x192.png',
+        sizes: '192x192',
         type: 'image/png',
-        purpose: 'maskable',
-      },
-      {
-        src: '/favicon.ico',
-        sizes: 'any',
-        type: 'image/x-icon',
       },
       {
         src: '/icon.png',
@@ -28,10 +21,11 @@ export default function manifest(): MetadataRoute.Manifest {
         type: 'image/png',
       },
       {
-        src: '/apple-icon.png',
-        sizes: '180x180',
+        src: '/icon-maskable.png',
+        sizes: '1024x1024',
         type: 'image/png',
-      },
+        purpose: 'maskable',
+      }
     ],
     screenshots: [
       {

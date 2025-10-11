@@ -10,46 +10,33 @@ To the open-source community and [Scira](https://scira.ai) for providing strong 
 
 ## Features
 
-### Core Search & Information
+### AI drafting workspace
 
-- **AI-powered search**: Get answers to your questions using multiple AI models including Anthropic's Claude and OpenAI's GPT models
-- **Web search**: Search the web using Exa's API with support for multiple queries, search depths, and topics
-- **URL content retrieval**: Extract and analyze content from any URL using Exa AI with live crawling capabilities
-- **Reddit search**: Search Reddit content with time range filtering using Tavily API
-- **Extreme search**: Advanced multi-step search capability for complex queries
+- **Multi-model chat**: Stream responses from OpenAI GPT-4o, GPT-5 variants, and Anthropic Claude through the Vercel AI SDK with reasoning, throttle control, and auto-resume.
+- **Context controls**: Toggle custom instructions, surface suggested follow-up questions, and preserve chat history with visibility and share controls (private or public).
+- **Polished UX**: PWA install prompts, keyboard-driven command palette, and proactive usage limits keep the writing flow uninterrupted.
 
-### Academic & Research
+### Live research tools
 
-- **Academic search**: Search for academic papers and research using Exa AI with abstracts and summaries
-- **YouTube search**: Find YouTube videos with detailed information, captions, and timestamps powered by Exa AI
+- **First-party search tools**: Run web, academic, YouTube, and Reddit lookups via Parallel AI, Firecrawl, and Exa with automatic deduping and streaming citations.
+- **Extreme search mode**: Orchestrate multi-step investigations that branch into additional tool calls when queries demand deeper context.
+- **Inline utilities**: Translate text, pull date/time context, and fetch code-aware context blocks without leaving the conversation.
 
-### Entertainment & Media
+### Knowledge connectors & memory
 
-- (Removed) TMDB-dependent features
+- **Document connectors**: Sync Google Drive and Notion workspaces (OneDrive coming soon) using Supermemory for unified retrieval inside chat.
+- **Long-term memory**: Store and query personal notes directly from the assistant to blend saved knowledge with live search results.
+- **Rich inputs**: Upload PDFs or images and transcribe audio with Whisper before injecting content into prompts.
 
-### Financial & Data Analysis
+### Automation & monitoring
 
-- (Removed) Crypto and finance features
+- **Lookouts**: Schedule recurring research jobs with manual test runs, status tracking, and quota guards for Pro subscribers.
+- **Usage awareness**: Automatic model switching, daily usage tracking, and toast reminders make it hard to run past plan limits.
 
+### Integrations & extensions
 
-### Productivity & Utilities
-
-- **Text translation**: Translate text between languages using AI models
-- **Date & time**: Get current date and time in user's timezone with multiple format options
-- **Memory management**: Add and search personal memories using Mem0 AI
-- **MCP server search**: Search for Model Context Protocol servers using Smithery Registry
-
-### Search Groups
-
-- **Web**: Search across the entire internet powered by Tavily
-- **Memory**: Your personal memory companion (requires authentication)
-- **Analysis**: Code execution, stock charts, and currency conversion
-- **Chat**: Direct conversation with AI models
-- **X**: Search X (Twitter) posts
-- **Reddit**: Search Reddit posts
-- **Academic**: Search academic papers powered by Exa
-- **YouTube**: Search YouTube videos powered by Exa
-- **Extreme**: Deep research with multiple sources and analysis
+- **Raycast command**: Access Draftpen’s web search stack from the desktop launcher using the same tool pipeline.
+- **Connector APIs**: Endpoints for manual sync, uploads, transcription, and health checks power integrations beyond the web app.
 
 ## LLM Models Supported
 
