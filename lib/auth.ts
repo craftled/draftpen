@@ -80,6 +80,14 @@ export const auth = betterAuth({
       clientId: serverEnv.GOOGLE_CLIENT_ID,
       clientSecret: serverEnv.GOOGLE_CLIENT_SECRET,
       redirectUri: `${process.env.NODE_ENV === 'production' ? process.env.NEXT_PUBLIC_APP_URL : 'http://localhost:3000'}/api/auth/callback/google`,
+      mapProfileToUser: (profile: any) => {
+        const nameFromParts = [profile?.given_name, profile?.family_name].filter(Boolean).join(' ');
+        return {
+          name: profile?.name || nameFromParts || '',
+          email: profile?.email || '',
+          image: profile?.picture || undefined,
+        };
+      },
     },
   },
   pluginRoutes: {

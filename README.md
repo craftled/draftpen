@@ -1,10 +1,8 @@
-# Scira
+# Draftpen
 
-![Scira](/app/opengraph-image.png)
+AI-first content writing software for researching and drafting human-level content.
 
-A minimalistic AI-powered search engine that helps you find information on the internet.
-
-🔗 **[Try Scira at scira.ai](https://scira.ai)**
+🔗 **[Try Draftpen](https://draftpen.com)**
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/zaidmukaddam/scira)
 
