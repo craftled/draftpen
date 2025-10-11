@@ -1,7 +1,7 @@
 import { generateText, tool } from 'ai';
 import { z } from 'zod';
 import { getTweet } from 'react-tweet/api';
-import type { XaiProviderOptions } from '@ai-sdk/xai';
+
 import { scira } from '@/ai/providers';
 
 export const xSearchTool = tool({
@@ -67,31 +67,12 @@ export const xSearchTool = tool({
 
       console.log('[X search - includeHandles]:', normalizedInclude, '[excludeHandles]:', normalizedExclude);
 
-      const { text, sources } = await generateText({
-        model: scira.languageModel('scira-grok-4-fast'),
+      const { text } = await generateText({
+        model: scira.languageModel('scira-gpt5-mini'),
         system: `You are a helpful assistant that searches for X posts and returns the results in a structured format. You will be given a search query and optional handles to include/exclude. You will then search for the posts and return the results in a structured format. You will also cite the sources in the format [Source No.]. Go very deep in the search and return the most relevant results.`,
         messages: [{ role: 'user', content: `${query}` }],
         maxOutputTokens: 10,
-        providerOptions: {
-          xai: {
-            searchParameters: {
-              mode: 'on',
-              fromDate: effectiveStart,
-              toDate: effectiveEnd,
-              maxSearchResults: maxResults && maxResults < 15 ? 15 : maxResults ?? 15,
-              returnCitations: true,
-              sources: [
-                {
-                  type: 'x',
-                  ...(normalizedInclude?.length ? { includedXHandles: normalizedInclude } : {}),
-                  ...(normalizedExclude?.length ? { excludedXHandles: normalizedExclude } : {}),
-                  ...(typeof postFavoritesCount === 'number' ? { postFavoriteCount: postFavoritesCount } : {}),
-                  ...(typeof postViewCount === 'number' ? { postViewCount: postViewCount } : {}),
-                },
-              ],
-            },
-          } satisfies XaiProviderOptions,
-        },
+
         onStepFinish: (step) => {
           console.log('[X search step]: ', step);
         },
@@ -99,7 +80,7 @@ export const xSearchTool = tool({
 
       console.log('[X search data]: ', text);
 
-      const citations = sources || [];
+      const citations: any[] = [];
       let allSources = [];
 
       if (citations.length > 0) {

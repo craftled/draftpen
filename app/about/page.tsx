@@ -1124,7 +1124,7 @@ export default function AboutPage() {
             <ProAccordionItem value="item-5">
               <ProAccordionTrigger>What AI models does Scira use?</ProAccordionTrigger>
               <ProAccordionContent>
-                Scira uses a range of advanced AI models including Grok, Claude, OpenAI GPT, Gemini, and more to provide
+                Scira uses a range of advanced AI models including OpenAI GPT and Claude to provide
                 the best possible answers for different types of queries.
               </ProAccordionContent>
             </ProAccordionItem>

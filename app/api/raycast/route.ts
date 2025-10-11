@@ -1,6 +1,6 @@
 import { scira } from '@/ai/providers';
 import { webSearchTool } from '@/lib/tools';
-import { xSearchTool } from '@/lib/tools/x-search';
+
 import { convertToModelMessages, generateText, stepCountIs } from 'ai';
 
 export const maxDuration = 800;
@@ -64,16 +64,15 @@ export async function POST(req: Request) {
   console.log('Running with model: ', model.trim());
   console.log('Group: ', group);
 
+  if (group === 'x') {
+    return new Response('X search is disabled', { status: 410 });
+  }
+
   // Get the appropriate system prompt based on the group
   const systemPrompt = groupSystemPrompts[group as keyof typeof groupSystemPrompts];
 
   // Determine which tools to activate based on the group
-  const activeTools =
-    group === 'x'
-      ? ['x_search' as const]
-      : group === 'web'
-        ? ['web_search' as const]
-        : ['web_search' as const, 'x_search' as const];
+  const activeTools = ['web_search' as const];
 
   const { text, steps } = await generateText({
     model: scira.languageModel(model),
@@ -85,7 +84,7 @@ export async function POST(req: Request) {
     experimental_activeTools: activeTools,
     tools: {
       web_search: webSearchTool(undefined, "exa"),
-      x_search: xSearchTool,
+
     },
   });
 

@@ -155,7 +155,7 @@ export async function POST(req: Request) {
             parts: userMessage.parts,
             attachments: [],
             createdAt: new Date(),
-            model: 'scira-grok-4-fast-think',
+            model: 'scira-gpt5-mini',
             completionTime: null,
             inputTokens: null,
             outputTokens: null,
@@ -179,7 +179,7 @@ export async function POST(req: Request) {
 
         // Start streaming
         const result = streamText({
-          model: scira.languageModel('scira-grok-4-fast-think'),
+          model: scira.languageModel('scira-gpt5-mini'),
           messages: convertToModelMessages([userMessage]),
           stopWhen: stepCountIs(2),
           maxRetries: 10,
@@ -572,7 +572,7 @@ $$
                 console.log('Finish part: ', part);
                 const processingTime = (Date.now() - streamStartTime) / 1000;
                 return {
-                  model: 'scira-grok-4-fast-think',
+                  model: 'scira-gpt5-mini',
                   completionTime: processingTime,
                   createdAt: new Date().toISOString(),
                   totalTokens: part.totalUsage?.totalTokens ?? null,
@@ -603,7 +603,7 @@ $$
                 createdAt: new Date(),
                 attachments: [],
                 chatId: chatId,
-                model: 'scira-grok-4-fast-think',
+                model: 'scira-gpt5-mini',
                 completionTime: message.metadata?.completionTime ?? 0,
                 inputTokens: message.metadata?.inputTokens ?? 0,
                 outputTokens: message.metadata?.outputTokens ?? 0,

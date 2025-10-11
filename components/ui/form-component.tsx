@@ -2691,7 +2691,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
           setSelectedModel(compatibleModel.value);
         } else {
           console.warn('No PDF-compatible model found');
-          toast.error('PDFs are only supported by Gemini and Claude models');
+          toast.error('PDFs are only supported by Claude models');
 
           if (imageFiles.length === 0) {
             event.target.value = '';
@@ -2921,7 +2921,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
           toast.info(`Switching to ${compatibleModel.label} to support PDF files`);
         } else {
           console.warn('No PDF-compatible model found');
-          toast.error('PDFs are only supported by Gemini and Claude models');
+          toast.error('PDFs are only supported by Claude models');
           if (imageFiles.length === 0) return;
         }
       }

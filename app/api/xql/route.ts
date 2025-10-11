@@ -18,8 +18,7 @@ import { markdownJoinerTransform } from '@/lib/parser';
 import { scira } from '@/ai/providers';
 
 import { z } from 'zod';
-import { GroqProviderOptions } from '@ai-sdk/groq';
-import { XaiProviderOptions } from '@ai-sdk/xai';
+
 
 const xqlTool = tool({
     description: 'Search X posts for recent information and discussions with the ability to filter by X handles, date range, and post engagement metrics.',
@@ -67,32 +66,13 @@ const xqlTool = tool({
         console.log('X search - includeHandles:', normalizedInclude, 'excludeHandles:', normalizedExclude);
 
         const result = await generateText({
-            model: scira.languageModel('scira-grok-4-fast'),
+            model: scira.languageModel('scira-gpt5-mini'),
             prompt: query,
             maxOutputTokens: 10,
-            providerOptions: {
-                xai: {
-                    searchParameters: {
-                        mode: 'on',
-                        fromDate: effectiveStart,
-                        toDate: effectiveEnd,
-                        maxSearchResults: maxResults && maxResults < 15 ? 15 : maxResults ?? 15,
-                        returnCitations: true,
-                        sources: [
-                            {
-                                type: 'x',
-                                ...(normalizedInclude?.length ? { includedXHandles: normalizedInclude } : {}),
-                                ...(normalizedExclude?.length ? { excludedXHandles: normalizedExclude } : {}),
-                                ...(typeof postFavoritesCount === 'number' ? { postFavoriteCount: postFavoritesCount } : {}),
-                                ...(typeof postViewCount === 'number' ? { postViewCount: postViewCount } : {}),
-                            },
-                        ],
-                    },
-                } satisfies XaiProviderOptions,
-            },
+
         });
 
-        const citations = result.sources.map((source) => source.sourceType === 'url' ? source.url : null).filter((url) => url !== null) || [];
+        const citations = (result.sources?.map((source) => source.sourceType === 'url' ? source.url : null).filter((url) => url !== null)) || [];
 
         return citations;
     },
@@ -105,10 +85,12 @@ const tools = {
 export type XQLMessage = UIMessage<never, UIDataTypes, InferUITools<typeof tools>>;
 
 export async function POST(req: Request) {
-    console.log('🔍 Search API endpoint hit');
+    return new Response(JSON.stringify({ error: 'X search is disabled' }), { status: 410 });
+    // Feature disabled: remaining implementation intentionally unreachable while disabled
+}
+/*
+/* XQL feature disabled: previous implementation commented out below
 
-    const requestStartTime = Date.now();
-    const { messages } = await req.json();
 
     const user = await getCurrentUser();
 
@@ -127,7 +109,7 @@ export async function POST(req: Request) {
     }
 
     const result = streamText({
-        model: scira.languageModel('scira-grok-4-fast'),
+        model: scira.languageModel('scira-gpt5-mini'),
         messages: convertToModelMessages(messages),
         stopWhen: hasToolCall('xql'),
         onAbort: ({ steps }) => {
@@ -224,3 +206,5 @@ export async function POST(req: Request) {
     });
 }
 
+
+*/

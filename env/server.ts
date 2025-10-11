@@ -4,12 +4,11 @@ import { z } from 'zod';
 
 export const serverEnv = createEnv({
   server: {
-    XAI_API_KEY: z.string().min(1).optional(),
+
     OPENAI_API_KEY: z.string().min(1),
     ANTHROPIC_API_KEY: z.string().min(1),
     AI_GATEWAY_API_KEY: z.string().min(1).optional(),
-    GROQ_API_KEY: z.string().min(1).optional(),
-    GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1).optional(),
+
     DATABASE_URL: z.string().min(1),
     BETTER_AUTH_SECRET: z.string().min(1),
     GOOGLE_CLIENT_ID: z.string().min(1),

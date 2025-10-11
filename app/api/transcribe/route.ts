@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { elevenlabs } from '@ai-sdk/elevenlabs';
-import { groq } from '@ai-sdk/groq';
+import { createOpenAI } from '@ai-sdk/openai';
 import { experimental_transcribe as transcribe } from 'ai';
+
+const openai = createOpenAI();
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +16,7 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await transcribe({
-      model: groq.transcription('whisper-large-v3'),
+      model: openai.transcription('whisper-1'),
       audio: await audio.arrayBuffer(),
     });
 

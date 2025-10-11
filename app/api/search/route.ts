@@ -42,7 +42,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { geolocation } from '@vercel/functions';
 
 import {
-  xSearchTool,
   textTranslateTool,
   webSearchTool,
   academicSearchTool,
@@ -56,13 +55,12 @@ import {
   createConnectorsSearchTool,
   codeContextTool,
 } from '@/lib/tools';
-import { GroqProviderOptions } from '@ai-sdk/groq';
 import { markdownJoinerTransform } from '@/lib/parser';
 import { ChatMessage } from '@/lib/types';
 import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
 import { AnthropicProviderOptions } from '@ai-sdk/anthropic';
 import { getCachedCustomInstructionsByUserId } from '@/lib/user-data-server';
-import { GoogleGenerativeAIProvider, GoogleGenerativeAIProviderOptions } from '@ai-sdk/google';
+
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
@@ -320,8 +318,8 @@ export async function POST(req: Request) {
         toolChoice: 'auto',
         providerOptions: {
           gateway: {
-            only: ['openai', 'anthropic', 'vertex', 'moonshotai', 'zai', 'deepseek', 'fireworks', 'bedrock', 'alibaba'],
-            order: ['anthropic', 'vertex', 'bedrock']
+            only: ['openai', 'anthropic'],
+            order: ['anthropic']
           },
           openai: {
             ...(model !== 'scira-qwen-coder'
@@ -349,28 +347,7 @@ export async function POST(req: Request) {
               }
               : {}) satisfies OpenAIResponsesProviderOptions),
           },
-          deepseek: {
-            parallelToolCalls: false,
-          },
-          groq: {
-            ...(model === 'scira-gpt-oss-20' || model === 'scira-gpt-oss-120'
-              ? {
-                reasoningEffort: 'high',
-                reasoningFormat: 'hidden',
-              }
-              : {}),
-            ...(model === 'scira-qwen-32b'
-              ? {
-                reasoningEffort: 'none',
-              }
-              : {}),
-            parallelToolCalls: false,
-            structuredOutputs: true,
-            serviceTier: 'auto',
-          } satisfies GroqProviderOptions,
-          xai: {
-            parallel_tool_calls: false,
-          },
+
           anthropic: {
             ...(model === 'scira-anthropic-think'
               ? {
@@ -383,17 +360,7 @@ export async function POST(req: Request) {
               : {}),
             disableParallelToolUse: true,
           } satisfies AnthropicProviderOptions,
-          google: {
-            ...(model === 'scira-google-think'
-              ? {
-                thinkingConfig: {
-                  thinkingBudget: 400,
-                  includeThoughts: true,
-                },
-              }
-              : {}),
-            threshold: "OFF"
-          } satisfies GoogleGenerativeAIProviderOptions,
+
         },
         prepareStep: async ({ steps }) => {
           if (steps.length > 0) {
@@ -409,7 +376,7 @@ export async function POST(req: Request) {
         },
         tools: (() => {
           const baseTools = {
-            x_search: xSearchTool,
+
             web_search: webSearchTool(dataStream, searchProvider),
             academic_search: academicSearchTool,
             youtube_search: youtubeSearchTool,
@@ -454,7 +421,7 @@ export async function POST(req: Request) {
           }
 
           const { object: repairedArgs } = await generateObject({
-            model: scira.languageModel('scira-grok-4-fast'),
+            model: scira.languageModel('scira-gpt5-mini'),
             schema: tool.inputSchema,
             prompt: [
               `The model tried to call the tool "${toolCall.toolName}"` + ` with the following arguments:`,

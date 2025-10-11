@@ -22,7 +22,7 @@ const testimonials = [
   },
   {
     content:
-      "Hi @sciraai, just for curiosity, I searched for myself using its Gemini 2.5 Pro and in extreme mode to see what results it could generate. And it created this 👇🏻 It is not just the best, it is wild. And the best part is it's 10000% accurate.",
+      "Hi @sciraai, just for curiosity, I searched for myself using its advanced models and in extreme mode to see what results it could generate. And it created this 👇🏻 It is not just the best, it is wild. And the best part is it's 10000% accurate.",
     author: 'Aniruddha Dak',
     handle: '@aniruddhadak',
     link: 'https://x.com/aniruddhadak/status/1917140602107445545',

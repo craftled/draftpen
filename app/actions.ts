@@ -34,7 +34,7 @@ import {
 } from '@/lib/db/queries';
 import { getDiscountConfig } from '@/lib/discount';
 import { get } from '@vercel/edge-config';
-import { groq } from '@ai-sdk/groq';
+
 import { Client } from '@upstash/qstash';
 import { experimental_generateSpeech as generateVoice } from 'ai';
 import { elevenlabs } from '@ai-sdk/elevenlabs';
@@ -136,7 +136,7 @@ export async function suggestQuestions(history: unknown) {
 
   const chatContext = normalizedHistory.map((m) => `${m.role.toUpperCase()}: ${m.content}`).join('\n');
 
-  const modelsToTry = ['scira-grok-3', 'scira-grok-4-fast-think', 'scira-default'] as const;
+  const modelsToTry = ['scira-gpt5-mini', 'scira-anthropic', 'scira-default'] as const;
 
   for (const modelId of modelsToTry) {
     try {
@@ -170,13 +170,8 @@ export async function checkImageModeration(images: string[]) {
   }));
 
   const { text } = await generateText({
-    model: groq('meta-llama/llama-guard-4-12b'),
+    model: scira.languageModel('scira-gpt5-mini'),
     messages,
-    providerOptions: {
-      groq: {
-        service_tier: 'flex',
-      },
-    },
   });
   return text;
 }
@@ -229,7 +224,7 @@ Guidelines (MANDATORY):
 - Just return the improved prompt text in plain text format, no other text or commentary or markdown or anything else!!`;
 
     const { text } = await generateText({
-      model: scira.languageModel('scira-enhance'),
+      model: scira.languageModel('scira-gpt5-mini'),
       temperature: 0.6,
       topP: 0.95,
       maxOutputTokens: 1024,

@@ -28,6 +28,11 @@ export default function XQLPage() {
   const { user, isProUser, isLoading: isProStatusLoading } = useUser();
   const router = useRouter();
 
+  // Feature disabled: redirect to home
+  React.useEffect(() => {
+    router.replace('/');
+  }, []);
+
   const { messages, sendMessage, status } = useChat<XQLMessage>({
     transport: new DefaultChatTransport({
       api: '/api/xql',

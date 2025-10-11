@@ -36,11 +36,10 @@ A minimalistic AI-powered search engine that helps you find information on the i
 
 ### Core Search & Information
 
-- **AI-powered search**: Get answers to your questions using multiple AI models including xAI's Grok, Anthropic's Claude, Google's Gemini, and OpenAI's GPT models
+- **AI-powered search**: Get answers to your questions using multiple AI models including Anthropic's Claude and OpenAI's GPT models
 - **Web search**: Search the web using Exa's API with support for multiple queries, search depths, and topics
 - **URL content retrieval**: Extract and analyze content from any URL using Exa AI with live crawling capabilities
 - **Reddit search**: Search Reddit content with time range filtering using Tavily API
-- **X (Twitter) search**: Search X posts with date ranges and specific handle filtering using xAI Live Search
 - **Extreme search**: Advanced multi-step search capability for complex queries
 
 ### Academic & Research
@@ -78,11 +77,10 @@ A minimalistic AI-powered search engine that helps you find information on the i
 
 ## LLM Models Supported
 
-- **xAI**: Grok 3, Grok 3 Mini, Grok 2 Vision
-- **Google**: Gemini 2.5 Flash (Preview), Gemini 2.5 Pro (Preview)
+
+
 - **Anthropic**: Claude 4 Sonnet
 - **OpenAI**: GPT-4o, o4-mini, o3 (with reasoning capabilities)
-- **Groq**: Qwen QwQ 32B, Qwen 3 32B, Meta's Llama 4 Maverick
 
 ## Built with
 
@@ -98,7 +96,7 @@ A minimalistic AI-powered search engine that helps you find information on the i
 
 ### Deploy your own
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,GROQ_API_KEY,GOOGLE_GENERATIVE_AI_API_KEY,DATABASE_URL,BETTER_AUTH_SECRET,GITHUB_CLIENT_ID,GITHUB_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,TWITTER_CLIENT_ID,TWITTER_CLIENT_SECRET,REDIS_URL,ELEVENLABS_API_KEY,EXA_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,SMITHERY_API_KEY,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST&envDescription=API%20keys%20and%20configuration)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=OPENAI_API_KEY,ANTHROPIC_API_KEY,DATABASE_URL,BETTER_AUTH_SECRET,GITHUB_CLIENT_ID,GITHUB_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,TWITTER_CLIENT_ID,TWITTER_CLIENT_SECRET,REDIS_URL,ELEVENLABS_API_KEY,EXA_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,SMITHERY_API_KEY,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST&envDescription=API%20keys%20and%20configuration)
 
 ## Set Scira as your default search engine
 
