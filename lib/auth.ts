@@ -15,7 +15,7 @@ import {
   lookout,
 } from '@/lib/db/schema';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { db } from '@/lib/db';
+import { db, maindb } from '@/lib/db';
 import { config } from 'dotenv';
 import { serverEnv } from '@/env/server';
 import { checkout, polar, portal, usage, webhooks } from '@polar-sh/better-auth';
@@ -58,7 +58,7 @@ export const auth = betterAuth({
       console.error("[Better Auth]:", (error as any)?.message ?? error);
     },
   },
-  database: drizzleAdapter(db, {
+  database: drizzleAdapter(maindb, {
     provider: 'pg',
     schema: {
       user,
