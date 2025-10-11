@@ -39,7 +39,7 @@ export function ShareDialog({
   const [isChangingVisibility, setIsChangingVisibility] = useState(false);
 
   // Generate the share URL
-  const shareUrl = chatId ? `https://scira.ai/search/${chatId}` : '';
+  const shareUrl = chatId ? `https://draftpen.com/search/${chatId}` : '';
 
   // Reset copied state when dialog opens/closes
   useEffect(() => {

@@ -79,7 +79,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/blog',
-        destination: 'https://blog.scira.ai',
+        destination: 'https://draftpen.com/blog',
         permanent: true,
       },
     ];

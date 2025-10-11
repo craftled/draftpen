@@ -6,7 +6,7 @@ AI-first content writing software for researching and drafting human-level conte
 
 ## Special Thanks
 
-To the open-source community and [Scira](https://scira.ai) for providing strong foundations for this project.
+To the open-source community and [Scira](https://draftpen.com) for providing strong foundations for this project.
 
 ## Features
 

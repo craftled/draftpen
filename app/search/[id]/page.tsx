@@ -59,15 +59,15 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   }
   return {
     title: title,
-    description: 'A search in scira.ai',
+    description: 'A search in Draftpen',
     openGraph: {
       title: title,
-      url: `https://scira.ai/search/${id}`,
+      url: `https://draftpen.com/search/${id}`,
       description: 'A search in scira.ai',
-      siteName: 'scira.ai',
+      siteName: 'draftpen.com',
       images: [
         {
-          url: `https://scira.ai/api/og/chat/${id}`,
+          url: `https://draftpen.com/api/og/chat/${id}`,
           width: 1200,
           height: 630,
         },
@@ -76,20 +76,20 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     twitter: {
       card: 'summary_large_image',
       title: title,
-      url: `https://scira.ai/search/${id}`,
-      description: 'A search in scira.ai',
-      siteName: 'scira.ai',
+      url: `https://draftpen.com/search/${id}`,
+      description: 'A search in Draftpen',
+      siteName: 'draftpen.com',
       creator: '@sciraai',
       images: [
         {
-          url: `https://scira.ai/api/og/chat/${id}`,
+          url: `https://draftpen.com/api/og/chat/${id}`,
           width: 1200,
           height: 630,
         },
       ],
     },
     alternates: {
-      canonical: `https://scira.ai/search/${id}`,
+      canonical: `https://draftpen.com/search/${id}`,
     },
   } as Metadata;
 }
