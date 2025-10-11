@@ -11,6 +11,11 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith('/new') || pathname.startsWith('/api/search')) {
     return NextResponse.next();
   }
+  // Allow Better Auth API routes through without interference
+  if (pathname.startsWith('/api/auth')) {
+    return NextResponse.next();
+  }
+
 
   // /api/payments/webhooks is a webhook endpoint that should be accessible without authentication
   if (pathname.startsWith('/api/payments/webhooks')) {

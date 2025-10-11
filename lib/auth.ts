@@ -79,6 +79,7 @@ export const auth = betterAuth({
     google: {
       clientId: serverEnv.GOOGLE_CLIENT_ID,
       clientSecret: serverEnv.GOOGLE_CLIENT_SECRET,
+      redirectUri: `${process.env.NODE_ENV === 'production' ? process.env.NEXT_PUBLIC_APP_URL : 'http://localhost:3000'}/api/auth/callback/google`,
     },
   },
   pluginRoutes: {
@@ -273,6 +274,6 @@ export const auth = betterAuth({
     }),
     nextCookies(),
   ],
-  trustedOrigins: ['http://localhost:3000', 'https://scira.ai', 'https://www.scira.ai'],
-  allowedOrigins: ['http://localhost:3000', 'https://scira.ai', 'https://www.scira.ai'],
+  trustedOrigins: ['http://localhost:3000', 'http://localhost:3001', 'https://draftpen.com'],
+  allowedOrigins: ['http://localhost:3000', 'http://localhost:3001', 'https://draftpen.com'],
 });
