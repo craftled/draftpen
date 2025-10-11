@@ -31,10 +31,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (pathname.startsWith('/api/raycast')) {
-    return NextResponse.next();
-  }
-
   const sessionCookie = getSessionCookie(request);
 
   // Redirect /settings to /#settings to open settings dialog (only if authenticated)

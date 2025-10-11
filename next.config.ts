@@ -68,11 +68,6 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
-        source: '/raycast',
-        destination: 'https://www.raycast.com/zaidmukaddam/scira',
-        permanent: true,
-      },
-      {
         source: '/plst',
         destination: 'https://peerlist.io/zaidmukaddam/project/scira-ai-30',
         permanent: true,
