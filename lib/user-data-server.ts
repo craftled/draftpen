@@ -64,7 +64,10 @@ const CUSTOM_INSTRUCTIONS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 function getCachedUserData(userId: string): ComprehensiveUserData | null {
   const cached = userDataCache.get(userId);
   if (cached && cached.expiresAt > Date.now()) {
-    return cached.data;
+    const data = cached.data;
+    // If essential fields are empty, bypass cache to allow fresh resolution from session/provider
+    const bad = !data?.email || data.email.trim() === '' || !data?.name || data.name.trim() === '';
+    if (!bad) return data;
   }
   if (cached) {
     userDataCache.delete(userId);
@@ -322,13 +325,23 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
       }
     }
 
+    // Prefer provider/session values when DB fields are empty strings
+    const sessionUser = session?.user as { name?: string | null; email?: string | null; image?: string | null } | null;
+    const resolvedName = (userData.name && userData.name.trim())
+      ? userData.name
+      : (sessionUser?.name?.trim() || (userData.email ? userData.email.split('@')[0] : ''));
+    const resolvedEmail = (userData.email && userData.email.trim())
+      ? userData.email
+      : (sessionUser?.email?.trim() || '');
+    const resolvedImage = userData.image ?? sessionUser?.image ?? null;
+
     // Build comprehensive user data
     const comprehensiveData: ComprehensiveUserData = {
       id: userData.userId,
-      email: userData.email,
+      email: resolvedEmail,
       emailVerified: userData.emailVerified,
-      name: userData.name || userData.email.split('@')[0], // Fallback to email prefix if name is null
-      image: userData.image,
+      name: resolvedName,
+      image: resolvedImage,
       createdAt: userData.userCreatedAt,
       updatedAt: userData.userUpdatedAt,
       isProUser,
