@@ -39,7 +39,6 @@ import { createResumableStreamContext, type ResumableStreamContext } from 'resum
 import { after } from 'next/server';
 import { CustomInstructions } from '@/lib/db/schema';
 import { v4 as uuidv4 } from 'uuid';
-import { geolocation } from '@vercel/functions';
 
 import {
   textTranslateTool,
@@ -99,10 +98,9 @@ export async function POST(req: Request) {
     searchProvider,
     selectedConnectors,
   } = await req.json();
-  const { latitude, longitude } = geolocation(req);
   const streamId = 'stream-' + uuidv4();
 
-  console.log('🔍 Search API:', { model: model.trim(), group, latitude, longitude });
+  console.log('🔍 Search API:', { model: model.trim(), group });
 
   // CRITICAL PATH: Get auth status first (required for all subsequent checks)
   const lightweightUser = await getLightweightUser();
@@ -313,8 +311,7 @@ export async function POST(req: Request) {
           instructions +
           (customInstructions && (isCustomInstructionsEnabled ?? true)
             ? `\n\nThe user's custom instructions are as follows and YOU MUST FOLLOW THEM AT ALL COSTS: ${customInstructions?.content}`
-            : '\n') +
-          (latitude && longitude ? `\n\nThe user's location is ${latitude}, ${longitude}.` : ''),
+            : '\n'),
         toolChoice: 'auto',
         providerOptions: {
           gateway: {

@@ -5,7 +5,7 @@ import React, { memo, useMemo } from 'react';
 import Link from 'next/link';
 import { PlusIcon, GlobeHemisphereWestIcon } from '@phosphor-icons/react';
 
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { UserProfile, NavigationMenu } from '@/components/user-profile';
 import { ChatHistoryButton } from '@/components/chat-history-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -77,17 +77,16 @@ const Navbar = memo(
           )}
         >
           <div className={cn('flex items-center gap-3', isDialogOpen ? 'pointer-events-auto' : '')}>
-            <Button
-              asChild
-              variant="secondary"
-              size="sm"
-              className="rounded-lg bg-accent hover:bg-accent/80 group transition-all hover:scale-105 pointer-events-auto"
+            <Link
+              href="/new"
+              className={cn(
+                buttonVariants({ variant: 'secondary', size: 'sm' }),
+                'rounded-lg bg-accent hover:bg-accent/80 group transition-all hover:scale-105 pointer-events-auto',
+              )}
             >
-              <Link href="/new">
-                <PlusIcon size={16} className="group-hover:rotate-90 transition-all" />
-                <span className="text-sm ml-1.5 group-hover:block hidden animate-in fade-in duration-300">New</span>
-              </Link>
-            </Button>
+              <PlusIcon size={16} className="group-hover:rotate-90 transition-all" />
+              <span className="text-sm ml-1.5 group-hover:block hidden animate-in fade-in duration-300">New</span>
+            </Link>
 
             {/* Mobile-only Upgrade (avoids overlap with share on small screens) */}
             {user && !hasActiveSubscription && !showProLoading && (

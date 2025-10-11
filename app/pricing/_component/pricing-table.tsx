@@ -13,7 +13,6 @@ import { PRICING } from '@/lib/constants';
 
 
 
-import { useLocation } from '@/hooks/use-location';
 import { ComprehensiveUserData } from '@/lib/user-data-server';
 
 
@@ -47,8 +46,6 @@ interface PricingTableProps {
 
 export default function PricingTable({ subscriptionDetails, user, priceUSD }: PricingTableProps) {
   const router = useRouter();
-  const location = useLocation();
-
   // Debug logging (can be removed in production)
   console.log('PricingTable Debug:', {
     subscriptionDetails,
@@ -146,11 +143,6 @@ export default function PricingTable({ subscriptionDetails, user, priceUSD }: Pr
         <div className="text-center mb-16">
           <h1 className="text-4xl font-medium text-foreground mb-4 font-be-vietnam-pro">Pricing</h1>
           <p className="text-xl text-muted-foreground">Choose the plan that works for you</p>
-          {!location.loading && location.isIndia && (
-            <Badge variant="secondary" className="mt-4">
-              🇮🇳 Special India pricing available
-            </Badge>
-          )}
         </div>
       </div>
 
@@ -224,30 +216,10 @@ export default function PricingTable({ subscriptionDetails, user, priceUSD }: Pr
                   )}
 
                 </div>
-              ) : !location.loading && location.isIndia ? (
-                !user ? (
-                  <Button className="w-full group" onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG)}>
-                    Start 7-day free trial
-                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                  </Button>
-                ) : (
-                  <div className="space-y-3">
-                    <Button className="w-full group" onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG)}>
-                      Start 7-day free trial
-                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                  </div>
-                )
               ) : (
-                <Button
-                  className="w-full group"
-                  onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG)}
-                  disabled={location.loading}
-                >
-                  {location.loading ? 'Loading...' : 'Start 7-day free trial'}
-                  {!location.loading && (
-                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                  )}
+                <Button className="w-full group" onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG)}>
+                  Start 7-day free trial
+                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               )}
             </CardContent>

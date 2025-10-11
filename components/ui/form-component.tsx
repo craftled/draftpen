@@ -44,7 +44,6 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from 
 import { Switch } from '@/components/ui/switch';
 import { UseChatHelpers } from '@ai-sdk/react';
 import { ChatMessage } from '@/lib/types';
-import { useLocation } from '@/hooks/use-location';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { CONNECTOR_CONFIGS, CONNECTOR_ICONS, type ConnectorProvider } from '@/lib/connectors';
@@ -101,7 +100,6 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
     const [open, setOpen] = useState(false);
     const [discountConfig, setDiscountConfig] = useState<any>(null);
 
-    const location = useLocation();
     const isMobile = useIsMobile();
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -230,8 +228,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
     // Calculate pricing with discounts
     const calculatePricing = useCallback(() => {
       const defaultUSDPrice = PRICING.PRO_MONTHLY;
-      const defaultINRPrice = PRICING.PRO_MONTHLY_INR;
-
+  
       // Check if discount should be applied
       const isDevMode = discountConfig?.dev || process.env.NODE_ENV === 'development';
       const shouldApplyDiscount = isDevMode
@@ -241,9 +238,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
       if (!discountConfig || !shouldApplyDiscount) {
         return {
           usd: { originalPrice: defaultUSDPrice, finalPrice: defaultUSDPrice, hasDiscount: false },
-          inr: location.isIndia
-            ? { originalPrice: defaultINRPrice, finalPrice: defaultINRPrice, hasDiscount: false }
-            : null,
+          inr: null,
         };
       }
 
@@ -272,37 +267,11 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
         };
       }
 
-      // INR pricing: prefer explicit inrPrice, otherwise derive from percentage
-      let inrPricing: { originalPrice: number; finalPrice: number; hasDiscount: boolean } | null = null;
-      if (location.isIndia) {
-        if (typeof discountConfig.inrPrice === 'number') {
-          inrPricing = {
-            originalPrice: defaultINRPrice,
-            finalPrice: discountConfig.inrPrice,
-            hasDiscount: true,
-          };
-        } else if (typeof discountConfig.percentage === 'number') {
-          const inrSavings = (defaultINRPrice * discountConfig.percentage) / 100;
-          const inrFinalPrice = defaultINRPrice - inrSavings;
-          inrPricing = {
-            originalPrice: defaultINRPrice,
-            finalPrice: inrFinalPrice,
-            hasDiscount: true,
-          };
-        } else {
-          inrPricing = {
-            originalPrice: defaultINRPrice,
-            finalPrice: defaultINRPrice,
-            hasDiscount: false,
-          };
-        }
-      }
-
       return {
         usd: usdPricing,
-        inr: inrPricing,
+        inr: null,
       };
-    }, [discountConfig, location.isIndia]);
+    }, [discountConfig]);
 
     const pricing = calculatePricing();
 
@@ -2128,7 +2097,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
   const audioLinesRef = useRef<any>(null);
   const gripIconRef = useRef<any>(null);
 
-  const location = useLocation();
   const isMobile = useIsMobile();
 
   const isProUser = useMemo(
@@ -2164,13 +2132,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
   // Calculate pricing with discounts
   const calculatePricing = useCallback(() => {
     const defaultUSDPrice = PRICING.PRO_MONTHLY;
-    const defaultINRPrice = PRICING.PRO_MONTHLY_INR;
-
-    console.log('calculatePricing called with:', {
-      discountConfig,
-      isIndia: location.isIndia,
-      nodeEnv: process.env.NODE_ENV,
-    });
 
     // Check if discount should be applied
     const isDevMode = discountConfig?.dev || process.env.NODE_ENV === 'development';
@@ -2188,12 +2149,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
     });
 
     if (!discountConfig || !shouldApplyDiscount) {
-      console.log('No discount applied - returning default pricing');
       return {
         usd: { originalPrice: defaultUSDPrice, finalPrice: defaultUSDPrice, hasDiscount: false },
-        inr: location.isIndia
-          ? { originalPrice: defaultINRPrice, finalPrice: defaultINRPrice, hasDiscount: false }
-          : null,
+        inr: null,
       };
     }
 
@@ -2222,37 +2180,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
       };
     }
 
-    // INR pricing: prefer explicit inrPrice, otherwise derive from percentage
-    let inrPricing: { originalPrice: number; finalPrice: number; hasDiscount: boolean } | null = null;
-    if (location.isIndia) {
-      if (typeof discountConfig.inrPrice === 'number') {
-        inrPricing = {
-          originalPrice: defaultINRPrice,
-          finalPrice: discountConfig.inrPrice,
-          hasDiscount: true,
-        };
-      } else if (typeof discountConfig.percentage === 'number') {
-        const inrSavings = (defaultINRPrice * discountConfig.percentage) / 100;
-        const inrFinalPrice = defaultINRPrice - inrSavings;
-        inrPricing = {
-          originalPrice: defaultINRPrice,
-          finalPrice: inrFinalPrice,
-          hasDiscount: true,
-        };
-      } else {
-        inrPricing = {
-          originalPrice: defaultINRPrice,
-          finalPrice: defaultINRPrice,
-          hasDiscount: false,
-        };
-      }
-    }
-
     return {
       usd: usdPricing,
-      inr: inrPricing,
+      inr: null,
     };
-  }, [discountConfig, location.isIndia]);
+  }, [discountConfig]);
 
   const pricing = calculatePricing();
 

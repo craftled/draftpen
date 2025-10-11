@@ -99,7 +99,7 @@ To the open-source community and [Scira](https://scira.ai) for providing strong 
 
 ### Observability & deployment
 
-- [Vercel Analytics](https://vercel.com/docs/analytics), [Vercel Speed Insights](https://vercel.com/docs/speed-insights), and `@vercel/functions`
+- [Vercel Analytics](https://vercel.com/docs/analytics) and [Vercel Speed Insights](https://vercel.com/docs/speed-insights)
 - [Cron-parser](https://www.npmjs.com/package/cron-parser) for scheduled tasks
 - [Prettier](https://prettier.io/), [ESLint](https://eslint.org/), [Knip](https://github.com/webpro/knip) for static analysis
 
