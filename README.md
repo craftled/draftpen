@@ -34,8 +34,6 @@ To the open-source community and [Scira](https://draftpen.com) for providing str
 - **Usage awareness**: Automatic model switching, daily usage tracking, and toast reminders make it hard to run past plan limits.
 
 ### Integrations & extensions
-
-- **Raycast command**: Access Draftpen’s web search stack from the desktop launcher using the same tool pipeline.
 - **Connector APIs**: Endpoints for manual sync, uploads, transcription, and health checks power integrations beyond the web app.
 
 ## LLM Models Supported
