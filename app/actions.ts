@@ -4,8 +4,8 @@
 import { geolocation } from '@vercel/functions';
 import { serverEnv } from '@/env/server';
 import { SearchGroupId } from '@/lib/utils';
-import { generateObject, UIMessage, generateText } from 'ai';
-import type { ModelMessage } from 'ai';
+import { generateObject, generateText } from 'ai';
+import type { CoreMessage, ModelMessage, UIMessage } from 'ai';
 import { z } from 'zod';
 import { getUser } from '@/lib/auth-utils';
 import { scira } from '@/ai/providers';
@@ -64,14 +64,40 @@ export async function getLightweightUser() {
   return await getLightweightUserAuth();
 }
 
-export async function suggestQuestions(history: any[]) {
+export async function suggestQuestions(history: unknown) {
   'use server';
 
-  console.log(history);
+  const normalizedHistory = Array.isArray(history)
+    ? history
+        .map((entry) => {
+          if (!entry || typeof entry !== 'object') {
+            return null;
+          }
 
-  const { object } = await generateObject({
-    model: scira.languageModel('scira-grok-3'),
-    system: `You are a search engine follow up query/questions generator. You MUST create EXACTLY 3 questions for the search engine based on the conversation history.
+          const role =
+            (entry as { role?: string }).role === 'assistant'
+              ? 'assistant'
+              : (entry as { role?: string }).role === 'system'
+                ? 'system'
+                : 'user';
+          const rawContent = (entry as { content?: unknown }).content;
+          const content = typeof rawContent === 'string' ? rawContent.trim() : '';
+
+          if (!content) {
+            return null;
+          }
+
+          return { role, content };
+        })
+        .filter((item): item is { role: 'user' | 'assistant' | 'system'; content: string } => Boolean(item))
+    : [];
+
+  if (!normalizedHistory.length) {
+    return { questions: [] };
+  }
+
+
+  const systemPrompt = `You are a search engine follow up query/questions generator. You MUST create EXACTLY 3 questions for the search engine based on the conversation history.
 
 ### Question Generation Guidelines:
 - Create exactly 3 questions that are open-ended and encourage further discussion
@@ -105,16 +131,36 @@ export async function suggestQuestions(history: any[]) {
 - Each question must be grammatically complete
 - Each question must end with a question mark
 - Questions must be diverse and not redundant
-- Do not include instructions or meta-commentary in the questions`,
-    messages: history,
-    schema: z.object({
-      questions: z.array(z.string().max(150)).describe('The generated questions based on the message history.').max(3),
-    }),
-  });
+- Do not include instructions or meta-commentary in the questions`;
 
-  return {
-    questions: object.questions,
-  };
+
+  const chatContext = normalizedHistory.map((m) => `${m.role.toUpperCase()}: ${m.content}`).join('\n');
+
+  const modelsToTry = ['scira-grok-3', 'scira-grok-4-fast-think', 'scira-default'] as const;
+
+  for (const modelId of modelsToTry) {
+    try {
+      const { object } = await generateObject({
+        model: scira.languageModel(modelId) as any,
+        system: systemPrompt,
+        prompt: chatContext,
+        schema: z.object({
+          questions: z
+            .array(z.string().max(150))
+            .describe('The generated questions based on the message history.')
+            .length(3),
+        }),
+      });
+
+      return {
+        questions: object.questions,
+      };
+    } catch (error) {
+      console.error(`Failed to generate suggested questions with model ${modelId}:`, error);
+    }
+  }
+
+  return { questions: [] };
 }
 
 export async function checkImageModeration(images: string[]) {
@@ -1155,7 +1201,7 @@ Synthesis of findings with citations [Source](URL)
 
 **Correct Examples:**
 - Inline: $E = mc^2$ for energy-mass equivalence
-- Block: 
+- Block:
 
 $$
 F = G \frac{m_1 m_2}{r^2}

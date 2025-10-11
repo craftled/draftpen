@@ -1,7 +1,7 @@
 import { wrapLanguageModel, customProvider, extractReasoningMiddleware, gateway } from 'ai';
 
 import { createOpenAI } from '@ai-sdk/openai';
-import { xai } from '@ai-sdk/xai';
+
 import { groq } from '@ai-sdk/groq';
 import { mistral } from '@ai-sdk/mistral';
 import { google } from '@ai-sdk/google';
@@ -27,36 +27,28 @@ const huggingface = createOpenAI({
   apiKey: process.env.HF_TOKEN,
 });
 
-const anannas = createOpenAI({
-  baseURL: 'https://api.anannas.ai/v1',
-  apiKey: process.env.ANANNAS_API_KEY,
-  headers: {
-    'HTTP-Referer': 'https://draftpen.app',
-    'X-Title': 'Draftpen',
-    'Content-Type': 'application/json',
-  },
-});
+const hasGatewayKey = Boolean(process.env.AI_GATEWAY_API_KEY);
 
 export const scira = customProvider({
   languageModels: {
-    'scira-default': xai('grok-4-fast-non-reasoning'),
+    'scira-default': hasGatewayKey ? gateway('openai/gpt-5-mini') : gateway('xai/grok-4-fast-non-reasoning'),
     'scira-nano': groq('llama-3.3-70b-versatile'),
-    'scira-name': anannas.chat('meta-llama/llama-3.3-70b-instruct'),
-    'scira-grok-3': xai('grok-3'),
-    'scira-grok-4': xai('grok-4'),
-    'scira-grok-4-fast': xai('grok-4-fast-non-reasoning'),
-    'scira-grok-4-fast-think': xai('grok-4-fast'),
-    'scira-code': xai('grok-code-fast-1'),
+    'scira-name': gateway('openai/gpt-4.1-nano'),
+    'scira-grok-3': gateway('xai/grok-3'),
+    'scira-grok-4': gateway('xai/grok-4'),
+    'scira-grok-4-fast': gateway('xai/grok-4-fast-non-reasoning'),
+    'scira-grok-4-fast-think': gateway('xai/grok-4-fast'),
+    'scira-code': gateway('xai/grok-code-fast-1'),
     'scira-enhance': groq('moonshotai/kimi-k2-instruct'),
     'scira-qwen-4b': huggingface.chat('Qwen/Qwen3-4B-Instruct-2507:nscale'),
     'scira-qwen-4b-thinking': wrapLanguageModel({
       model: huggingface.chat('Qwen/Qwen3-4B-Thinking-2507:nscale'),
       middleware: [middlewareWithStartWithReasoning],
     }),
-    'scira-gpt5': anannas.chat('openai/gpt-5'),
-    'scira-gpt5-mini': anannas.chat('openai/gpt-5-mini'),
-    'scira-gpt5-nano': anannas.chat('openai/gpt-5-nano'),
-    'scira-o3': anannas.chat('openai/o3'),
+    'scira-gpt5': gateway('openai/gpt-5'),
+    'scira-gpt5-mini': gateway('openai/gpt-5-mini'),
+    'scira-gpt5-nano': gateway('openai/gpt-5-nano'),
+    'scira-o3': gateway('openai/o3'),
     'scira-qwen-32b': wrapLanguageModel({
       model: groq('qwen/qwen3-32b'),
       middleware,
@@ -75,7 +67,7 @@ export const scira = customProvider({
       middleware,
     }),
     'scira-deepseek-r1': wrapLanguageModel({
-      model: anannas.chat('deepseek/deepseek-r1'),
+      model: gateway('deepseek/deepseek-r1'),
       middleware,
     }),
     'scira-qwen-coder': huggingface.chat('Qwen/Qwen3-Coder-480B-A35B-Instruct:cerebras'),
@@ -144,6 +136,23 @@ interface Model {
   parameters?: ModelParameters;
 }
 
+const defaultModelEntry: Model = {
+  value: 'scira-default',
+  label: 'GPT 5 Mini (Default)',
+  description: "Draftpen's free default model powered by GPT 5 Mini",
+  vision: true,
+  reasoning: true,
+  experimental: false,
+  category: 'Free',
+  pdf: true,
+  pro: false,
+  requiresAuth: false,
+  freeUnlimited: false,
+  maxOutputTokens: 16000,
+  fast: true,
+  isNew: true,
+};
+
 export const models: Model[] = [
   // Models (xAI)
   {
@@ -174,22 +183,7 @@ export const models: Model[] = [
     freeUnlimited: false,
     maxOutputTokens: 16000,
   },
-  {
-    value: 'scira-default',
-    label: 'Grok 4 Fast',
-    description: "xAI's fastest multimodel LLM",
-    vision: true,
-    reasoning: false,
-    experimental: false,
-    category: 'Free',
-    pdf: false,
-    pro: false,
-    requiresAuth: false,
-    freeUnlimited: false,
-    maxOutputTokens: 16000,
-    fast: true,
-    isNew: true,
-  },
+  defaultModelEntry,
   {
     value: 'scira-grok-4-fast-think',
     label: 'Grok 4 Fast Thinking',

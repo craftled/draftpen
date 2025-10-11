@@ -1,3 +1,5 @@
+'use client';
+
 // /components/multi-search.tsx
 /* eslint-disable @next/next/no-img-element */
 import React from 'react';
@@ -16,8 +18,8 @@ import {
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Drawer, DrawerContent } from '@/components/ui/drawer';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -314,6 +316,12 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
       {/* Image Viewer */}
       <ImageViewer open={isOpen} onOpenChange={setIsOpen}>
         <ImageViewerContent className={viewerContentClassName}>
+          {/* A11y titles for Dialog/Drawer */}
+          {isMobile ? (
+            <DrawerTitle className="sr-only">Image viewer</DrawerTitle>
+          ) : (
+            <DialogTitle className="sr-only">Image viewer</DialogTitle>
+          )}
           <div className="relative w-full h-full bg-white dark:bg-neutral-900">
             {/* Header */}
             <div className="absolute top-0 left-0 right-0 z-50 p-4 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-sm border-b border-neutral-200 dark:border-neutral-800">
@@ -443,8 +451,6 @@ const LoadingState: React.FC<{
               'bg-white dark:bg-neutral-900',
               'border border-neutral-200 dark:border-neutral-800',
               'data-[state=open]:rounded-b-none',
-              '[&>svg]:hidden', // Hide default chevron
-              '[&[data-state=open]_[data-chevron]]:rotate-180', // Rotate custom chevron when open
             )}
           >
             <div className="flex items-center justify-between w-full">
@@ -458,16 +464,6 @@ const LoadingState: React.FC<{
                 <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
                   {totalResults || '0'}
                 </Badge>
-                {totalResults > 0 && (
-                  <Button variant="ghost" size="sm" className="h-7 px-2 text-xs opacity-50 cursor-not-allowed" disabled>
-                    View all
-                    <ArrowUpRight className="w-3 h-3 ml-1" />
-                  </Button>
-                )}
-                <ChevronDown
-                  className="h-4 w-4 text-neutral-500 shrink-0 transition-transform duration-200"
-                  data-chevron
-                />
               </div>
             </div>
           </AccordionTrigger>
@@ -661,8 +657,6 @@ const MultiSearch = ({
               'bg-white dark:bg-neutral-900',
               'border border-neutral-200 dark:border-neutral-800',
               'data-[state=open]:rounded-b-none',
-              '[&>svg]:hidden', // Hide default chevron
-              '[&[data-state=open]_[data-chevron]]:rotate-180', // Rotate custom chevron when open
             )}
           >
             <div className="flex items-center justify-between w-full">
@@ -676,24 +670,6 @@ const MultiSearch = ({
                 <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
                   {totalResults}
                 </Badge>
-                {totalResults > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-2 text-xs"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSourcesOpen(true);
-                    }}
-                  >
-                    View all
-                    <ArrowUpRight className="w-3 h-3 ml-1" />
-                  </Button>
-                )}
-                <ChevronDown
-                  className="h-4 w-4 text-neutral-500 shrink-0 transition-transform duration-200"
-                  data-chevron
-                />
               </div>
             </div>
           </AccordionTrigger>

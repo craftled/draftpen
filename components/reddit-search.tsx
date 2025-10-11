@@ -172,6 +172,7 @@ const SearchLoadingState = () => {
       <Accordion type="single" collapsible defaultValue="search" className="w-full">
         <AccordionItem value="search" className="border-none">
           <AccordionTrigger
+            asChild
             className={cn(
               'py-3 px-4 rounded-xl hover:no-underline',
               'bg-white dark:bg-neutral-900',
@@ -311,6 +312,7 @@ const RedditSearch: React.FC<{
       <Accordion type="single" collapsible defaultValue="reddit_search" className="w-full">
         <AccordionItem value="reddit_search" className="border-none">
           <AccordionTrigger
+            asChild
             className={cn(
               'py-3 px-4 rounded-xl hover:no-underline',
               'bg-white dark:bg-neutral-900',

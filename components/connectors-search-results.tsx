@@ -404,6 +404,7 @@ export function ConnectorsSearchResults({
       >
         <AccordionItem value="documents" className="border-none">
           <AccordionTrigger
+            asChild
             className={cn(
               'py-3 px-4 hover:no-underline group',
               'bg-card border rounded-lg',

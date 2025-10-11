@@ -1,14 +1,7 @@
+import { scira } from '@/ai/providers';
 import { webSearchTool } from '@/lib/tools';
 import { xSearchTool } from '@/lib/tools/x-search';
-import { groq } from '@ai-sdk/groq';
-import { xai } from '@ai-sdk/xai';
-import { convertToModelMessages, customProvider, generateText, stepCountIs } from 'ai';
-
-const scira = customProvider({
-  languageModels: {
-    'scira-default': xai('grok-4-fast-reasoning'),
-  },
-});
+import { convertToModelMessages, generateText, stepCountIs } from 'ai';
 
 export const maxDuration = 800;
 

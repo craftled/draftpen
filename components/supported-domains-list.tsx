@@ -2,14 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -97,12 +90,16 @@ export function SupportedDomainsList({ className }: SupportedDomainsListProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant="default" size="sm" className={className}>
-          <Eye className="w-4 h-4 mr-2" />
-          View supported universities
-        </Button>
-      </DialogTrigger>
+      <Button
+        type="button"
+        variant="default"
+        size="sm"
+        className={className}
+        onClick={() => handleOpenChange(true)}
+      >
+        <Eye className="w-4 h-4 mr-2" />
+        View supported universities
+      </Button>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

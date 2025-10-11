@@ -2,14 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -95,12 +88,10 @@ Best regards`;
         if (!open) reset();
       }}
     >
-      <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2">
-          <Mail className="w-4 h-4" />
-          Request University Domain
-        </Button>
-      </DialogTrigger>
+      <Button type="button" variant="outline" className="gap-2" onClick={() => setIsOpen(true)}>
+        <Mail className="w-4 h-4" />
+        Request University Domain
+      </Button>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Request University Domain</DialogTitle>
