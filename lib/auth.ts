@@ -85,7 +85,7 @@ export const auth = betterAuth({
   pluginRoutes: {
     autoNamespace: true,
   },
-  plugins: [
+  plugins: [ ...(process.env.NODE_ENV === 'production' && process.env.POLAR_ACCESS_TOKEN ? [
         polar({
       client: polarClient,
       createCustomerOnSignUp: true,
@@ -271,7 +271,7 @@ export const auth = betterAuth({
           },
         }),
       ],
-    }),
+    }), ] : []),
     nextCookies(),
   ],
   trustedOrigins: ['http://localhost:3000', 'http://localhost:3001', 'https://draftpen.com'],
