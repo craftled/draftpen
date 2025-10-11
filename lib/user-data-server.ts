@@ -1,8 +1,8 @@
 import 'server-only';
 
-import { eq } from 'drizzle-orm';
-import { subscription, user } from './db/schema';
-import { db } from './db';
+import { eq, and } from 'drizzle-orm';
+import { subscription, user, account } from './db/schema';
+import { db, maindb } from './db';
 import { auth } from './auth';
 import { headers } from 'next/headers';
 
@@ -239,7 +239,7 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
 
     // OPTIMIZED: Use JOIN query to reduce DB round trips
     // Fetch user + subscriptions in a single query
-    const userWithSubscriptions = await db
+    const userWithSubscriptions = await maindb
       .select({
         // User fields
         userId: user.id,
@@ -264,8 +264,7 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
       })
       .from(user)
       .leftJoin(subscription, eq(subscription.userId, user.id))
-      .where(eq(user.id, userId))
-      .$withCache();
+      .where(eq(user.id, userId));
 
     if (!userWithSubscriptions || userWithSubscriptions.length === 0) {
       return null;
@@ -274,6 +273,46 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
     const userData = userWithSubscriptions[0];
 
 
+    // Try to enrich from provider account token (e.g., Google id_token)
+    let providerClaims: { email?: string; name?: string; picture?: string } = {};
+    try {
+      const acct = await maindb.query.account.findFirst({
+        where: and(eq(account.userId, userId), eq(account.providerId, 'google')),
+        columns: { idToken: true },
+      });
+      const idToken = acct?.idToken;
+      if (idToken && idToken.includes('.')) {
+        const payloadB64 = idToken.split('.')[1];
+        const normalized = payloadB64.replace(/-/g, '+').replace(/_/g, '/');
+        const json = Buffer.from(normalized, 'base64').toString('utf8');
+        const payload = JSON.parse(json);
+        providerClaims.email = payload.email || undefined;
+        providerClaims.name = payload.name || [payload.given_name, payload.family_name].filter(Boolean).join(' ') || undefined;
+        providerClaims.picture = payload.picture || undefined;
+      }
+    } catch (e) {
+      // Non-fatal; continue with whatever we have
+      console.warn('Provider claims decode failed (non-fatal):', e);
+    }
+
+    // Optionally backfill empty DB fields if we discovered trustworthy values
+    try {
+      const updates: Partial<typeof user.$inferInsert> = {} as any;
+      if ((userData.email?.trim?.() === '' || !userData.email) && (providerClaims.email)) {
+        (updates as any).email = providerClaims.email;
+      }
+      if ((userData.name?.trim?.() === '' || !userData.name) && (providerClaims.name)) {
+        (updates as any).name = providerClaims.name;
+      }
+      if ((userData.image == null || userData.image === '') && (providerClaims.picture)) {
+        (updates as any).image = providerClaims.picture;
+      }
+      if (Object.keys(updates).length > 0) {
+        await maindb.update(user).set({ ...(updates as any), updatedAt: new Date() }).where(eq(user.id, userId));
+      }
+    } catch (e) {
+      console.warn('Backfill of user profile fields failed (non-fatal):', e);
+    }
 
     // Process Polar subscriptions from the joined data
     const polarSubscriptions = userWithSubscriptions
@@ -329,11 +368,11 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
     const sessionUser = session?.user as { name?: string | null; email?: string | null; image?: string | null } | null;
     const resolvedName = (userData.name && userData.name.trim())
       ? userData.name
-      : (sessionUser?.name?.trim() || (userData.email ? userData.email.split('@')[0] : ''));
+      : (sessionUser?.name?.trim() || providerClaims.name || (userData.email ? userData.email.split('@')[0] : ''));
     const resolvedEmail = (userData.email && userData.email.trim())
       ? userData.email
-      : (sessionUser?.email?.trim() || '');
-    const resolvedImage = userData.image ?? sessionUser?.image ?? null;
+      : (sessionUser?.email?.trim() || providerClaims.email || '');
+    const resolvedImage = userData.image ?? sessionUser?.image ?? providerClaims.picture ?? null;
 
     // Build comprehensive user data
     const comprehensiveData: ComprehensiveUserData = {
