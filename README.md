@@ -126,7 +126,7 @@ A minimalistic AI-powered search engine that helps you find information on the i
 
 After completing these steps, you should be able to use Scira as your default search engine in Chrome.
 
-### Local development (Node.js)
+### Local development (Bun)
 
 To run the application locally without Docker:
 
@@ -137,11 +137,11 @@ To run the application locally without Docker:
 2. Copy `.env.example` to `.env.local` and fill in your API keys (minimal keys listed below)
 3. Install dependencies:
    ```bash
-   pnpm install
+   bun install
    ```
 4. Start the development server:
    ```bash
-   pnpm dev
+   bun run dev
    ```
 5. Open `http://localhost:3000` in your browser
 
