@@ -301,6 +301,7 @@ const ChatInterface = memo(
               isCustomInstructionsEnabled: isCustomInstructionsEnabledRef.current,
               searchProvider: searchProviderRef.current,
               selectedConnectors: selectedConnectorsRef.current,
+              selectedVisibilityType: chatState.selectedVisibilityType,
               ...(initialChatId ? { chat_id: initialChatId } : {}),
               ...body,
             },

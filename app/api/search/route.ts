@@ -159,7 +159,7 @@ export async function POST(req: Request) {
           id,
           userId: lightweightUser.userId,
           title: 'New Chat',
-          visibility: selectedVisibilityType,
+          visibility: selectedVisibilityType ?? 'private',
         });
 
         // Generate better title in background (non-critical)
