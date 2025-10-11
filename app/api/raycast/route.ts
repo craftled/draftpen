@@ -1,4 +1,4 @@
-import { scira } from '@/ai/providers';
+import { modelProvider } from '@/ai/providers';
 import { webSearchTool } from '@/lib/tools';
 
 import { convertToModelMessages, generateText, stepCountIs } from 'ai';
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
   const activeTools = ['web_search' as const];
 
   const { text, steps } = await generateText({
-    model: scira.languageModel(model),
+    model: modelProvider.languageModel(model),
     system: systemPrompt,
     stopWhen: stepCountIs(2),
     messages: convertToModelMessages(messages),

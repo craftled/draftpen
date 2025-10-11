@@ -15,7 +15,7 @@ import {
 import { ChatSDKError } from '@/lib/errors';
 
 import { markdownJoinerTransform } from '@/lib/parser';
-import { scira } from '@/ai/providers';
+import { modelProvider } from '@/ai/providers';
 
 import { z } from 'zod';
 
@@ -66,7 +66,7 @@ const xqlTool = tool({
         console.log('X search - includeHandles:', normalizedInclude, 'excludeHandles:', normalizedExclude);
 
         const result = await generateText({
-            model: scira.languageModel('scira-gpt5-mini'),
+            model: modelProvider.languageModel('gpt5-mini'),
             prompt: query,
             maxOutputTokens: 10,
 
@@ -109,7 +109,7 @@ export async function POST(req: Request) {
     }
 
     const result = streamText({
-        model: scira.languageModel('scira-gpt5-mini'),
+        model: modelProvider.languageModel('gpt5-mini'),
         messages: convertToModelMessages(messages),
         stopWhen: hasToolCall('xql'),
         onAbort: ({ steps }) => {

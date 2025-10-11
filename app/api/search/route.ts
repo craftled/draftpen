@@ -18,7 +18,7 @@ import {
 } from 'ai';
 import { createMemoryTools } from '@/lib/tools/supermemory';
 import {
-  scira,
+  modelProvider,
   requiresAuthentication,
   requiresProSubscription,
   shouldBypassRateLimits,
@@ -299,7 +299,7 @@ export async function POST(req: Request) {
       const streamStartTime = Date.now();
 
       const result = streamText({
-        model: scira.languageModel(model),
+        model: modelProvider.languageModel(model),
         messages: convertToModelMessages(messages),
         ...getModelParameters(model),
         stopWhen: stepCountIs(5),
@@ -322,34 +322,34 @@ export async function POST(req: Request) {
             order: ['anthropic']
           },
           openai: {
-            ...(model !== 'scira-qwen-coder'
+            ...(model !== 'qwen-coder'
               ? {
                 parallelToolCalls: false,
               }
               : {}),
-            ...((model === 'scira-gpt5' ||
-              model === 'scira-gpt5-mini' ||
-              model === 'scira-o3' ||
-              model === 'scira-gpt5-nano' ||
-              model === 'scira-gpt5-codex'
+            ...((model === 'gpt5' ||
+              model === 'gpt5-mini' ||
+              model === 'o3' ||
+              model === 'gpt5-nano' ||
+              model === 'gpt5-codex'
               ? {
                 reasoningEffort: (
-                  model === 'scira-gpt5-nano' ||
-                    model === 'scira-gpt5' ||
-                    model === 'scira-gpt5-mini' ?
+                  model === 'gpt5-nano' ||
+                    model === 'gpt5' ||
+                    model === 'gpt5-mini' ?
                     'minimal' :
                     'medium'
                 ),
                 parallelToolCalls: false,
                 store: false,
                 reasoningSummary: 'detailed',
-                textVerbosity: (model === 'scira-o3' || model === 'scira-gpt5-codex' ? 'medium' : 'high'),
+                textVerbosity: (model === 'o3' || model === 'gpt5-codex' ? 'medium' : 'high'),
               }
               : {}) satisfies OpenAIResponsesProviderOptions),
           },
 
           anthropic: {
-            ...(model === 'scira-anthropic-think'
+            ...(model === 'claude-4-5-sonnet-think'
               ? {
                 sendReasoning: true,
                 thinking: {
@@ -421,7 +421,7 @@ export async function POST(req: Request) {
           }
 
           const { object: repairedArgs } = await generateObject({
-            model: scira.languageModel('scira-gpt5-mini'),
+            model: modelProvider.languageModel('gpt5-mini'),
             schema: tool.inputSchema,
             prompt: [
               `The model tried to call the tool "${toolCall.toolName}"` + ` with the following arguments:`,

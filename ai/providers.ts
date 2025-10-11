@@ -26,33 +26,19 @@ const anthropic = createAnthropic({
 
 
 
-export const scira = customProvider({
+export const modelProvider = customProvider({
   languageModels: {
-    'scira-default': gateway('openai/gpt-5-mini'),
+    'gpt5': gateway('openai/gpt-5'),
+    'gpt5-mini': gateway('openai/gpt-5-mini'),
+    'gpt5-nano': gateway('openai/gpt-5-nano'),
+    'o3': gateway('openai/o3'),
 
-    'scira-name': gateway('openai/gpt-4.1-nano'),
+    // Utility/aux models (not shown in UI)
+    'gpt4-1-nano': gateway('openai/gpt-4.1-nano'),
 
-
-
-    'scira-gpt5': gateway('openai/gpt-5'),
-    'scira-gpt5-mini': gateway('openai/gpt-5-mini'),
-    'scira-gpt5-nano': gateway('openai/gpt-5-nano'),
-    'scira-o3': gateway('openai/o3'),
-
-
-
-
-
-
-
-
-
-    'scira-haiku': anthropic('claude-3-5-haiku-20241022'),
-
-
-
-
-    'scira-anthropic': anthropic('claude-sonnet-4-5-20250929'),
+    // Anthropic
+    'claude-3-5-haiku': anthropic('claude-3-5-haiku-20241022'),
+    'claude-4-5-sonnet': anthropic('claude-sonnet-4-5-20250929'),
   },
 });
 
@@ -84,7 +70,7 @@ interface Model {
 }
 
 const defaultModelEntry: Model = {
-  value: 'scira-default',
+  value: 'gpt5-mini',
   label: 'GPT 5 Mini (Default)',
   description: "Draftpen's free default model powered by GPT 5 Mini",
   vision: true,
@@ -107,7 +93,7 @@ export const models: Model[] = [
 
 
   {
-    value: 'scira-gpt5-nano',
+    value: 'gpt5-nano',
     label: 'GPT 5 Nano',
     description: "OpenAI's smallest flagship LLM",
     vision: true,
@@ -128,7 +114,7 @@ export const models: Model[] = [
 
 
   {
-    value: 'scira-gpt5-mini',
+    value: 'gpt5-mini',
     label: 'GPT 5 Mini',
     description: "OpenAI's small flagship LLM",
     vision: true,
@@ -144,7 +130,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-gpt5',
+    value: 'gpt5',
     label: 'GPT 5',
     description: "OpenAI's flagship LLM",
     vision: true,
@@ -160,7 +146,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-o3',
+    value: 'o3',
     label: 'o3',
     description: "OpenAI's advanced LLM",
     vision: true,
@@ -190,7 +176,7 @@ export const models: Model[] = [
 
 
   {
-    value: 'scira-anthropic',
+    value: 'claude-4-5-sonnet',
     label: 'Claude 4.5 Sonnet',
     description: "Anthropic's most advanced LLM",
     vision: true,

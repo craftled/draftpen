@@ -10,7 +10,7 @@ import { generateObject, generateText, stepCountIs, tool } from 'ai';
 import type { UIMessageStreamWriter } from 'ai';
 import { z } from 'zod';
 import { serverEnv } from '@/env/server';
-import { scira } from '@/ai/providers';
+import { modelProvider } from '@/ai/providers';
 import { ChatMessage } from '../types';
 import FirecrawlApp from '@mendable/firecrawl-js';
 import { getTweet } from 'react-tweet/api';
@@ -177,7 +177,7 @@ async function extremeSearch(
 
   // plan out the research
   const { object: result } = await generateObject({
-    model: scira.languageModel('scira-gpt5-mini'),
+    model: modelProvider.languageModel('gpt5-mini'),
     schema: z.object({
       plan: z
         .array(
@@ -233,7 +233,7 @@ Plan Guidelines:
 
   // Create the autonomous research agent with tools
   const { text } = await generateText({
-    model: scira.languageModel('scira-gpt5-mini'),
+    model: modelProvider.languageModel('gpt5-mini'),
     stopWhen: stepCountIs(totalTodos),
     system: `
 You are an autonomous deep research analyst. Your goal is to research the given research plan thoroughly with the given tools.
@@ -487,7 +487,7 @@ ${JSON.stringify(plan)}
             const searchEndDate = endDate || new Date().toISOString().split('T')[0];
 
             const { text, sources } = await generateText({
-              model: scira.languageModel('scira-gpt5-mini'),
+              model: modelProvider.languageModel('gpt5-mini'),
               system: `You are a helpful assistant that searches for X posts and returns the results in a structured format. You will be given a search query and a list of X handles to search from. You will then search for the posts and return the results in a structured format. You will also cite the sources in the format [Source No.]. Go very deep in the search and return the most relevant results.`,
               messages: [{ role: 'user', content: query }],
               maxOutputTokens: 10,

@@ -8,7 +8,7 @@ import { generateObject, generateText } from 'ai';
 import type { CoreMessage, ModelMessage, UIMessage } from 'ai';
 import { z } from 'zod';
 import { getUser } from '@/lib/auth-utils';
-import { scira } from '@/ai/providers';
+import { modelProvider } from '@/ai/providers';
 import {
   getChatsByUserId,
   deleteChatById,
@@ -136,12 +136,12 @@ export async function suggestQuestions(history: unknown) {
 
   const chatContext = normalizedHistory.map((m) => `${m.role.toUpperCase()}: ${m.content}`).join('\n');
 
-  const modelsToTry = ['scira-gpt5-mini', 'scira-anthropic', 'scira-default'] as const;
+  const modelsToTry = ['gpt5-mini', 'claude-4-5-sonnet'] as const;
 
   for (const modelId of modelsToTry) {
     try {
       const { object } = await generateObject({
-        model: scira.languageModel(modelId) as any,
+        model: modelProvider.languageModel(modelId) as any,
         system: systemPrompt,
         prompt: chatContext,
         schema: z.object({
@@ -170,7 +170,7 @@ export async function checkImageModeration(images: string[]) {
   }));
 
   const { text } = await generateText({
-    model: scira.languageModel('scira-gpt5-mini'),
+    model: modelProvider.languageModel('gpt5-mini'),
     messages,
   });
   return text;
@@ -178,7 +178,7 @@ export async function checkImageModeration(images: string[]) {
 
 export async function generateTitleFromUserMessage({ message }: { message: UIMessage }) {
   const { text: title } = await generateText({
-    model: scira.languageModel('scira-name'),
+    model: modelProvider.languageModel('gpt4-1-nano'),
     system: `You are an expert title generator. You are given a message and you need to generate a short title based on it.
 
     - you will generate a short title based on the first message a user begins a conversation with
@@ -224,7 +224,7 @@ Guidelines (MANDATORY):
 - Just return the improved prompt text in plain text format, no other text or commentary or markdown or anything else!!`;
 
     const { text } = await generateText({
-      model: scira.languageModel('scira-gpt5-mini'),
+      model: modelProvider.languageModel('gpt5-mini'),
       temperature: 0.6,
       topP: 0.95,
       maxOutputTokens: 1024,

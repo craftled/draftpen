@@ -2,7 +2,7 @@ import { generateText, tool } from 'ai';
 import { z } from 'zod';
 import { getTweet } from 'react-tweet/api';
 
-import { scira } from '@/ai/providers';
+import { modelProvider } from '@/ai/providers';
 
 export const xSearchTool = tool({
   description:
@@ -68,7 +68,7 @@ export const xSearchTool = tool({
       console.log('[X search - includeHandles]:', normalizedInclude, '[excludeHandles]:', normalizedExclude);
 
       const { text } = await generateText({
-        model: scira.languageModel('scira-gpt5-mini'),
+        model: modelProvider.languageModel('gpt5-mini'),
         system: `You are a helpful assistant that searches for X posts and returns the results in a structured format. You will be given a search query and optional handles to include/exclude. You will then search for the posts and return the results in a structured format. You will also cite the sources in the format [Source No.]. Go very deep in the search and return the most relevant results.`,
         messages: [{ role: 'user', content: `${query}` }],
         maxOutputTokens: 10,

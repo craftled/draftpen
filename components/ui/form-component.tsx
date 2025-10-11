@@ -425,9 +425,9 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
 
       // If current model requires pro but user is not pro, switch to default
       // Also prevent infinite loops by ensuring we're not already on the default model
-      if (currentModelExists && currentModelRequiresPro && !isProUser && selectedModel !== 'scira-default') {
-        console.log(`Auto-switching from pro model '${selectedModel}' to 'scira-default' - user lost pro access`);
-        setSelectedModel('scira-default');
+      if (currentModelExists && currentModelRequiresPro && !isProUser && selectedModel !== 'gpt5-mini') {
+        console.log(`Auto-switching from pro model '${selectedModel}' to 'gpt5-mini' - user lost pro access`);
+        setSelectedModel('gpt5-mini');
 
         // Show a toast notification to inform the user
         toast.info('Switched to default model - Pro subscription required for premium models');
