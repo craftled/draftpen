@@ -23,8 +23,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Kbd, KbdGroup } from '@/components/ui/kbd';
 import { ComprehensiveUserData } from '@/hooks/use-user-data';
 import { useSession } from '@/lib/auth-client';
-import { checkImageModeration, enhancePrompt, getDiscountConfigAction } from '@/app/actions';
-import { DiscountConfig } from '@/lib/discount';
+import { checkImageModeration, enhancePrompt } from '@/app/actions';
+
 import { PRICING } from '@/lib/constants';
 import { LockIcon, Eye, Brain, FilePdf } from '@phosphor-icons/react';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -99,7 +99,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
     const [selectedProModel, setSelectedProModel] = useState<(typeof models)[0] | null>(null);
     const [selectedAuthModel, setSelectedAuthModel] = useState<(typeof models)[0] | null>(null);
     const [open, setOpen] = useState(false);
-    const [discountConfig, setDiscountConfig] = useState<DiscountConfig | null>(null);
+    const [discountConfig, setDiscountConfig] = useState<any>(null);
 
     const location = useLocation();
     const isMobile = useIsMobile();
@@ -224,14 +224,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
 
     // Fetch discount config when needed
     const fetchDiscountConfig = useCallback(async () => {
-      if (discountConfig) return; // Already fetched
-
-      try {
-        const config = await getDiscountConfigAction();
-        setDiscountConfig(config);
-      } catch (error) {
-        console.error('Failed to fetch discount config:', error);
-      }
+      return;
     }, [discountConfig]);
 
     // Calculate pricing with discounts
@@ -2128,7 +2121,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isTypewriting, setIsTypewriting] = useState(false);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
-  const [discountConfig, setDiscountConfig] = useState<DiscountConfig | null>(null);
+  const [discountConfig, setDiscountConfig] = useState<any>(null);
 
   // Combined state for animations to avoid restart issues
   const isEnhancementActive = isEnhancing || isTypewriting;
@@ -2165,14 +2158,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
   // Fetch discount config when needed
   const fetchDiscountConfigForm = useCallback(async () => {
-    if (discountConfig) return; // Already fetched
-
-    try {
-      const config = await getDiscountConfigAction();
-      setDiscountConfig(config);
-    } catch (error) {
-      console.error('Failed to fetch discount config:', error);
-    }
+    return;
   }, [discountConfig]);
 
   // Calculate pricing with discounts

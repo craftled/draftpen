@@ -32,8 +32,8 @@ import {
   updateLookoutStatus,
   deleteLookout,
 } from '@/lib/db/queries';
-import { getDiscountConfig } from '@/lib/discount';
-import { get } from '@vercel/edge-config';
+
+
 
 import { Client } from '@upstash/qstash';
 import { experimental_generateSpeech as generateVoice } from 'ai';
@@ -1631,20 +1631,6 @@ export async function getExtremeSearchUsageCount(providedUser?: any) {
   }
 }
 
-export async function getDiscountConfigAction() {
-  'use server';
-
-  try {
-    const user = await getCurrentUser();
-    const userEmail = user?.email;
-    return await getDiscountConfig(userEmail);
-  } catch (error) {
-    console.error('Error getting discount configuration:', error);
-    return {
-      enabled: false,
-    };
-  }
-}
 
 export async function getHistoricalUsage(providedUser?: any, months: number = 9) {
   'use server';
@@ -2460,46 +2446,3 @@ export async function getConnectorSyncStatusAction(provider: ConnectorProvider) 
   }
 }
 
-// Server action to get supported student domains from Edge Config
-export async function getStudentDomainsAction() {
-  'use server';
-
-  try {
-    const studentDomainsConfig = await get('student_domains');
-    if (studentDomainsConfig && typeof studentDomainsConfig === 'string') {
-      // Parse CSV string to array, trim whitespace, and sort alphabetically
-      const domains = studentDomainsConfig
-        .split(',')
-        .map((domain) => domain.trim())
-        .filter((domain) => domain.length > 0)
-        .sort();
-
-      return {
-        success: true,
-        domains,
-        count: domains.length,
-      };
-    }
-
-    // Fallback to hardcoded domains if Edge Config fails
-    const fallbackDomains = ['.edu', '.ac.in'].sort();
-    return {
-      success: true,
-      domains: fallbackDomains,
-      count: fallbackDomains.length,
-      fallback: true,
-    };
-  } catch (error) {
-    console.error('Failed to fetch student domains from Edge Config:', error);
-
-    // Return fallback domains on error
-    const fallbackDomains = ['.edu', '.ac.in'].sort();
-    return {
-      success: false,
-      domains: fallbackDomains,
-      count: fallbackDomains.length,
-      fallback: true,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    };
-  }
-}
