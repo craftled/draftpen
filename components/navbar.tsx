@@ -76,6 +76,16 @@ const Navbar = memo(
     const hasActiveSubscription = isProUser;
     const showProLoading = isProStatusLoading;
     
+    // Debug logging
+    if (typeof window !== 'undefined' && user) {
+      console.log('🔍 Navbar Debug:', {
+        isProUser,
+        isInTrial,
+        daysLeftInTrial,
+        hasActiveSubscription,
+      });
+    }
+    
     // Only show upgrade UI after hydration
     const shouldShowUpgrade = isMounted && user && !hasActiveSubscription && !showProLoading;
 
