@@ -44,6 +44,9 @@ export function useCachedUserData() {
   };
 
   return {
+    // Spread all fields from useUserData to include trial fields
+    ...otherUserData,
+    
     // Core user data
     user,
     isLoading,
@@ -59,8 +62,6 @@ export function useCachedUserData() {
     // Polar subscription details
     polarSubscription: user?.polarSubscription,
     hasPolarSubscription: Boolean(user?.polarSubscription),
-
-
 
     // Rate limiting helpers
     shouldCheckLimits: Boolean(!isLoading && user && !user.isProUser),
@@ -79,8 +80,6 @@ export function useCachedUserData() {
           subscription: user.polarSubscription,
         }
       : { hasSubscription: false },
-
-
 
     // Additional utilities
     isCached: Boolean(cachedUser),

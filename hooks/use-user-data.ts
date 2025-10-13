@@ -50,7 +50,7 @@ export function useUserData() {
     daysLeftInTrial: userData?.polarSubscription ? getDaysLeftInTrial(userData.polarSubscription) : 0,
 
     // Rate limiting helpers
-    shouldCheckLimits: !isLoading && userData && !userData.isProUser,
+    shouldCheckLimits: Boolean(!isLoading && userData && !userData.isProUser),
     shouldBypassLimitsForModel,
 
     // Subscription status checks

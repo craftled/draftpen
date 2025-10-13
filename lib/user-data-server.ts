@@ -34,6 +34,8 @@ export type ComprehensiveUserData = {
     currentPeriodEnd: Date;
     cancelAtPeriodEnd: boolean;
     canceledAt: Date | null;
+    trialStart?: Date | null;
+    trialEnd?: Date | null;
   };
 
 };

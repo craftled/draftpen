@@ -21,6 +21,12 @@ interface UserContextType {
   polarSubscription: any;
   hasPolarSubscription: boolean;
 
+  // Trial status (new)
+  isInTrial: boolean;
+  subscriptionType: 'trial' | 'paid' | 'none';
+  trialEndsAt?: Date | string | null;
+  daysLeftInTrial: number;
+
   // Payment history (removed with DodoPayments)
   // paymentHistory?: any[];
 
