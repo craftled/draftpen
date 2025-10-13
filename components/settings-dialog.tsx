@@ -984,17 +984,26 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
                   isMobile ? 'text-[10px] px-1.5 py-0.5' : 'text-xs',
                 )}
               >
-                ACTIVE
+                {subscription?.status === 'trialing' ? 'TRIAL' : 'ACTIVE'}
               </Badge>
             </div>
             <div className={cn('opacity-90 mb-3', isMobile ? 'text-[11px]' : 'text-xs')}>
               <p className="mb-1">Unlimited access to all premium features</p>
               {hasActiveSubscription && subscription && (
                 <div className="flex gap-4 text-[10px] opacity-75">
-                  <span>
-                    ${(subscription.amount / 100).toFixed(2)}/{subscription.recurringInterval}
-                  </span>
-                  <span>Next billing: {new Date(subscription.currentPeriodEnd).toLocaleDateString()}</span>
+                  {subscription.status === 'trialing' ? (
+                    <>
+                      <span>Trial ends: {new Date(subscription.currentPeriodEnd).toLocaleDateString()}</span>
+                      <span>Then $99/month</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>
+                        ${(subscription.amount / 100).toFixed(2)}/{subscription.recurringInterval}
+                      </span>
+                      <span>Next billing: {new Date(subscription.currentPeriodEnd).toLocaleDateString()}</span>
+                    </>
+                  )}
                 </div>
               )}
             </div>
