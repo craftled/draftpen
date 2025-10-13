@@ -287,6 +287,7 @@ const ChatInterface = memo(
 
     const { messages, sendMessage, setMessages, regenerate, stop, status, error, resumeStream } = useChat<ChatMessage>({
       id: chatId,
+      messages: initialMessages ?? [],
       transport: new DefaultChatTransport({
         api: '/api/search',
         prepareSendMessagesRequest({ messages, body }) {
@@ -371,7 +372,6 @@ const ChatInterface = memo(
           });
         }
       },
-      messages: initialMessages || [],
     });
 
     // Handle text highlighting and quoting

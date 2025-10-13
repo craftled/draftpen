@@ -10,7 +10,7 @@ import {
   type Chat,
 } from './schema';
 import { ChatSDKError } from '../errors';
-import { db } from './index';
+import { db, maindb } from './index';
 
 // Combined query to get chat and initial messages in one database call
 export async function getChatWithInitialMessages({
@@ -88,19 +88,15 @@ export async function getChatWithUserAndInitialMessages({
   hasMoreMessages: boolean;
 }> {
   try {
-    console.log('🔍 [DB-OPTIMIZED] getChatWithUserAndInitialMessages: Starting optimized query...');
-    const startTime = Date.now();
-
-    // Get chat with user data in one query
-    const [chatWithUser] = await db
+    // Get chat with user data in one query - use maindb to avoid replica lag
+    const [chatWithUser] = await maindb
       .select({
         chat: chat,
         user: user,
       })
       .from(chat)
       .leftJoin(user, eq(chat.userId, user.id))
-      .where(eq(chat.id, id))
-      .$withCache();
+      .where(eq(chat.id, id));
 
     if (!chatWithUser?.chat) {
       return {
@@ -111,21 +107,17 @@ export async function getChatWithUserAndInitialMessages({
       };
     }
 
-    // Get initial messages
-    const messages = await db
+    // Get initial messages - use maindb to avoid replica lag
+    const messages = await maindb
       .select()
       .from(message)
       .where(eq(message.chatId, id))
       .orderBy(asc(message.createdAt))
       .limit(messageLimit + 1)
-      .offset(messageOffset)
-      .$withCache();
+      .offset(messageOffset);
 
     const hasMoreMessages = messages.length > messageLimit;
     const limitedMessages = hasMoreMessages ? messages.slice(0, messageLimit) : messages;
-
-    const queryTime = (Date.now() - startTime) / 1000;
-    console.log(`⏱️  [DB-OPTIMIZED] getChatWithUserAndInitialMessages: Optimized query took ${queryTime.toFixed(2)}s`);
 
     return {
       chat: chatWithUser.chat,

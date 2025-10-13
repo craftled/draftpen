@@ -272,6 +272,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
 
   return (
     <ChatInterface
+      key={id}
       initialChatId={id}
       initialMessages={initialMessages}
       initialVisibility={chat.visibility as 'public' | 'private'}

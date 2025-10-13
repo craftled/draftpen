@@ -15,7 +15,7 @@ import {
   lookout,
 } from './schema';
 import { ChatSDKError } from '../errors';
-import { db } from './index';
+import { db, maindb } from './index';
 
 type VisibilityType = 'public' | 'private';
 
@@ -48,7 +48,8 @@ export async function saveChat({
   visibility: VisibilityType;
 }) {
   try {
-    return await db.insert(chat).values({
+    // Use maindb for writes to avoid replica lag
+    return await maindb.insert(chat).values({
       id,
       createdAt: new Date(),
       userId,
@@ -56,6 +57,7 @@ export async function saveChat({
       visibility,
     });
   } catch (error) {
+    console.error('Failed to save chat:', error);
     throw new ChatSDKError('bad_request:database', 'Failed to save chat' + error);
   }
 }
@@ -86,19 +88,19 @@ export async function getChatsByUserId({
   try {
     const extendedLimit = limit + 1;
 
+    // Use maindb to avoid replica lag for recently created chats
     const query = (whereCondition?: SQL<any>) =>
-      db
+      maindb
         .select()
         .from(chat)
         .where(whereCondition ? and(whereCondition, eq(chat.userId, id)) : eq(chat.userId, id))
         .orderBy(desc(chat.createdAt))
-        .limit(extendedLimit)
-        .$withCache();
+        .limit(extendedLimit);
 
     let filteredChats: Array<Chat> = [];
 
     if (startingAfter) {
-      const [selectedChat] = await db.select().from(chat).where(eq(chat.id, startingAfter)).limit(1);
+      const [selectedChat] = await maindb.select().from(chat).where(eq(chat.id, startingAfter)).limit(1);
 
       if (!selectedChat) {
         throw new ChatSDKError('not_found:database', `Chat with id ${startingAfter} not found`);
@@ -106,7 +108,7 @@ export async function getChatsByUserId({
 
       filteredChats = await query(gt(chat.createdAt, selectedChat.createdAt));
     } else if (endingBefore) {
-      const [selectedChat] = await db.select().from(chat).where(eq(chat.id, endingBefore)).limit(1);
+      const [selectedChat] = await maindb.select().from(chat).where(eq(chat.id, endingBefore)).limit(1);
 
       if (!selectedChat) {
         throw new ChatSDKError('not_found:database', `Chat with id ${endingBefore} not found`);
@@ -130,11 +132,8 @@ export async function getChatsByUserId({
 
 export async function getChatById({ id }: { id: string }) {
   try {
-    console.log('🔍 [DB-DETAIL] getChatById: Starting cached query...');
-    const cacheQueryStart = Date.now();
-    const [selectedChat] = await db.select().from(chat).where(eq(chat.id, id)).$withCache();
-    const cacheQueryTime = (Date.now() - cacheQueryStart) / 1000;
-    console.log(`⏱️  [DB-DETAIL] getChatById: Cached query took ${cacheQueryTime.toFixed(2)}s`);
+    // Use maindb to avoid replica lag for recently created chats
+    const [selectedChat] = await maindb.select().from(chat).where(eq(chat.id, id));
     return selectedChat;
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to get chat by id');
@@ -168,8 +167,10 @@ export async function getChatWithUserById({ id }: { id: string }) {
 
 export async function saveMessages({ messages }: { messages: Array<Message> }) {
   try {
-    return await db.insert(message).values(messages);
+    // Use maindb for writes to avoid replica lag
+    return await maindb.insert(message).values(messages);
   } catch (error) {
+    console.error('Failed to save messages:', error);
     throw new ChatSDKError('bad_request:database', 'Failed to save messages');
   }
 }

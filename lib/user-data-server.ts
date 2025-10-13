@@ -182,18 +182,35 @@ export async function getLightweightUserAuth(): Promise<LightweightUserAuth | nu
       return lightweightData;
     }
 
-    // Optimized query: Use JOIN to fetch user + subscription status in a single query
-    const result = await db
+    // Optimized query: Use simple user query first (JOIN was causing issues with null subscriptions)
+    // CRITICAL: Use maindb (not replicas) to avoid replication lag for auth checks
+    const [userRecord] = await maindb
       .select({
         userId: user.id,
         email: user.email,
-        subscriptionStatus: subscription.status,
-        subscriptionEnd: subscription.currentPeriodEnd,
       })
       .from(user)
-      .leftJoin(subscription, eq(subscription.userId, user.id))
-      .where(eq(user.id, userId))
-      .$withCache();
+      .where(eq(user.id, userId));
+
+    if (!userRecord) {
+      return null;
+    }
+
+    // Now check for subscription separately
+    const [subscriptionRecord] = await maindb
+      .select({
+        status: subscription.status,
+        currentPeriodEnd: subscription.currentPeriodEnd,
+      })
+      .from(subscription)
+      .where(eq(subscription.userId, userId));
+
+    const result = [{
+      userId: userRecord.userId,
+      email: userRecord.email,
+      subscriptionStatus: subscriptionRecord?.status || null,
+      subscriptionEnd: subscriptionRecord?.currentPeriodEnd || null,
+    }];
 
     if (!result || result.length === 0) {
       return null;
