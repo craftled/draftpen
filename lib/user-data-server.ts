@@ -426,6 +426,8 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
         currentPeriodEnd: activePolarSubscription.currentPeriodEnd,
         cancelAtPeriodEnd: activePolarSubscription.cancelAtPeriodEnd,
         canceledAt: activePolarSubscription.canceledAt,
+        trialStart: activePolarSubscription.trialStart,
+        trialEnd: activePolarSubscription.trialEnd,
       };
     }
 
