@@ -5,6 +5,7 @@ export type ErrorType =
   | 'not_found'
   | 'rate_limit'
   | 'upgrade_required'
+  | 'subscription_required'
   | 'model_restricted'
   | 'offline';
 
