@@ -218,8 +218,10 @@ export async function getLightweightUserAuth(): Promise<LightweightUserAuth | nu
       return null;
     }
 
-    // Check for active Polar subscription (quick check)
-    const hasActivePolarSub = result.some((row) => row.subscriptionStatus === 'active');
+    // Check for active Polar subscription (includes trialing)
+    const hasActivePolarSub = result.some((row) => 
+      row.subscriptionStatus === 'active' || row.subscriptionStatus === 'trialing'
+    );
 
     const lightweightData: LightweightUserAuth = {
       userId: result[0].userId,
