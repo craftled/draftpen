@@ -352,9 +352,9 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
         productId: row.subscriptionProductId!,
       }));
 
-    // Process Polar subscription
+    // Process Polar subscription (includes trialing)
     const activePolarSubscription = polarSubscriptions
-      .filter((sub) => sub.status === 'active')
+      .filter((sub) => sub.status === 'active' || sub.status === 'trialing')
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
 
     // Determine overall Pro status and source
@@ -365,7 +365,7 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
     if (activePolarSubscription) {
       isProUser = true;
       proSource = 'polar';
-      subscriptionStatus = 'active';
+      subscriptionStatus = activePolarSubscription.status === 'trialing' ? 'active' : 'active';
     } else {
       // Check for expired/canceled Polar subscriptions
       const latestPolarSubscription = polarSubscriptions.sort(
