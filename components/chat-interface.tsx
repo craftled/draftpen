@@ -156,6 +156,9 @@ const ChatInterface = memo(
       isInTrial,
       daysLeftInTrial,
     } = useUser();
+    
+    // Debug: Check what useUser returns
+    console.log('💡 ChatInterface useUser:', { isInTrial, daysLeftInTrial, polarSub: user?.polarSubscription });
 
     const { setDataStream } = useDataStream();
 
