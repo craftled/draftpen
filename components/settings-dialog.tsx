@@ -131,6 +131,7 @@ function ProfileSection({ user, subscriptionData, isProUser, isProStatusLoading 
                   'bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground',
                   'dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground',
                 )}
+                suppressHydrationWarning
               >
                 {isTrialing && daysLeftInTrial > 0 ? (
                   <>

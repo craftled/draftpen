@@ -691,7 +691,7 @@ const ChatInterface = memo(
                     Draftpen
                   </h1>
                   {isUserPro && (
-                    <h1 className="text-2xl font-baumans! leading-4 inline-flex items-center gap-1.5 !px-3 !pt-1 !pb-2.5 rounded-xl shadow-sm !m-0 !mt-2 bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground ring-1 ring-ring/35 ring-offset-1 ring-offset-background dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">
+                    <h1 className="text-2xl font-baumans! leading-4 inline-flex items-center gap-1.5 !px-3 !pt-1 !pb-2.5 rounded-xl shadow-sm !m-0 !mt-2 bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground ring-1 ring-ring/35 ring-offset-1 ring-offset-background dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground" suppressHydrationWarning>
                       {isInTrial && daysLeftInTrial > 0 ? (
                         <>
                           <Clock className="h-4 w-4" />
