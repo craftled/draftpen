@@ -98,7 +98,6 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
     const [selectedProModel, setSelectedProModel] = useState<(typeof models)[0] | null>(null);
     const [selectedAuthModel, setSelectedAuthModel] = useState<(typeof models)[0] | null>(null);
     const [open, setOpen] = useState(false);
-    const [discountConfig, setDiscountConfig] = useState<any>(null);
 
     const isMobile = useIsMobile();
 
@@ -220,60 +219,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
       [searchQuery, escapeHtml, escapeRegExp],
     );
 
-    // Fetch discount config when needed
-    const fetchDiscountConfig = useCallback(async () => {
-      return;
-    }, [discountConfig]);
 
-    // Calculate pricing with discounts
-    const calculatePricing = useCallback(() => {
-      const defaultUSDPrice = PRICING.PRO_MONTHLY;
-  
-      // Check if discount should be applied
-      const isDevMode = discountConfig?.dev || process.env.NODE_ENV === 'development';
-      const shouldApplyDiscount = isDevMode
-        ? discountConfig?.code && discountConfig?.message
-        : discountConfig?.enabled && discountConfig?.code && discountConfig?.message;
-
-      if (!discountConfig || !shouldApplyDiscount) {
-        return {
-          usd: { originalPrice: defaultUSDPrice, finalPrice: defaultUSDPrice, hasDiscount: false },
-          inr: null,
-        };
-      }
-
-      // USD pricing: prefer explicit finalPrice over percentage
-      let usdPricing: { originalPrice: number; finalPrice: number; hasDiscount: boolean } = {
-        originalPrice: defaultUSDPrice,
-        finalPrice: defaultUSDPrice,
-        hasDiscount: false,
-      };
-      if (typeof discountConfig.finalPrice === 'number') {
-        const original =
-          typeof discountConfig.originalPrice === 'number' ? discountConfig.originalPrice : defaultUSDPrice;
-        usdPricing = {
-          originalPrice: original,
-          finalPrice: discountConfig.finalPrice,
-          hasDiscount: true,
-        };
-      } else if (typeof discountConfig.percentage === 'number') {
-        const base = typeof discountConfig.originalPrice === 'number' ? discountConfig.originalPrice : defaultUSDPrice;
-        const usdSavings = (base * discountConfig.percentage) / 100;
-        const usdFinalPrice = base - usdSavings;
-        usdPricing = {
-          originalPrice: base,
-          finalPrice: usdFinalPrice,
-          hasDiscount: true,
-        };
-      }
-
-      return {
-        usd: usdPricing,
-        inr: null,
-      };
-    }, [discountConfig]);
-
-    const pricing = calculatePricing();
 
     const isFilePart = useCallback((p: unknown): p is { type: 'file'; mediaType?: string } => {
       return (
@@ -416,7 +362,6 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
 
         if (requiresPro && !isProUser) {
           setSelectedProModel(model);
-          fetchDiscountConfig();
           setShowUpgradeDialog(true);
           return;
         }
@@ -428,7 +373,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
           onModelSelect(model);
         }
       },
-      [availableModels, user, isProUser, isSubscriptionLoading, setSelectedModel, onModelSelect, fetchDiscountConfig],
+      [availableModels, user, isProUser, isSubscriptionLoading, setSelectedModel, onModelSelect],
     );
 
     // Shared command content renderer (not a component) to preserve focus
@@ -480,7 +425,6 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                             setShowSignInDialog(true);
                           } else if (requiresPro && !isProUser) {
                             setSelectedProModel(model);
-                            fetchDiscountConfig();
                             setShowUpgradeDialog(true);
                           }
                           setOpen(false);
@@ -696,7 +640,6 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                             setShowSignInDialog(true);
                           } else if (requiresPro && !isProUser) {
                             setSelectedProModel(model);
-                            fetchDiscountConfig();
                             setShowUpgradeDialog(true);
                           }
                           setOpen(false);
@@ -976,40 +919,8 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                     </div>
                   </DialogTitle>
                   <DialogDescription className="text-white/90">
-                    {discountConfig &&
-                      (() => {
-                        const isDevMode = discountConfig.dev || process.env.NODE_ENV === 'development';
-                        const shouldShowDiscount = isDevMode
-                          ? discountConfig.code && discountConfig.message && discountConfig.percentage
-                          : discountConfig.enabled &&
-                          discountConfig.code &&
-                          discountConfig.message &&
-                          discountConfig.percentage;
-
-                        if (shouldShowDiscount && discountConfig.showPrice && discountConfig.finalPrice) {
-                          return (
-                            <div className="flex items-center gap-2 mb-2">
-                              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium">
-                                {discountConfig.showPrice && discountConfig.finalPrice
-                                  ? `$${PRICING.PRO_MONTHLY - discountConfig.finalPrice} OFF for a year`
-                                  : discountConfig.percentage
-                                    ? `${discountConfig.percentage}% OFF`
-                                    : 'DISCOUNT'}
-                              </div>
-                            </div>
-                          );
-                        }
-                        return null;
-                      })()}
                     <div className="flex items-center gap-2">
-                      {pricing.usd.hasDiscount ? (
-                        <>
-                          <span className="text-lg text-white/60 line-through">${pricing.usd.originalPrice}</span>
-                          <span className="text-2xl font-bold">${pricing.usd.finalPrice.toFixed(2)}</span>
-                        </>
-                      ) : (
-                        <span className="text-2xl font-bold">${pricing.usd.finalPrice}</span>
-                      )}
+                      <span className="text-2xl font-bold">${PRICING.PRO_MONTHLY}</span>
                       <span className="text-sm text-white/80">/month</span>
                     </div>
                     <p className="text-sm text-white/80 text-left mt-2">
@@ -2090,7 +2001,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isTypewriting, setIsTypewriting] = useState(false);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
-  const [discountConfig, setDiscountConfig] = useState<any>(null);
 
   // Combined state for animations to avoid restart issues
   const isEnhancementActive = isEnhancing || isTypewriting;
@@ -2124,69 +2034,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
     };
   }, [cleanupMediaRecorder]);
 
-  // Fetch discount config when needed
-  const fetchDiscountConfigForm = useCallback(async () => {
-    return;
-  }, [discountConfig]);
 
-  // Calculate pricing with discounts
-  const calculatePricing = useCallback(() => {
-    const defaultUSDPrice = PRICING.PRO_MONTHLY;
-
-    // Check if discount should be applied
-    const isDevMode = discountConfig?.dev || process.env.NODE_ENV === 'development';
-    const shouldApplyDiscount = isDevMode
-      ? discountConfig?.code && discountConfig?.message
-      : discountConfig?.enabled && discountConfig?.code && discountConfig?.message;
-
-    console.log('Discount check:', {
-      isDevMode,
-      shouldApplyDiscount,
-      enabled: discountConfig?.enabled,
-      code: discountConfig?.code,
-      message: discountConfig?.message,
-      percentage: discountConfig?.percentage,
-    });
-
-    if (!discountConfig || !shouldApplyDiscount) {
-      return {
-        usd: { originalPrice: defaultUSDPrice, finalPrice: defaultUSDPrice, hasDiscount: false },
-        inr: null,
-      };
-    }
-
-    // USD pricing: prefer explicit finalPrice over percentage
-    let usdPricing: { originalPrice: number; finalPrice: number; hasDiscount: boolean } = {
-      originalPrice: defaultUSDPrice,
-      finalPrice: defaultUSDPrice,
-      hasDiscount: false,
-    };
-    if (typeof discountConfig.finalPrice === 'number') {
-      const original =
-        typeof discountConfig.originalPrice === 'number' ? discountConfig.originalPrice : defaultUSDPrice;
-      usdPricing = {
-        originalPrice: original,
-        finalPrice: discountConfig.finalPrice,
-        hasDiscount: true,
-      };
-    } else if (typeof discountConfig.percentage === 'number') {
-      const base = typeof discountConfig.originalPrice === 'number' ? discountConfig.originalPrice : defaultUSDPrice;
-      const usdSavings = (base * discountConfig.percentage) / 100;
-      const usdFinalPrice = base - usdSavings;
-      usdPricing = {
-        originalPrice: base,
-        finalPrice: usdFinalPrice,
-        hasDiscount: true,
-      };
-    }
-
-    return {
-      usd: usdPricing,
-      inr: null,
-    };
-  }, [discountConfig]);
-
-  const pricing = calculatePricing();
 
   // Control audio lines animation
   useEffect(() => {
@@ -2302,7 +2150,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
   const handleEnhance = useCallback(async () => {
     if (!isProUser) {
-      fetchDiscountConfigForm();
       setShowUpgradeDialog(true);
       return;
     }
@@ -2347,7 +2194,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
     typewriterText,
     isEnhancing,
     setShowUpgradeDialog,
-    fetchDiscountConfigForm,
   ]);
 
   const handleRecord = useCallback(async () => {
@@ -3727,14 +3573,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                   </DialogTitle>
                   <DialogDescription className="text-white/90">
                     <div className="flex items-center gap-2 mb-2">
-                      {pricing.usd.hasDiscount ? (
-                        <>
-                          <span className="text-lg text-white/60 line-through">${pricing.usd.originalPrice}</span>
-                          <span className="text-2xl font-bold">${pricing.usd.finalPrice.toFixed(2)}</span>
-                        </>
-                      ) : (
-                        <span className="text-2xl font-bold">${pricing.usd.finalPrice}</span>
-                      )}
+                      <span className="text-2xl font-bold">${PRICING.PRO_MONTHLY}</span>
                       <span className="text-sm text-white/80">/month</span>
                     </div>
                     <p className="text-sm text-white/80 text-left">
@@ -3747,7 +3586,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     }}
                     className="backdrop-blur-md bg-white/90 border border-white/20 text-black hover:bg-white w-full font-medium mt-3"
                   >
-                    {discountConfig?.buttonText || 'Upgrade to Pro'}
+                    Upgrade to Pro
                   </Button>
                 </div>
               </div>

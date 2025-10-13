@@ -1011,14 +1011,7 @@ export default function AboutPage() {
             </div>
           </div>
 
-          {/* Removed: legacy Student Discount block */}
-          <div className="max-w-2xl mx-auto rounded-xl p-6 mt-8">
-            <div className="text-center">
-              <Button onClick={() => router.push('/pricing')} variant="outline" size="sm" className="px-4 py-2">
-                Get Student Pricing
-              </Button>
-            </div>
-          </div>
+
         </div>
       </section>
       {/* FAQ Section */}
@@ -1047,11 +1040,9 @@ export default function AboutPage() {
             </ProAccordionItem>
 
             <ProAccordionItem value="item-3">
-              <ProAccordionTrigger>Is there a student discount?</ProAccordionTrigger>
+              <ProAccordionTrigger>Are there any discounts available?</ProAccordionTrigger>
               <ProAccordionContent>
-                Yes! Students with university email addresses (.edu, .ac.in, .ac.uk, etc.) automatically get Pro for
-                just $5/month - that&apos;s $120 in annual savings. No verification required, the discount is applied
-                automatically at checkout.
+                We occasionally offer discount codes for special promotions. You can apply any available discount codes during checkout through Polar.
               </ProAccordionContent>
             </ProAccordionItem>
 

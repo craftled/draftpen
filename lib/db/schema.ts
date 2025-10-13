@@ -116,7 +116,6 @@ export const subscription = pgTable('subscription', {
   endedAt: timestamp('endedAt'),
   customerId: text('customerId').notNull(),
   productId: text('productId').notNull(),
-  discountId: text('discountId'),
   checkoutId: text('checkoutId').notNull(),
   customerCancellationReason: text('customerCancellationReason'),
   customerCancellationComment: text('customerCancellationComment'),
