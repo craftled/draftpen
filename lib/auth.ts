@@ -255,35 +255,42 @@ export const auth = betterAuth({
                 });
 
                 // STEP 3: Use Drizzle's onConflictDoUpdate for proper upsert
+                // IMPORTANT: Only update userId if we have a valid one (don't overwrite with NULL)
+                const updateSet: any = {
+                  modifiedAt: subscriptionData.modifiedAt || new Date(),
+                  amount: subscriptionData.amount,
+                  currency: subscriptionData.currency,
+                  recurringInterval: subscriptionData.recurringInterval,
+                  status: subscriptionData.status,
+                  currentPeriodStart: subscriptionData.currentPeriodStart,
+                  currentPeriodEnd: subscriptionData.currentPeriodEnd,
+                  cancelAtPeriodEnd: subscriptionData.cancelAtPeriodEnd,
+                  canceledAt: subscriptionData.canceledAt,
+                  startedAt: subscriptionData.startedAt,
+                  endsAt: subscriptionData.endsAt,
+                  endedAt: subscriptionData.endedAt,
+                  trialStart: subscriptionData.trialStart,
+                  trialEnd: subscriptionData.trialEnd,
+                  customerId: subscriptionData.customerId,
+                  productId: subscriptionData.productId,
+                  checkoutId: subscriptionData.checkoutId,
+                  customerCancellationReason: subscriptionData.customerCancellationReason,
+                  customerCancellationComment: subscriptionData.customerCancellationComment,
+                  metadata: subscriptionData.metadata,
+                  customFieldData: subscriptionData.customFieldData,
+                };
+                
+                // Only update userId if we have a valid one (preserve existing if webhook doesn't have it)
+                if (subscriptionData.userId) {
+                  updateSet.userId = subscriptionData.userId;
+                }
+                
                 await db
                   .insert(subscription)
                   .values(subscriptionData)
                   .onConflictDoUpdate({
                     target: subscription.id,
-                    set: {
-                      modifiedAt: subscriptionData.modifiedAt || new Date(),
-                      amount: subscriptionData.amount,
-                      currency: subscriptionData.currency,
-                      recurringInterval: subscriptionData.recurringInterval,
-                      status: subscriptionData.status,
-                      currentPeriodStart: subscriptionData.currentPeriodStart,
-                      currentPeriodEnd: subscriptionData.currentPeriodEnd,
-                      cancelAtPeriodEnd: subscriptionData.cancelAtPeriodEnd,
-                      canceledAt: subscriptionData.canceledAt,
-                      startedAt: subscriptionData.startedAt,
-                      endsAt: subscriptionData.endsAt,
-                      endedAt: subscriptionData.endedAt,
-                      trialStart: subscriptionData.trialStart,
-                      trialEnd: subscriptionData.trialEnd,
-                      customerId: subscriptionData.customerId,
-                      productId: subscriptionData.productId,
-                      checkoutId: subscriptionData.checkoutId,
-                      customerCancellationReason: subscriptionData.customerCancellationReason,
-                      customerCancellationComment: subscriptionData.customerCancellationComment,
-                      metadata: subscriptionData.metadata,
-                      customFieldData: subscriptionData.customFieldData,
-                      userId: subscriptionData.userId,
-                    },
+                    set: updateSet,
                   });
 
                 console.log('✅ Upserted subscription:', data.id);
