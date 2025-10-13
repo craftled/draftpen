@@ -1,5 +1,5 @@
 import { db } from './lib/db';
-<parameter name="sql">import { sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 
 async function verifySubscription() {
   try {
