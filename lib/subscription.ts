@@ -10,7 +10,8 @@ import {
   setProUserStatus,
 } from './performance-cache';
 
-
+// Re-export client-safe utilities
+export { isInTrial, getSubscriptionType, getDaysLeftInTrial } from './subscription-utils';
 
 export type SubscriptionDetails = {
   id: string;
@@ -23,6 +24,8 @@ export type SubscriptionDetails = {
   currentPeriodEnd: Date;
   cancelAtPeriodEnd: boolean;
   canceledAt: Date | null;
+  trialStart?: Date | null;
+  trialEnd?: Date | null;
   organizationId: string | null;
 };
 
@@ -32,8 +35,6 @@ export type SubscriptionDetailsResult = {
   error?: string;
   errorType?: 'CANCELED' | 'EXPIRED' | 'GENERAL';
 };
-
-
 
 // Combined function to check Pro status from Polar subscriptions
 async function getComprehensiveProStatus(
@@ -124,6 +125,8 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
             currentPeriodEnd: latestSubscription.currentPeriodEnd,
             cancelAtPeriodEnd: latestSubscription.cancelAtPeriodEnd,
             canceledAt: latestSubscription.canceledAt,
+            trialStart: latestSubscription.trialStart,
+            trialEnd: latestSubscription.trialEnd,
             organizationId: null,
           },
           error: isCanceled
@@ -163,6 +166,8 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
         currentPeriodEnd: activeSubscription.currentPeriodEnd,
         cancelAtPeriodEnd: activeSubscription.cancelAtPeriodEnd,
         canceledAt: activeSubscription.canceledAt,
+        trialStart: activeSubscription.trialStart,
+        trialEnd: activeSubscription.trialEnd,
         organizationId: null,
       },
     };

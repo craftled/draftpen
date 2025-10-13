@@ -80,12 +80,14 @@ export function getMessageByErrorCode(errorCode: ErrorCode): string {
     case 'forbidden:auth':
       return 'Your account does not have access to this feature.';
     case 'upgrade_required:auth':
-      return 'This feature requires a Pro subscription. Sign in and upgrade to continue.';
+      return 'An active subscription is required. Start your 7-day free trial to continue.';
+    case 'subscription_required':
+      return 'An active subscription is required. Start your 7-day free trial to access all features.';
 
     case 'rate_limit:chat':
       return 'You have exceeded your maximum number of messages for the day. Please try again later.';
     case 'upgrade_required:chat':
-      return 'You have reached your daily search limit. Upgrade to Pro for unlimited searches.';
+      return 'Start your 7-day free trial for unlimited searches.';
     case 'not_found:chat':
       return 'The requested chat was not found. Please check the chat ID and try again.';
     case 'forbidden:chat':
@@ -96,15 +98,15 @@ export function getMessageByErrorCode(errorCode: ErrorCode): string {
       return "We're having trouble sending your message. Please check your internet connection and try again.";
 
     case 'unauthorized:model':
-      return 'You need to sign in to access this AI model.';
+      return 'Sign in and start your 7-day free trial to access AI models.';
     case 'forbidden:model':
-      return 'This AI model requires a Pro subscription.';
+      return 'An active subscription is required to use this AI model.';
     case 'model_restricted:model':
-      return 'Access to this AI model is restricted. Please upgrade to Pro or contact support.';
+      return 'Start your 7-day free trial to access this AI model.';
     case 'upgrade_required:model':
-      return 'This premium AI model is only available with a Pro subscription.';
+      return 'Start your 7-day free trial to access premium AI models.';
     case 'rate_limit:model':
-      return 'You have reached the usage limit for this AI model. Upgrade to Pro for unlimited access.';
+      return 'Start your 7-day free trial for unlimited access.';
 
     case 'forbidden:api':
       return 'Access denied';

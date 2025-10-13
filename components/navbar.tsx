@@ -9,6 +9,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { UserProfile, NavigationMenu } from '@/components/user-profile';
 import { ChatHistoryButton } from '@/components/chat-history-dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Clock } from 'lucide-react';
 
 import { ShareButton } from '@/components/share';
 import { cn } from '@/lib/utils';
@@ -30,6 +31,8 @@ interface NavbarProps {
   subscriptionData?: any;
   isProUser?: boolean;
   isProStatusLoading?: boolean;
+  isInTrial?: boolean;
+  daysLeftInTrial?: number;
   isCustomInstructionsEnabled?: boolean;
   setIsCustomInstructionsEnabled?: (value: boolean | ((val: boolean) => boolean)) => void;
   settingsOpen?: boolean;
@@ -50,6 +53,8 @@ const Navbar = memo(
     subscriptionData,
     isProUser,
     isProStatusLoading,
+    isInTrial = false,
+    daysLeftInTrial = 0,
     isCustomInstructionsEnabled,
     setIsCustomInstructionsEnabled,
     settingsOpen,
@@ -111,7 +116,7 @@ const Navbar = memo(
             )}
           </div>
 
-          {/* Centered Upgrade Button */}
+          {/* Start Free Trial Button */}
           {shouldShowUpgrade && (
             <div
               className={cn(
@@ -119,17 +124,14 @@ const Navbar = memo(
                 isDialogOpen ? 'pointer-events-auto' : '',
               )}
             >
-              <div className="flex items-center bg-muted/50 rounded-lg border border-border">
-                <span className="px-2 py-1.5 text-sm font-medium text-muted-foreground">Free Plan</span>
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="rounded-md mr-1.5 h-6"
-                  onClick={() => router.push('/pricing')}
-                >
-                  Upgrade
-                </Button>
-              </div>
+              <Button
+                variant="default"
+                size="sm"
+                className="rounded-md h-7 shadow-sm"
+                onClick={() => router.push('/pricing')}
+              >
+                Start 7-Day Free Trial
+              </Button>
             </div>
           )}
           <div className={cn('flex items-center gap-1', isDialogOpen ? 'pointer-events-auto' : '')}>
@@ -194,12 +196,20 @@ const Navbar = memo(
                     <TooltipTrigger asChild>
                       <div className="pointer-events-auto mr-1">
                         <span className="font-baumans! px-2.5 pt-0.5 pb-1.75 sm:pt-1 leading-4 inline-flex items-center gap-1 rounded-lg shadow-sm border-transparent ring-1 ring-ring/35 ring-offset-1 ring-offset-background bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground  dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">
-                          <span>pro</span>
+                          {isInTrial && daysLeftInTrial > 0 ? (
+                            <>
+                              <Clock className="h-3 w-3" />
+                              <span className="hidden sm:inline">{daysLeftInTrial}d trial</span>
+                              <span className="sm:hidden">trial</span>
+                            </>
+                          ) : (
+                            <span>pro</span>
+                          )}
                         </span>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" sideOffset={4}>
-                      Pro Subscribed - Unlimited access
+                      {isInTrial ? `Trial - ${daysLeftInTrial} days remaining` : 'Pro Subscribed - Unlimited access'}
                     </TooltipContent>
                   </Tooltip>
                 ) : null}

@@ -153,6 +153,8 @@ const ChatInterface = memo(
       isLoading: proStatusLoading,
       shouldCheckLimits: shouldCheckUserLimits,
       shouldBypassLimitsForModel,
+      isInTrial,
+      daysLeftInTrial,
     } = useUser();
 
     const { setDataStream } = useDataStream();
@@ -631,6 +633,8 @@ const ChatInterface = memo(
           subscriptionData={subscriptionData}
           isProUser={isUserPro}
           isProStatusLoading={proStatusLoading}
+          isInTrial={isInTrial}
+          daysLeftInTrial={daysLeftInTrial}
           isCustomInstructionsEnabled={isCustomInstructionsEnabled}
           setIsCustomInstructionsEnabled={setIsCustomInstructionsEnabled}
           settingsOpen={settingsOpen}

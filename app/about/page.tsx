@@ -1032,10 +1032,11 @@ export default function AboutPage() {
             </ProAccordionItem>
 
             <ProAccordionItem value="item-2">
-              <ProAccordionTrigger>What&apos;s the difference between Free and Pro plans?</ProAccordionTrigger>
+              <ProAccordionTrigger>What&apos;s included in the subscription?</ProAccordionTrigger>
               <ProAccordionContent>
-                The Free plan offers limited daily searches with basic AI models, while the Pro plan ($15/month)
-                provides unlimited searches, access to all AI models, PDF document analysis, and priority support.
+                Draftpen is a pro-only service at $99/month with a 7-day free trial. You get unlimited searches, 
+                access to all premium AI models (GPT-4, Claude 3.5, and more), PDF document analysis, web research 
+                with real-time data, and priority support.
               </ProAccordionContent>
             </ProAccordionItem>
 

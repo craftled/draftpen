@@ -203,8 +203,9 @@ export function requiresAuthentication(modelValue: string): boolean {
 }
 
 export function requiresProSubscription(modelValue: string): boolean {
-  const model = getModelConfig(modelValue);
-  return model?.pro || false;
+  // PRO-ONLY MODE: All models require subscription, but this function is kept for backwards compatibility
+  // Always return false since subscription check happens at API route level
+  return false;
 }
 
 export function isFreeUnlimited(modelValue: string): boolean {
@@ -250,14 +251,13 @@ export function canUseModel(modelValue: string, user: any, isProUser: boolean): 
     return { canUse: false, reason: 'Model not found' };
   }
 
-  // Check if model requires authentication
-  if (model.requiresAuth && !user) {
+  // PRO-ONLY MODE: Require authentication and active subscription for all models
+  if (!user) {
     return { canUse: false, reason: 'authentication_required' };
   }
 
-  // Check if model requires Pro subscription
-  if (model.pro && !isProUser) {
-    return { canUse: false, reason: 'pro_subscription_required' };
+  if (!isProUser) {
+    return { canUse: false, reason: 'subscription_required' };
   }
 
   return { canUse: true };
@@ -272,7 +272,8 @@ export function shouldBypassRateLimits(modelValue: string, user: any): boolean {
 // Get acceptable file types for a model
 export function getAcceptedFileTypes(modelValue: string, isProUser: boolean): string {
   const model = getModelConfig(modelValue);
-  if (model?.pdf && isProUser) {
+  // PRO-ONLY MODE: All subscribers get PDF support if model supports it
+  if (model?.pdf) {
     return 'image/*,.pdf';
   }
   return 'image/*';

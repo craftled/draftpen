@@ -93,7 +93,7 @@ export const auth = betterAuth({
   pluginRoutes: {
     autoNamespace: true,
   },
-  plugins: [ ...(process.env.NODE_ENV === 'production' && process.env.POLAR_ACCESS_TOKEN ? [
+  plugins: [ ...(process.env.POLAR_ACCESS_TOKEN ? [
         polar({
       client: polarClient,
       createCustomerOnSignUp: true,
@@ -214,6 +214,8 @@ export const auth = betterAuth({
                   startedAt: safeParseDate(data.startedAt) || new Date(),
                   endsAt: safeParseDate(data.endsAt),
                   endedAt: safeParseDate(data.endedAt),
+                  trialStart: safeParseDate((data as any).trial_start),
+                  trialEnd: safeParseDate((data as any).trial_end),
                   customerId: data.customerId,
                   productId: data.productId,
                   checkoutId: data.checkoutId || '',
@@ -228,6 +230,16 @@ export const auth = betterAuth({
                   id: subscriptionData.id,
                   status: subscriptionData.status,
                   userId: subscriptionData.userId,
+                  trialStart: subscriptionData.trialStart,
+                  trialEnd: subscriptionData.trialEnd,
+                });
+                
+                // Debug: Log raw data to see what Polar sends
+                console.log('🔍 Raw webhook data (trial fields):', {
+                  trialStart: data.trialStart,
+                  trialEnd: data.trialEnd,
+                  trial_start: (data as any).trial_start,
+                  trial_end: (data as any).trial_end,
                   amount: subscriptionData.amount,
                 });
 

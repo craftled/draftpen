@@ -106,18 +106,20 @@ export async function POST(req: Request) {
   const lightweightUser = await getLightweightUser();
 
   // Early exit checks (no DB operations needed)
+  // PRO-ONLY MODE: Block all non-subscribers (no free tier)
   if (!lightweightUser) {
-    if (requiresAuthentication(model)) {
-      return new ChatSDKError('unauthorized:model', `${model} requires authentication`).toResponse();
-    }
-    if (group === 'extreme') {
-      return new ChatSDKError('unauthorized:auth', 'Authentication required to use Extreme Search mode').toResponse();
-    }
-  } else {
-    // Fast auth checks using lightweight user (no additional DB calls)
-    if (requiresProSubscription(model) && !lightweightUser.isProUser) {
-      return new ChatSDKError('upgrade_required:model', `${model} requires a Pro subscription`).toResponse();
-    }
+    return new ChatSDKError(
+      'unauthorized:auth',
+      'This app requires an active subscription. Start your 7-day free trial to continue.'
+    ).toResponse();
+  }
+
+  // Check if user has active subscription (includes trials)
+  if (!lightweightUser.isProUser) {
+    return new ChatSDKError(
+      'subscription_required',
+      'An active subscription is required. Start your 7-day free trial to continue.'
+    ).toResponse();
   }
 
   // START ALL CRITICAL PARALLEL OPERATIONS IMMEDIATELY
@@ -187,60 +189,20 @@ export async function POST(req: Request) {
       return existingChat;
     });
 
-    // For non-Pro users: run usage checks in parallel
-    if (!isProUser) {
-      criticalChecksPromise = Promise.all([
-        fullUserPromise,
-        chatValidationPromise,
-      ]).then(async ([user]) => {
-        if (!user) {
-          throw new ChatSDKError('unauthorized:auth', 'User authentication failed');
-        }
-
-        const [messageCountResult, extremeSearchUsage] = await Promise.all([
-          getUserMessageCount(user),
-          getExtremeSearchUsageCount(user),
-        ]);
-
-        if (messageCountResult.error) {
-          throw new ChatSDKError('bad_request:api', 'Failed to verify usage limits');
-        }
-
-        const shouldBypassLimits = shouldBypassRateLimits(model, user);
-        if (!shouldBypassLimits && messageCountResult.count !== undefined && messageCountResult.count >= 100) {
-          throw new ChatSDKError('rate_limit:chat', 'Daily search limit reached');
-        }
-
-        return {
-          canProceed: true,
-          isProUser: false,
-          messageCount: messageCountResult.count,
-          extremeSearchUsage: extremeSearchUsage.count,
-          subscriptionData: user.polarSubscription
-            ? { hasSubscription: true, subscription: { ...user.polarSubscription, organizationId: null } }
-            : { hasSubscription: false },
-          shouldBypassLimits,
-        };
-      }).catch(error => {
-        if (error instanceof ChatSDKError) throw error;
-        throw new ChatSDKError('bad_request:api', 'Failed to verify user access');
-      });
-    } else {
-      // Pro users: just validate chat ownership
-      criticalChecksPromise = Promise.all([
-        fullUserPromise,
-        chatValidationPromise,
-      ]).then(([user]) => ({
-        canProceed: true,
-        isProUser: true,
-        messageCount: 0,
-        extremeSearchUsage: 0,
-        subscriptionData: user?.polarSubscription
-          ? { hasSubscription: true, subscription: { ...user.polarSubscription, organizationId: null } }
-          : { hasSubscription: false },
-        shouldBypassLimits: true,
-      }));
-    }
+    // All authenticated users with subscription have full access (no rate limits)
+    criticalChecksPromise = Promise.all([
+      fullUserPromise,
+      chatValidationPromise,
+    ]).then(([user]) => ({
+      canProceed: true,
+      isProUser: true,
+      messageCount: 0,
+      extremeSearchUsage: 0,
+      subscriptionData: user?.polarSubscription
+        ? { hasSubscription: true, subscription: { ...user.polarSubscription, organizationId: null } }
+        : { hasSubscription: false },
+      shouldBypassLimits: true,
+    }));
   } else {
     // Unauthenticated users: no checks needed
     criticalChecksPromise = Promise.resolve({

@@ -100,12 +100,13 @@ export async function POST(req: Request) {
     }
 
 
-    if (user) {
-        const isProUser = user.isProUser;
+    // PRO-ONLY MODE: Require active subscription for all access
+    if (!user) {
+        return new ChatSDKError('unauthorized:auth', 'This app requires an active subscription. Start your 7-day free trial to continue.').toResponse();
+    }
 
-        if (!isProUser) {
-            return new ChatSDKError('upgrade_required:auth', 'This feature requires a Pro subscription').toResponse();
-        }
+    if (!user.isProUser) {
+        return new ChatSDKError('subscription_required', 'An active subscription is required. Start your 7-day free trial to continue.').toResponse();
     }
 
     const result = streamText({

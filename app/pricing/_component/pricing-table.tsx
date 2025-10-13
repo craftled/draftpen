@@ -64,19 +64,25 @@ export default function PricingTable({ subscriptionDetails, user, priceUSD }: Pr
 
 
   const handleCheckout = async (productId: string, slug: string) => {
+    console.log('🛒 Checkout initiated:', { productId, slug, hasUser: !!user });
+    
     if (!user) {
+      console.log('❌ No user, redirecting to sign-up');
+      toast.info('Please sign in to start your free trial');
       router.push('/sign-up');
       return;
     }
 
     try {
+      console.log('📦 Opening checkout with authClient.checkout()...');
       await authClient.checkout({
         products: [productId],
         slug,
         allowDiscountCodes: true,
       });
+      console.log('✅ Checkout opened successfully');
     } catch (error) {
-      console.error('Checkout failed:', error);
+      console.error('❌ Checkout failed:', error);
       toast.error('Something went wrong. Please try again.');
     }
   };

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getCurrentUser } from '@/app/actions';
 import { type ComprehensiveUserData } from '@/lib/user-data';
 import { shouldBypassRateLimits } from '@/ai/providers';
+import { isInTrial, getSubscriptionType, getDaysLeftInTrial } from '@/lib/subscription-utils';
 
 export function useUserData() {
   const {
@@ -42,7 +43,11 @@ export function useUserData() {
     polarSubscription: userData?.polarSubscription,
     hasPolarSubscription: Boolean(userData?.polarSubscription),
 
-
+    // Trial status (new)
+    isInTrial: userData?.polarSubscription ? isInTrial(userData.polarSubscription) : false,
+    subscriptionType: userData?.polarSubscription ? getSubscriptionType(userData.polarSubscription) : 'none',
+    trialEndsAt: userData?.polarSubscription?.trialEnd,
+    daysLeftInTrial: userData?.polarSubscription ? getDaysLeftInTrial(userData.polarSubscription) : 0,
 
     // Rate limiting helpers
     shouldCheckLimits: !isLoading && userData && !userData.isProUser,

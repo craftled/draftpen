@@ -114,6 +114,8 @@ export const subscription = pgTable('subscription', {
   startedAt: timestamp('startedAt').notNull(),
   endsAt: timestamp('endsAt'),
   endedAt: timestamp('endedAt'),
+  trialStart: timestamp('trialStart'),
+  trialEnd: timestamp('trialEnd'),
   customerId: text('customerId').notNull(),
   productId: text('productId').notNull(),
   checkoutId: text('checkoutId').notNull(),
