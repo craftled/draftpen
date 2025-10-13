@@ -96,6 +96,12 @@ function ProfileSection({ user, subscriptionData, isProUser, isProStatusLoading 
   // Use comprehensive Pro status from user data (Polar only)
   const isProUserActive: boolean = user?.isProUser || fastProStatus || false;
   const showProLoading: boolean = Boolean(fastProLoading || isProStatusLoading);
+  
+  // Check if in trial
+  const subscription = subscriptionData?.subscription;
+  const isTrialing = subscription?.status === 'trialing';
+  const trialEnd = subscription?.trialEnd || subscription?.currentPeriodEnd;
+  const daysLeftInTrial = trialEnd ? Math.ceil((new Date(trialEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
 
   return (
     <div>
@@ -121,12 +127,19 @@ function ProfileSection({ user, subscriptionData, isProUser, isProStatusLoading 
             isProUserActive && (
               <span
                 className={cn(
-                  'font-baumans! px-2 pt-1 pb-2 inline-flex leading-5 mt-2 items-center rounded-lg shadow-sm border-transparent ring-1 ring-ring/35 ring-offset-1 ring-offset-background',
+                  'font-baumans! px-2 pt-1 pb-2 inline-flex leading-5 mt-2 items-center gap-1.5 rounded-lg shadow-sm border-transparent ring-1 ring-ring/35 ring-offset-1 ring-offset-background',
                   'bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground',
                   'dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground',
                 )}
               >
-                pro user
+                {isTrialing && daysLeftInTrial > 0 ? (
+                  <>
+                    <Clock className="h-3 w-3" />
+                    <span>{daysLeftInTrial}d trial</span>
+                  </>
+                ) : (
+                  <span>pro user</span>
+                )}
               </span>
             )
           )}
