@@ -46,7 +46,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { getAllMemories, searchMemories, deleteMemory, MemoryItem } from '@/lib/memory-actions';
-import { Loader2, Search } from 'lucide-react';
+import { Loader2, Search, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { useIsProUser } from '@/contexts/user-context';
