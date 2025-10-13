@@ -1,7 +1,7 @@
 'use client';
 
 /* eslint-disable @next/next/no-img-element */
-import React, { memo, useMemo } from 'react';
+import React, { memo, useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { PlusIcon, GlobeHemisphereWestIcon } from '@phosphor-icons/react';
 
@@ -60,9 +60,19 @@ const Navbar = memo(
     const pathname = usePathname();
     const isSearchWithId = useMemo(() => Boolean(pathname && /^\/search\/[^/]+/.test(pathname)), [pathname]);
 
+    // Prevent hydration mismatch by only showing upgrade buttons after client mount
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+      setIsMounted(true);
+    }, []);
+
     // Use passed Pro status directly
     const hasActiveSubscription = isProUser;
     const showProLoading = isProStatusLoading;
+    
+    // Only show upgrade UI after hydration
+    const shouldShowUpgrade = isMounted && user && !hasActiveSubscription && !showProLoading;
 
     return (
       <>
@@ -89,7 +99,7 @@ const Navbar = memo(
             </Link>
 
             {/* Mobile-only Upgrade (avoids overlap with share on small screens) */}
-            {user && !hasActiveSubscription && !showProLoading && (
+            {shouldShowUpgrade && (
               <Button
                 variant="default"
                 size="sm"
@@ -102,7 +112,7 @@ const Navbar = memo(
           </div>
 
           {/* Centered Upgrade Button */}
-          {user && !hasActiveSubscription && !showProLoading && (
+          {shouldShowUpgrade && (
             <div
               className={cn(
                 'hidden sm:flex items-center justify-center absolute left-1/2 transform -translate-x-1/2',
