@@ -175,6 +175,7 @@ export const auth = betterAuth({
                 const userId = data.customer?.externalId;
 
                 // STEP 1.5: Check if user exists to prevent foreign key violations
+                // Also preserve existing userId if not found in webhook (for updates)
                 let validUserId = null;
                 if (userId) {
                   try {
@@ -193,10 +194,20 @@ export const auth = betterAuth({
                     console.error('Error checking user existence:', error);
                   }
                 } else {
-                  console.error('🚨 No external ID found for subscription', {
-                    subscriptionId: data.id,
-                    customerId: data.customerId,
-                  });
+                  // No external ID in webhook - check if subscription already exists with a userId
+                  console.warn('🚨 No external ID found in webhook, checking existing subscription');
+                  try {
+                    const existing = await db.query.subscription.findFirst({
+                      where: eq(subscription.id, data.id),
+                      columns: { userId: true },
+                    });
+                    if (existing?.userId) {
+                      console.log(`✅ Preserving existing userId: ${existing.userId}`);
+                      validUserId = existing.userId;
+                    }
+                  } catch (error) {
+                    console.error('Error checking existing subscription:', error);
+                  }
                 }
                 // STEP 2: Build subscription data
                 const subscriptionData = {
@@ -262,6 +273,8 @@ export const auth = betterAuth({
                       startedAt: subscriptionData.startedAt,
                       endsAt: subscriptionData.endsAt,
                       endedAt: subscriptionData.endedAt,
+                      trialStart: subscriptionData.trialStart,
+                      trialEnd: subscriptionData.trialEnd,
                       customerId: subscriptionData.customerId,
                       productId: subscriptionData.productId,
                       checkoutId: subscriptionData.checkoutId,
