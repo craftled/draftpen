@@ -82,7 +82,7 @@ export function getMessageByErrorCode(errorCode: ErrorCode): string {
       return 'Your account does not have access to this feature.';
     case 'upgrade_required:auth':
       return 'An active subscription is required. Start your 7-day free trial to continue.';
-    case 'subscription_required':
+    case 'subscription_required:auth':
       return 'An active subscription is required. Start your 7-day free trial to access all features.';
 
     case 'rate_limit:chat':

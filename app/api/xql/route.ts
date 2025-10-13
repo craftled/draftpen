@@ -106,7 +106,7 @@ export async function POST(req: Request) {
     }
 
     if (!user.isProUser) {
-        return new ChatSDKError('subscription_required', 'An active subscription is required. Start your 7-day free trial to continue.').toResponse();
+        return new ChatSDKError('subscription_required:auth', 'An active subscription is required. Start your 7-day free trial to continue.').toResponse();
     }
 
     const result = streamText({
