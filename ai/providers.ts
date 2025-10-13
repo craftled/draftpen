@@ -257,7 +257,7 @@ export function canUseModel(modelValue: string, user: any, isProUser: boolean): 
   }
 
   if (!isProUser) {
-    return { canUse: false, reason: 'subscription_required' };
+    return { canUse: false, reason: 'subscription_required:auth' };
   }
 
   return { canUse: true };

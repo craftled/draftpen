@@ -117,7 +117,7 @@ export async function POST(req: Request) {
   // Check if user has active subscription (includes trials)
   if (!lightweightUser.isProUser) {
     return new ChatSDKError(
-      'subscription_required',
+      'subscription_required:auth',
       'An active subscription is required. Start your 7-day free trial to continue.'
     ).toResponse();
   }
