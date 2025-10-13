@@ -952,9 +952,10 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
     }
   };
 
-  // Check for active status from either source
+  // Check for active status from either source (includes trialing)
   const hasActiveSubscription =
-    subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
+    subscriptionData?.hasSubscription && 
+    (subscriptionData?.subscription?.status === 'active' || subscriptionData?.subscription?.status === 'trialing');
   const isProUserActive = hasActiveSubscription;
   const subscription = subscriptionData?.subscription;
 
@@ -1027,25 +1028,20 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
             />
             <h3 className={cn('font-semibold mb-1', isMobile ? 'text-sm' : 'text-base')}>No Active Subscription</h3>
             <p className={cn('text-muted-foreground mb-4', isMobile ? 'text-[11px]' : 'text-xs')}>
-              Upgrade to Pro for unlimited access
+              Start your 7-day free trial
             </p>
-            <div className="space-y-2">
-              <Button asChild size="sm" className={cn('w-full', isMobile ? 'h-8 text-xs' : 'h-9')}>
-                <Link href="/pricing">
-                  <HugeiconsIcon
-                    icon={Crown02Icon}
-                    size={isMobile ? 12 : 14}
-                    color="currentColor"
-                    strokeWidth={1.5}
-                    className={isMobile ? 'mr-1.5' : 'mr-2'}
-                  />
-                  Upgrade to Pro
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="sm" className={cn('w-full', isMobile ? 'h-7 text-xs' : 'h-8')}>
-                <Link href="/pricing">Compare Plans</Link>
-              </Button>
-            </div>
+            <Button asChild size="sm" className={cn('w-full', isMobile ? 'h-8 text-xs' : 'h-9')}>
+              <Link href="/pricing">
+                <HugeiconsIcon
+                  icon={Crown02Icon}
+                  size={isMobile ? 12 : 14}
+                  color="currentColor"
+                  strokeWidth={1.5}
+                  className={isMobile ? 'mr-1.5' : 'mr-2'}
+                />
+                Start Free Trial
+              </Link>
+            </Button>
           </div>
         </div>
       )}
