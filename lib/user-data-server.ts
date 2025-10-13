@@ -281,6 +281,8 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
         subscriptionCurrentPeriodEnd: subscription.currentPeriodEnd,
         subscriptionCancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
         subscriptionCanceledAt: subscription.canceledAt,
+        subscriptionTrialStart: subscription.trialStart,
+        subscriptionTrialEnd: subscription.trialEnd,
         subscriptionProductId: subscription.productId,
       })
       .from(user)
@@ -349,6 +351,8 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
         currentPeriodEnd: row.subscriptionCurrentPeriodEnd!,
         cancelAtPeriodEnd: row.subscriptionCancelAtPeriodEnd!,
         canceledAt: row.subscriptionCanceledAt,
+        trialStart: row.subscriptionTrialStart,
+        trialEnd: row.subscriptionTrialEnd,
         productId: row.subscriptionProductId!,
       }));
 
