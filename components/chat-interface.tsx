@@ -318,7 +318,7 @@ const ChatInterface = memo(
       experimental_throttle: 100,
       onData: (dataPart) => {
         console.log('onData<Client>', dataPart);
-        setDataStream((ds) => (ds ? [...ds, dataPart] : []));
+        setDataStream((ds) => (ds ? [...ds, dataPart as any] : []));
       },
       onFinish: async ({ message }) => {
         console.log('onFinish<Client>', message.parts);

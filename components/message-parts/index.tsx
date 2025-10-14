@@ -22,6 +22,7 @@ import { UseChatHelpers } from '@ai-sdk/react';
 import { SciraLogoHeader } from '@/components/scira-logo-header';
 import Image from 'next/image';
 import ReactMarkdown from 'react-markdown';
+import { Response } from '@/components/ai-elements/response';
 
 // Tool-specific components (lazy loaded)
 import { lazy, Suspense } from 'react';
@@ -209,7 +210,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
         <div key={`${messageIndex}-${partIndex}-text`} className="mt-2">
           <div>
             <ChatTextHighlighter onHighlight={onHighlight} removeHighlightOnClick={true}>
-              <MarkdownRenderer content={part.text} />
+              <Response className="prose dark:prose-invert max-w-none">
+                {part.text}
+              </Response>
             </ChatTextHighlighter>
           </div>
 
@@ -433,6 +436,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
       const setIsExpanded = (v: boolean) => setReasoningVisibilityMap((prev) => ({ ...prev, [sectionKey]: v }));
       const setIsFullscreen = (v: boolean) => setReasoningFullscreenMap((prev) => ({ ...prev, [sectionKey]: v }));
 
+      // Back to original ReasoningPartView - Elements had issues
       return (
         <ReasoningPartView
           key={sectionKey}
