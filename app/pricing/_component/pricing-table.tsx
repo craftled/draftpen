@@ -104,12 +104,15 @@ export default function PricingTable({ subscriptionDetails, user, priceUSD }: Pr
     throw new Error('Missing required environment variables for Starter tier');
   }
 
-  // Check if user has active Polar subscription
+  // Check if user has active Polar subscription (includes trialing)
   const hasPolarSubscription = () => {
+    const sub = subscriptionDetails.subscription;
+    if (!subscriptionDetails.hasSubscription || !sub) return false;
+    const now = new Date();
     return (
-      subscriptionDetails.hasSubscription &&
-      subscriptionDetails.subscription?.productId === STARTER_TIER &&
-      subscriptionDetails.subscription?.status === 'active'
+      sub.productId === STARTER_TIER &&
+      (sub.status === 'active' || sub.status === 'trialing') &&
+      new Date(sub.currentPeriodEnd) > now
     );
   };
 

@@ -132,7 +132,14 @@ export function setProUserStatus(userId: string, isProUser: boolean): void {
 }
 
 export function computeAndCacheProUserStatus(userId: string, subscriptionData: any): boolean {
-  const isProUser = Boolean(subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active');
+  const sub = subscriptionData?.subscription;
+  const now = new Date();
+  const isProUser = Boolean(
+    subscriptionData?.hasSubscription &&
+    sub &&
+    (sub.status === 'active' || sub.status === 'trialing') &&
+    new Date(sub.currentPeriodEnd) > now
+  );
 
   setProUserStatus(userId, isProUser);
   return isProUser;

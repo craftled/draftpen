@@ -142,3 +142,13 @@ FIRECRAWL_API_KEY=xxxx
 # License
 
 This project is licensed under the AGPLv3 License - see the [LICENSE](LICENSE) file for details.
+
+
+## Pricing
+
+- One plan: Draftpen Pro — $99/month with a 7‑day free trial
+- Access: Full access when subscription status is "active" or "trialing" and currentPeriodEnd is in the future
+- Billing: Polar (checkout and customer portal)
+- Database: Single Neon Postgres for all environments; set the same DATABASE_URL (and READ_DB_1/READ_DB_2) for Production/Preview/Development
+- Local setup: keep envs in sync with `vercel env pull`
+- No free tier: all features require an active or trialing subscription

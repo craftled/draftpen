@@ -9,7 +9,7 @@ export function isInTrial(subscription: any): boolean {
 
 // Helper to get subscription type
 export function getSubscriptionType(subscription: any): 'trial' | 'paid' | 'none' {
-  if (!subscription || subscription.status !== 'active') return 'none';
+  if (!subscription || (subscription.status !== 'active' && subscription.status !== 'trialing')) return 'none';
   return isInTrial(subscription) ? 'trial' : 'paid';
 }
 
