@@ -209,6 +209,25 @@ export const auth = betterAuth({
                     console.error('Error checking existing subscription:', error);
                   }
                 }
+                // STEP 1.6: Fallback linking by email if externalId did not resolve a local user
+                if (!validUserId) {
+                  try {
+                    const customerEmail = data.customer?.email;
+                    if (customerEmail) {
+                      const userByEmail = await db.query.user.findFirst({
+                        where: eq(user.email, customerEmail),
+                        columns: { id: true },
+                      });
+                      if (userByEmail?.id) {
+                        console.log(`🔗 Fallback linking by email: ${customerEmail} -> ${userByEmail.id}`);
+                        validUserId = userByEmail.id;
+                      }
+                    }
+                  } catch (e) {
+                    console.warn('Email-based fallback linking failed:', e);
+                  }
+                }
+
                 // STEP 2: Build subscription data
                 const subscriptionData = {
                   id: data.id,
@@ -244,7 +263,7 @@ export const auth = betterAuth({
                   trialStart: subscriptionData.trialStart,
                   trialEnd: subscriptionData.trialEnd,
                 });
-                
+
                 // Debug: Log raw data to see what Polar sends
                 console.log('🔍 Raw webhook data (trial fields):', {
                   trialStart: data.trialStart,
@@ -279,12 +298,12 @@ export const auth = betterAuth({
                   metadata: subscriptionData.metadata,
                   customFieldData: subscriptionData.customFieldData,
                 };
-                
+
                 // Only update userId if we have a valid one (preserve existing if webhook doesn't have it)
                 if (subscriptionData.userId) {
                   updateSet.userId = subscriptionData.userId;
                 }
-                
+
                 await db
                   .insert(subscription)
                   .values(subscriptionData)

@@ -27,6 +27,9 @@ export const serverEnv = createEnv({
     QSTASH_TOKEN: z.string().min(1),
     RESEND_API_KEY: z.string().min(1),
     SUPERMEMORY_API_KEY: z.string().min(1),
+    DATAFORSEO_LOGIN: z.string().min(1).optional(),
+    DATAFORSEO_PASSWORD: z.string().min(1).optional(),
+
     ALLOWED_ORIGINS: z.string().optional().default('http://localhost:3000'),
   },
   experimental__runtimeEnv: process.env,

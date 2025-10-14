@@ -53,6 +53,7 @@ import {
   extremeSearchTool,
   createConnectorsSearchTool,
   codeContextTool,
+  keywordResearchTool,
 } from '@/lib/tools';
 import { markdownJoinerTransform } from '@/lib/parser';
 import { ChatMessage } from '@/lib/types';
@@ -347,6 +348,8 @@ export async function POST(req: Request) {
             datetime: datetimeTool,
             extreme_search: extremeSearchTool(dataStream),
             greeting: greetingTool(timezone),
+            keyword_research: keywordResearchTool,
+
             code_context: codeContextTool,
           };
 

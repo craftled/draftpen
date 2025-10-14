@@ -47,7 +47,12 @@ async function getComprehensiveProStatus(
       .from(subscription)
       .where(eq(subscription.userId, userId))
       .$withCache();
-    const activeSubscription = userSubscriptions.find((sub) => sub.status === 'active');
+    const now = new Date();
+const activeSubscription = userSubscriptions.find(
+  (sub) =>
+    (sub.status === 'active' || sub.status === 'trialing') &&
+    new Date(sub.currentPeriodEnd) > now,
+);
 
     if (activeSubscription) {
       return { isProUser: true, source: 'polar' };
@@ -97,8 +102,13 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
     }
 
     // Get the most recent active subscription
+    const now = new Date();
     const activeSubscription = userSubscriptions
-      .filter((sub) => sub.status === 'active')
+      .filter(
+        (sub) =>
+          (sub.status === 'active' || sub.status === 'trialing') &&
+          new Date(sub.currentPeriodEnd) > now,
+      )
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
 
     if (!activeSubscription) {
@@ -228,8 +238,13 @@ export async function isUserProCached(): Promise<boolean> {
 // Helper to check if user has access to a specific product/tier
 export async function hasAccessToProduct(productId: string): Promise<boolean> {
   const result = await getSubscriptionDetails();
+  const sub = result.subscription;
+  const now = new Date();
   return (
-    result.hasSubscription && result.subscription?.status === 'active' && result.subscription?.productId === productId
+    result.hasSubscription &&
+    sub?.productId === productId &&
+    (sub?.status === 'active' || sub?.status === 'trialing') &&
+    new Date(sub.currentPeriodEnd) > now
   );
 }
 
@@ -253,7 +268,11 @@ export async function getUserSubscriptionStatus(): Promise<'active' | 'canceled'
       return proStatus.isProUser ? 'active' : 'none';
     }
 
-    if (result.subscription?.status === 'active') {
+    if (
+      result.subscription &&
+      (result.subscription.status === 'active' || result.subscription.status === 'trialing') &&
+      new Date(result.subscription.currentPeriodEnd) > new Date()
+    ) {
       return 'active';
     }
 

@@ -36,7 +36,7 @@ async function checkUserIsProById(userId: string): Promise<boolean> {
     // Check if any Polar subscription is active
     const activePolarSubscription = polarSubscriptions.find((sub) => {
       const now = new Date();
-      const isActive = sub.status === 'active' && new Date(sub.currentPeriodEnd) > now;
+      const isActive = (sub.status === 'active' || sub.status === 'trialing') && new Date(sub.currentPeriodEnd) > now;
       return isActive;
     });
 
