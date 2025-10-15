@@ -2,7 +2,7 @@
 
 AI-first content writing software for researching and drafting human-level content.
 
-🔗 **[Try Draftpen](https://draftpen.com)**
+✍️ **[Try Draftpen](https://draftpen.com)**
 
 ## Special Thanks
 
