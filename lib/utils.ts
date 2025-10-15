@@ -5,7 +5,6 @@ import {
   GlobalSearchIcon,
   Database02Icon,
   AtomicPowerIcon,
-  Bitcoin02Icon,
   MicroscopeIcon,
   NewTwitterIcon,
   RedditIcon,
@@ -31,7 +30,7 @@ export type SearchGroupId =
   | 'chat'
   | 'extreme'
   | 'memory'
-  | 'crypto'
+
   | 'code'
   | 'connectors'
   | 'keywords';
@@ -135,13 +134,7 @@ export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
       icon: RedditIcon,
       show: true,
     },
-    {
-      id: 'crypto' as const,
-      name: 'Crypto',
-      description: 'Cryptocurrency research',
-      icon: Bitcoin02Icon,
-      show: true,
-    },
+
     {
       id: 'youtube' as const,
       name: 'YouTube',
