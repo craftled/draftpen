@@ -24,6 +24,8 @@ import Image from 'next/image';
 import ReactMarkdown from 'react-markdown';
 import { Response } from '@/components/ai-elements/response';
 
+import { Tool, ToolContent, ToolHeader, ToolInput, ToolOutput } from '@/components/ai-elements/tool';
+
 // Tool-specific components (lazy loaded)
 import { lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
@@ -155,7 +157,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
     if (part.type === 'text') {
       // Check if there are any reasoning parts in the message
       const hasReasoningParts = parts.some((p) => p.type === 'reasoning');
-      
+
       // For empty text parts in a streaming message, show loading animation only if no tool invocations and no reasoning parts are present
       if ((!part.text || part.text.trim() === '') && status === 'streaming' && !hasActiveToolInvocations && !hasReasoningParts) {
         return (
@@ -697,9 +699,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
             }
             break;
 
-          
 
-          
+
+
 
           case 'tool-academic_search':
             switch (part.state) {
@@ -734,7 +736,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
             }
             break;
 
-          
+
 
           case 'tool-reddit_search':
             switch (part.state) {
@@ -1041,7 +1043,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
             }
             break;
 
-          
+
 
           case 'tool-currency_converter':
             switch (part.state) {
@@ -1377,11 +1379,11 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
             }
             break;
 
-          
 
-          
 
-          
+
+
+
 
           case 'tool-greeting':
             switch (part.state) {
@@ -1436,6 +1438,29 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
             }
             break;
+
+          default:
+            // Generic fallback for any tool without custom UI (e.g., keyword_research)
+            const toolName = part.type.replace('tool-', '');
+            const shouldAutoOpen = part.state === 'output-available' || part.state === 'output-error';
+
+            return (
+              <Tool key={`${messageIndex}-${partIndex}-tool`} defaultOpen={shouldAutoOpen}>
+                <ToolHeader
+                  type={part.type as any}
+                  state={part.state}
+                  title={toolName.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
+                />
+                <ToolContent>
+                  {(part.state === 'input-available' || part.state === 'output-available' || part.state === 'output-error') && (
+                    <ToolInput input={part.input} />
+                  )}
+                  {(part.state === 'output-available' || part.state === 'output-error') && (
+                    <ToolOutput output={part.output} errorText={part.errorText} />
+                  )}
+                </ToolContent>
+              </Tool>
+            );
         }
       } else {
         // Legacy tool invocation without state - show as loading or fallback

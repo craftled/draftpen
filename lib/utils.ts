@@ -14,6 +14,7 @@ import {
   AppleStocksIcon,
   ConnectIcon,
   CodeCircleIcon,
+  Search02Icon,
 } from '@hugeicons/core-free-icons';
 
 export function cn(...inputs: ClassValue[]) {
@@ -32,7 +33,8 @@ export type SearchGroupId =
   | 'memory'
   | 'crypto'
   | 'code'
-  | 'connectors';
+  | 'connectors'
+  | 'keywords';
 
 // Search provider information for dynamic descriptions
 export const searchProviderInfo = {
@@ -81,6 +83,13 @@ export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
       show: true,
       requireAuth: true,
       requirePro: true,
+    },
+    {
+      id: 'keywords' as const,
+      name: 'Keywords',
+      description: 'Keyword research with search volume and difficulty via DataForSEO',
+      icon: Search02Icon,
+      show: true,
     },
     {
       id: 'code' as const,

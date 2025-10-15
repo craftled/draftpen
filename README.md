@@ -19,6 +19,7 @@ To the open-source community and [Scira]([https://draftpen.com](https://github.c
 ### Live research tools
 
 - **First-party search tools**: Run web, academic, YouTube, and Reddit lookups via Parallel AI, Firecrawl, and Exa with automatic deduping and streaming citations.
+- **Keyword research**: Get real-time keyword data with search volume, CPC, and difficulty metrics powered by DataForSEO's Google Ads API—perfect for SEO content planning.
 - **Extreme search mode**: Orchestrate multi-step investigations that branch into additional tool calls when queries demand deeper context.
 - **Inline utilities**: Translate text, pull date/time context, and fetch code-aware context blocks without leaving the conversation.
 
@@ -64,6 +65,7 @@ To the open-source community and [Scira]([https://draftpen.com](https://github.c
 - [Exa AI](https://exa.ai/) - Web search and retrieval
 - [Firecrawl](https://firecrawl.dev/) - Live crawling
 - [Parallel](https://parallel.to/) - Agent automation
+- [DataForSEO](https://dataforseo.com/) - Keyword research with search volume, CPC, and difficulty metrics
 - [Supermemory](https://supermemory.ai/) & `@supermemory/tools` - Long-term memory and connectors
 - [ElevenLabs](https://elevenlabs.io/) (text-to-speech integration)
 
@@ -110,6 +112,7 @@ To run the application locally:
    - OpenAI (required)
    - Anthropic (required)
    - Exa (required for web search feature)
+   - DataForSEO (optional, for keyword research feature)
 2. Copy `.env.example` to `.env.local` and fill in your API keys (minimal keys listed below)
 3. Install dependencies:
    ```bash
@@ -137,6 +140,10 @@ OPENAI_API_KEY=xxxx
 EXA_API_KEY=xxxx
 PARALLEL_API_KEY=xxxx
 FIRECRAWL_API_KEY=xxxx
+
+# Optional: For keyword research feature
+DATAFORSEO_LOGIN=your-email@example.com
+DATAFORSEO_PASSWORD=your-api-password
 ```
 
 # License

@@ -7,40 +7,60 @@ interface DFSKeywordItem {
   search_volume?: number;
   cpc?: number;
   competition?: number;
+  difficulty?: number; // convenience alias (maps to competition when available)
 }
 
 export const keywordResearchTool = tool({
   description:
-    'Perform keyword research with DataForSEO Google Ads Keywords for Keywords (live). Provide 1-5 seed keywords, a location_code, and a language_code. Returns suggestions with volume, CPC, and competition.',
-  inputSchema: z.object({
-    seed_keywords: z
-      .array(z.string().min(1))
-      .min(1)
-      .max(5)
-      .describe('1-5 seed keywords to generate ideas from'),
-    location_code: z
-      .number()
-      .describe('DataForSEO location_code (e.g., 2840 for United States). Use /v3/locations endpoint to discover codes.'),
-    language_code: z.string().describe('ISO language code supported by DataForSEO (e.g., "en")'),
-    limit: z
-      .number()
-      .min(1)
-      .max(200)
-      .default(100)
-      .optional()
-      .describe('Max number of keyword ideas to return (default 100)'),
-    include_adult_keywords: z.boolean().optional().default(false),
-  }),
+    'Keyword research via DataForSEO (Google Ads Keywords for Keywords, live). You can provide a simple "query" like "best seo tools" or 1-5 seed keywords. Defaults: location_code=2840 (US), language_code="en".',
+  inputSchema: z
+    .object({
+      query: z
+        .string()
+        .min(1)
+        .optional()
+        .describe('Simple topic/seed (e.g., "best seo tools"). If provided, seed_keywords is optional.'),
+      seed_keywords: z
+        .array(z.string().min(1))
+        .min(1)
+        .max(5)
+        .optional()
+        .describe('1-5 seed keywords to generate ideas from'),
+      location_code: z
+        .number()
+        .optional()
+        .default(2840)
+        .describe('DataForSEO location_code. Defaults to 2840 (United States).'),
+      language_code: z
+        .string()
+        .optional()
+        .default('en')
+        .describe('ISO language code. Defaults to "en".'),
+      limit: z
+        .number()
+        .min(1)
+        .max(200)
+        .default(100)
+        .optional()
+        .describe('Max number of keyword ideas to return (default 100)'),
+      include_adult_keywords: z.boolean().optional().default(false),
+    })
+    .refine(
+      (v) => (v.query && v.query.length > 0) || (Array.isArray(v.seed_keywords) && v.seed_keywords.length > 0),
+      { message: 'Provide either "query" or "seed_keywords".' },
+    ),
   execute: async ({
+    query,
     seed_keywords,
-    location_code,
-    language_code,
+    location_code = 2840,
+    language_code = 'en',
     limit = 100,
     include_adult_keywords = false,
   }: {
-    seed_keywords: string[];
-    location_code: number;
-    language_code: string;
+    query?: string;
+    seed_keywords?: string[];
+    location_code?: number;
+    language_code?: string;
     limit?: number;
     include_adult_keywords?: boolean;
   }) => {
@@ -53,11 +73,19 @@ export const keywordResearchTool = tool({
       );
     }
 
+    const seeds = (seed_keywords && seed_keywords.length > 0)
+      ? seed_keywords
+      : (query ? [query] : []);
+
+    if (seeds.length === 0) {
+      throw new Error('Provide a non-empty "query" or at least one value in "seed_keywords".');
+    }
+
     const authHeader = 'Basic ' + Buffer.from(`${login}:${password}`).toString('base64');
 
     const payload = [
       {
-        keywords: seed_keywords,
+        keywords: seeds,
         location_code,
         language_code,
         include_adult_keywords,
@@ -83,24 +111,42 @@ export const keywordResearchTool = tool({
 
     const json = await res.json();
 
-    // Expected structure: { tasks: [{ result: [{ items: [...] }] }] }
-    const items: DFSKeywordItem[] =
-      json?.tasks?.flatMap((t: any) => t?.result || [])
-        ?.flatMap((r: any) => r?.items || []) || [];
+    // Check for API errors
+    if (json.status_code !== 20000) {
+      throw new Error(`DataForSEO API error: ${json.status_message || 'Unknown error'}`);
+    }
+
+    // Expected structure: { tasks: [{ result: [...keyword objects...] }] }
+    // Each result item is a keyword object directly
+    const items: any[] =
+      json?.tasks?.flatMap((t: any) => t?.result || []) || [];
+
+    if (items.length === 0) {
+      return {
+        provider: 'dataforseo',
+        endpoint: 'keywords_for_keywords/live',
+        input: { query, seed_keywords: seeds, location_code, language_code, limit, include_adult_keywords },
+        count: 0,
+        keywords: [],
+        message: 'No keyword results found for this query.',
+      };
+    }
 
     const normalized = items
       .slice(0, limit)
       .map((it: any) => ({
         keyword: it.keyword,
-        search_volume: it.search_volume ?? it.avg_monthly_searches ?? undefined,
-        cpc: typeof it.cpc === 'number' ? it.cpc : it.cpc?.usd ?? undefined,
-        competition: it.competition ?? it.keyword_competition ?? undefined,
-      })) as DFSKeywordItem[];
+        search_volume: it.search_volume ?? undefined,
+        cpc: typeof it.cpc === 'number' ? it.cpc : undefined,
+        competition: it.competition ?? undefined,
+        competition_index: it.competition_index ?? undefined,
+        difficulty: it.competition_index ?? it.competition ?? undefined,
+      }));
 
     return {
       provider: 'dataforseo',
       endpoint: 'keywords_for_keywords/live',
-      input: { seed_keywords, location_code, language_code, limit, include_adult_keywords },
+      input: { query, seed_keywords: seeds, location_code, language_code, limit, include_adult_keywords },
       count: normalized.length,
       keywords: normalized,
     };
