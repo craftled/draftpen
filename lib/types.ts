@@ -15,7 +15,6 @@ import type {
   createMemoryTools,
   SearchMemoryTool,
   AddMemoryTool,
-  codeContextTool,
   keywordResearchTool,
 } from '@/lib/tools';
 
@@ -108,7 +107,10 @@ type datetimeTool = InferUITool<typeof datetimeTool>;
 type createConnectorsSearchTool = InferUITool<ReturnType<typeof createConnectorsSearchTool>>;
 type createMemoryTools = InferUITool<SearchMemoryTool>;
 type addMemoryTools = InferUITool<AddMemoryTool>;
-type codeContextTool = InferUITool<typeof codeContextTool>;
+// Kept for backward-compatibility of old messages referencing code_context
+// No runtime tool implementation remains; this is a loose UI-only placeholder type
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type codeContextTool = any;
 type keywordResearchTool = InferUITool<typeof keywordResearchTool>;
 
 // type mcpSearchTool = InferUITool<typeof mcpSearchTool>;

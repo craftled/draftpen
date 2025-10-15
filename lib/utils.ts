@@ -12,7 +12,6 @@ import {
   ChattingIcon,
   AppleStocksIcon,
   ConnectIcon,
-  CodeCircleIcon,
   Search02Icon,
 } from '@hugeicons/core-free-icons';
 
@@ -31,7 +30,6 @@ export type SearchGroupId =
   | 'extreme'
   | 'memory'
 
-  | 'code'
   | 'connectors'
   | 'keywords';
 
@@ -90,13 +88,7 @@ export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
       icon: Search02Icon,
       show: true,
     },
-    {
-      id: 'code' as const,
-      name: 'Code',
-      description: 'Get context about languages and frameworks',
-      icon: CodeCircleIcon,
-      show: true,
-    },
+
     {
       id: 'academic' as const,
       name: 'Academic',

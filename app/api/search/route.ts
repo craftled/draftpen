@@ -52,7 +52,6 @@ import {
   redditSearchTool,
   extremeSearchTool,
   createConnectorsSearchTool,
-  codeContextTool,
   keywordResearchTool,
 } from '@/lib/tools';
 import { markdownJoinerTransform } from '@/lib/parser';
@@ -350,7 +349,6 @@ export async function POST(req: Request) {
             greeting: greetingTool(timezone),
             keyword_research: keywordResearchTool,
 
-            code_context: codeContextTool,
           };
 
           if (!user) {
