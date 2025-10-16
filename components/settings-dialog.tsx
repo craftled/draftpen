@@ -184,9 +184,6 @@ const ExaIcon = ({ className }: { className?: string }) => (
   <Image src="/exa-color.svg" alt="Exa" width={16} height={16} className={className} />
 );
 
-const TavilyIcon = ({ className }: { className?: string }) => (
-  <Image src="/tavily-color.svg" alt="Tavily" width={16} height={16} className={className} />
-);
 
 const FirecrawlIcon = ({ className }: { className?: string }) => (
   <span className={cn('text-base sm:text-lg !mb-3 !pr-1', className)}>🔥</span>
@@ -214,13 +211,6 @@ const searchProviders = [
     description: 'Base and premium web search along with Firecrawl image search support',
     icon: ParallelIcon,
     default: true,
-  },
-  {
-    value: 'tavily',
-    label: 'Tavily',
-    description: 'Wide web search with comprehensive results and analysis',
-    icon: TavilyIcon,
-    default: false,
   },
 ] as const;
 

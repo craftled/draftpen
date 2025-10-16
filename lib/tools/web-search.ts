@@ -6,7 +6,6 @@ import { UIMessageStreamWriter } from 'ai';
 import { ChatMessage } from '../types';
 import Parallel from 'parallel-web';
 import FirecrawlApp, { SearchResultWeb, SearchResultNews, SearchResultImages, Document } from '@mendable/firecrawl-js';
-// Tavily removed
 
 const extractDomain = (url: string | null | undefined): string => {
   if (!url || typeof url !== 'string') return '';
@@ -68,25 +67,6 @@ const processDomains = (domains?: (string | null)[]): string[] | undefined => {
   return processedDomains.length === 0 ? undefined : processedDomains;
 };
 
-// Helper functions for Tavily image processing
-const sanitizeUrl = (url: string): string => {
-  try {
-    // Remove any additional URL parameters that might cause issues
-    const urlObj = new URL(url);
-    return urlObj.href;
-  } catch {
-    return url;
-  }
-};
-
-const isValidImageUrl = async (url: string): Promise<{ valid: boolean; redirectedUrl?: string }> => {
-  try {
-    // Just return valid for now - we can add more sophisticated validation later
-    return { valid: true, redirectedUrl: url };
-  } catch {
-    return { valid: false };
-  }
-};
 
 // Search provider strategy interface
 interface SearchStrategy {
