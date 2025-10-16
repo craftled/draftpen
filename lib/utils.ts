@@ -29,7 +29,8 @@ export type SearchGroupId =
   | 'memory'
 
   | 'connectors'
-  | 'keywords';
+  | 'keywords'
+  | 'serp';
 
 // Search provider information for dynamic descriptions
 export const searchProviderInfo = {
@@ -79,6 +80,14 @@ export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
       icon: Search02Icon,
       show: true,
     },
+    {
+      id: 'serp' as const,
+      name: 'SERP',
+      description: 'Top 20 results with PAA & related (Serper.dev)',
+      icon: Search02Icon,
+      show: true,
+    },
+
 
     {
       id: 'academic' as const,

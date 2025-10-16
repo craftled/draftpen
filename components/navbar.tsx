@@ -167,15 +167,18 @@ const Navbar = memo(
                   selectedVisibilityType === 'public' && (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          className="pointer-events-auto bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 opacity-80 cursor-not-allowed"
-                          disabled
-                        >
-                          <GlobeHemisphereWestIcon size={16} className="text-blue-600 dark:text-blue-400" />
-                          <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Shared</span>
-                        </Button>
+                        <span className="inline-flex">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="pointer-events-none bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 opacity-80 cursor-not-allowed"
+                            aria-disabled="true"
+                            tabIndex={-1}
+                          >
+                            <GlobeHemisphereWestIcon size={16} className="text-blue-600 dark:text-blue-400" />
+                            <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Shared</span>
+                          </Button>
+                        </span>
                       </TooltipTrigger>
                       <TooltipContent side="bottom" sideOffset={4}>
                         {user ? "This is someone else's shared page" : 'This is a shared page'}

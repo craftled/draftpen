@@ -30,7 +30,7 @@ import {
   differenceInYears,
 } from 'date-fns';
 import { deleteChat, getUserChats, loadMoreChats, updateChatTitle } from '@/app/actions';
-import { Button } from './ui/button';
+import { Button, buttonVariants } from './ui/button';
 import { toast } from 'sonner';
 import { User } from '@/lib/db/schema';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -1158,16 +1158,15 @@ export function ChatHistoryButton({ onClickAction }: { onClickAction: () => void
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
+        <button
+          type="button"
           onClick={onClickAction}
-          className="size-6 !p-0 !m-0 rounded-full hover:bg-muted"
           aria-label="Chat History"
+          className={`${buttonVariants({ variant: 'ghost', size: 'icon' })} size-6 !p-0 !m-0 rounded-full hover:bg-muted`}
         >
           <HugeiconsIcon icon={SearchList02Icon} className="size-6" />
           <span className="sr-only">Chat History</span>
-        </Button>
+        </button>
       </TooltipTrigger>
       <TooltipContent side="bottom" sideOffset={4}>
         Chat History

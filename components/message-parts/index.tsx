@@ -74,6 +74,10 @@ const CurrencyConverter = lazy(() =>
   import('@/components/currency_conv').then((module) => ({ default: module.CurrencyConverter })),
 );
 
+const SerpResults = lazy(() =>
+  import('@/components/serp-results').then((module) => ({ default: module.default })),
+);
+
 
 const YouTubeSearchResults = lazy(() =>
   import('@/components/youtube-search-results').then((module) => ({ default: module.YouTubeSearchResults })),
@@ -843,6 +847,44 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
             }
             break;
+
+
+          case 'tool-serp_checker':
+            switch (part.state) {
+              case 'input-streaming':
+                return (
+                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                    Preparing SERP search...
+                  </div>
+                );
+              case 'input-available':
+                return (
+                  <SearchLoadingState
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    icon={Globe}
+                    text="Searching Google (Serper.dev)..."
+                    color="blue"
+                  />
+                );
+              case 'output-available':
+                return (
+                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
+                    <SerpResults output={part.output as any} />
+                  </Suspense>
+                );
+              case 'output-error':
+                return (
+                  <Tool key={`${messageIndex}-${partIndex}-tool`} defaultOpen={true}>
+                    <ToolHeader type={part.type as any} state={part.state} title="SERP Checker" />
+                    <ToolContent>
+                      <ToolInput input={part.input} />
+                      <ToolOutput output={part.output} errorText={part.errorText} />
+                    </ToolContent>
+                  </Tool>
+                );
+            }
+            break;
+
 
           case 'tool-search_memories':
             switch (part.state) {

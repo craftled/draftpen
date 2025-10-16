@@ -13,3 +13,5 @@ export { createConnectorsSearchTool } from './connectors-search';
 export { createMemoryTools, type SearchMemoryTool, type AddMemoryTool } from './supermemory';
 
 export { keywordResearchTool } from './keyword-research';
+
+export { serpCheckerTool } from './serp-checker';
