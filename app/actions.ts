@@ -1199,7 +1199,7 @@ $$
   1. Brief summary (1-2 sentences) of what was found
   2. Markdown table with top keywords (20-30 rows max)
   3. Key insights: high-value opportunities, keyword clusters, patterns
-  4. Optional: Group similar keywords by theme if applicable
+  4. Create clusters: group similar keywords (2-6 clusters). For each top cluster, recommend 1-2 blog post ideas (concise titles).
 
   ### Content Guidelines:
   - Focus on actionable keyword insights
