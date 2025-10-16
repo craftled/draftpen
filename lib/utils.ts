@@ -10,7 +10,6 @@ import {
   RedditIcon,
   YoutubeIcon,
   ChattingIcon,
-  AppleStocksIcon,
   ConnectIcon,
   Search02Icon,
 } from '@hugeicons/core-free-icons';
@@ -25,7 +24,6 @@ export type SearchGroupId =
   | 'academic'
   | 'youtube'
   | 'reddit'
-  | 'stocks'
   | 'chat'
   | 'extreme'
   | 'memory'
@@ -63,13 +61,6 @@ export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
       name: 'X',
       description: 'Search X posts',
       icon: NewTwitterIcon,
-      show: true,
-    },
-    {
-      id: 'stocks' as const,
-      name: 'Stocks',
-      description: 'Stock and currency information',
-      icon: AppleStocksIcon,
       show: true,
     },
     {
