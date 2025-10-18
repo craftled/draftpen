@@ -1,20 +1,20 @@
-import { notFound } from 'next/navigation';
-import { ChatInterface } from '@/components/chat-interface';
-import { getUser } from '@/lib/auth-utils';
-import { getChatWithUserAndInitialMessages } from '@/lib/db/chat-queries';
-import { getChatById } from '@/lib/db/queries';
-import { Message, type Chat } from '@/lib/db/schema';
-import { Metadata } from 'next';
-import { UIMessagePart } from 'ai';
-import { ChatMessage, ChatTools, CustomUIDataTypes } from '@/lib/types';
-import { formatISO } from 'date-fns';
+import type { UIMessagePart } from "ai";
+import { formatISO } from "date-fns";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { ChatInterface } from "@/components/chat-interface";
+import { getUser } from "@/lib/auth-utils";
+import { getChatWithUserAndInitialMessages } from "@/lib/db/chat-queries";
+import { getChatById } from "@/lib/db/queries";
+import type { Chat, Message } from "@/lib/db/schema";
+import type { ChatMessage, ChatTools, CustomUIDataTypes } from "@/lib/types";
 
 async function sleep(durationMs: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, durationMs));
 }
 
 async function fetchChatWithBackoff(id: string): Promise<Chat | undefined> {
-  const maximumWaitMs = 15000;
+  const maximumWaitMs = 15_000;
   let delayMs = 500;
   const deadline = Date.now() + maximumWaitMs;
 
@@ -30,41 +30,45 @@ async function fetchChatWithBackoff(id: string): Promise<Chat | undefined> {
     delayMs = Math.min(delayMs * 2, maximumWaitMs);
   }
 
-  return undefined;
+  return;
 }
 
 // metadata
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
   const id = (await params).id;
   const chat = await fetchChatWithBackoff(id);
   const user = await getUser();
   // if not chat, return Scira Chat
   if (!chat) {
-    return { title: 'Scira Chat' };
+    return { title: "Scira Chat" };
   }
   let title;
   // if chat is public, return title
-  if (chat.visibility === 'public') {
+  if (chat.visibility === "public") {
     title = chat.title;
   }
   // if chat is private, return title
-  if (chat.visibility === 'private') {
+  if (chat.visibility === "private") {
     if (!user) {
-      title = 'Scira Chat';
+      title = "Scira Chat";
     }
     if (user!.id !== chat.userId) {
-      title = 'Scira Chat';
+      title = "Scira Chat";
     }
     title = chat.title;
   }
   return {
-    title: title,
-    description: 'A search in Draftpen',
+    title,
+    description: "A search in Draftpen",
     openGraph: {
-      title: title,
+      title,
       url: `https://draftpen.com/search/${id}`,
-      description: 'A search in scira.ai',
-      siteName: 'draftpen.com',
+      description: "A search in scira.ai",
+      siteName: "draftpen.com",
       images: [
         {
           url: `https://draftpen.com/api/og/chat/${id}`,
@@ -74,12 +78,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       ],
     },
     twitter: {
-      card: 'summary_large_image',
-      title: title,
+      card: "summary_large_image",
+      title,
       url: `https://draftpen.com/search/${id}`,
-      description: 'A search in Draftpen',
-      siteName: 'draftpen.com',
-      creator: '@sciraai',
+      description: "A search in Draftpen",
+      siteName: "draftpen.com",
+      creator: "@sciraai",
       images: [
         {
           url: `https://draftpen.com/api/og/chat/${id}`,
@@ -95,7 +99,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 export function convertToUIMessages(messages: Message[]): ChatMessage[] {
-  console.log('Messages: ', messages);
+  console.log("Messages: ", messages);
 
   return messages.map((message) => {
     // Handle the parts array which comes from JSON in the database
@@ -108,11 +112,11 @@ export function convertToUIMessages(messages: Message[]): ChatMessage[] {
 
     return {
       id: message.id,
-      role: message.role as 'user' | 'assistant' | 'system',
+      role: message.role as "user" | "assistant" | "system",
       parts: convertedParts as UIMessagePart<CustomUIDataTypes, ChatTools>[],
       metadata: {
         createdAt: formatISO(message.createdAt),
-        model: message.model ?? '',
+        model: message.model ?? "",
         completionTime: message.completionTime,
         inputTokens: message.inputTokens,
         outputTokens: message.outputTokens,
@@ -125,14 +129,14 @@ export function convertToUIMessages(messages: Message[]): ChatMessage[] {
 function convertLegacyToolInvocation(part: unknown): unknown {
   // Check if this is a legacy tool-invocation part
   if (
-    typeof part === 'object' &&
+    typeof part === "object" &&
     part !== null &&
-    'type' in part &&
-    part.type === 'tool-invocation' &&
-    'toolInvocation' in part &&
-    typeof part.toolInvocation === 'object' &&
+    "type" in part &&
+    part.type === "tool-invocation" &&
+    "toolInvocation" in part &&
+    typeof part.toolInvocation === "object" &&
     part.toolInvocation !== null &&
-    'toolName' in part.toolInvocation
+    "toolName" in part.toolInvocation
   ) {
     const toolInvocation = part.toolInvocation as {
       toolName: string;
@@ -145,12 +149,12 @@ function convertLegacyToolInvocation(part: unknown): unknown {
     // Map old state to new state
     const mapState = (oldState: string): string => {
       switch (oldState) {
-        case 'result':
-          return 'output-available';
-        case 'partial-result':
-          return 'input-available';
-        case 'call':
-          return 'input-streaming';
+        case "result":
+          return "output-available";
+        case "partial-result":
+          return "input-available";
+        case "call":
+          return "input-streaming";
         default:
           return oldState; // Keep unknown states as-is
       }
@@ -172,7 +176,7 @@ function convertLegacyToolInvocation(part: unknown): unknown {
 
 // Convert legacy reasoning structures to the standard ReasoningUIPart shape
 function convertLegacyReasoningPart(part: unknown): unknown {
-  if (typeof part !== 'object' || part === null || !('type' in part)) {
+  if (typeof part !== "object" || part === null || !("type" in part)) {
     return part;
   }
 
@@ -185,39 +189,42 @@ function convertLegacyReasoningPart(part: unknown): unknown {
   };
 
   // Only handle legacy reasoning-like entries
-  if (maybePart.type === 'reasoning') {
+  if (maybePart.type === "reasoning") {
     // If already in the desired shape (has string text), keep as-is
-    if (typeof maybePart.text === 'string' && maybePart.text.length > 0) {
+    if (typeof maybePart.text === "string" && maybePart.text.length > 0) {
       return part;
     }
 
     // Collect text from possible legacy fields
-    const mainText = typeof maybePart.reasoning === 'string' ? maybePart.reasoning : '';
+    const mainText =
+      typeof maybePart.reasoning === "string" ? maybePart.reasoning : "";
 
-    let detailsText = '';
+    let detailsText = "";
     if (Array.isArray(maybePart.details)) {
       const collected: string[] = [];
       for (const entry of maybePart.details as Array<unknown>) {
         if (
-          typeof entry === 'object' &&
+          typeof entry === "object" &&
           entry !== null &&
-          'type' in entry &&
-          (entry as { type?: unknown }).type === 'text' &&
-          'text' in entry &&
-          typeof (entry as { text?: unknown }).text === 'string'
+          "type" in entry &&
+          (entry as { type?: unknown }).type === "text" &&
+          "text" in entry &&
+          typeof (entry as { text?: unknown }).text === "string"
         ) {
           collected.push((entry as { text: string }).text);
         }
       }
       if (collected.length > 0) {
-        detailsText = collected.join('\n\n');
+        detailsText = collected.join("\n\n");
       }
     }
 
-    const combinedText = [mainText, detailsText].filter((v) => v && v.trim().length > 0).join('\n\n');
+    const combinedText = [mainText, detailsText]
+      .filter((v) => v && v.trim().length > 0)
+      .join("\n\n");
 
     return {
-      type: 'reasoning',
+      type: "reasoning",
       text: combinedText,
     };
   }
@@ -230,7 +237,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const { id } = params;
 
-  console.log('🔍 [PAGE] Starting optimized chat page load for:', id);
+  console.log("🔍 [PAGE] Starting optimized chat page load for:", id);
   const pageStartTime = Date.now();
 
   // Get user first for ownership checks
@@ -248,11 +255,11 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
     notFound();
   }
 
-  console.log('Chat: ', chat);
-  console.log('Messages from DB: ', messagesFromDb);
+  console.log("Chat: ", chat);
+  console.log("Messages from DB: ", messagesFromDb);
 
   // Check visibility and ownership
-  if (chat.visibility === 'private') {
+  if (chat.visibility === "private") {
     if (!user) {
       return notFound();
     }
@@ -272,11 +279,11 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
 
   return (
     <ChatInterface
-      key={id}
       initialChatId={id}
       initialMessages={initialMessages}
-      initialVisibility={chat.visibility as 'public' | 'private'}
+      initialVisibility={chat.visibility as "public" | "private"}
       isOwner={isOwner}
+      key={id}
     />
   );
 }

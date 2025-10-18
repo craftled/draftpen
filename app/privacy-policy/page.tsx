@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { ExternalLink } from 'lucide-react';
-import { SciraLogo } from '@/components/logos/scira-logo';
-import { SiteFooter } from '@/components/site-footer';
+import { motion } from "framer-motion";
+import { ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { SciraLogo } from "@/components/logos/scira-logo";
+import { SiteFooter } from "@/components/site-footer";
 
 const container = {
   hidden: { opacity: 0 },
@@ -28,71 +28,86 @@ export default function PrivacyPage() {
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-to-b from-muted/30 to-transparent" />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border))_1px,transparent_1px)] bg-[size:24px_24px] opacity-20" />
-        <div className="absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+        <div className="absolute top-0 right-0 left-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
-        <div className="relative pt-24 pb-12 px-4">
+        <div className="relative px-4 pt-24 pb-12">
           <motion.div
-            className="container max-w-3xl mx-auto space-y-8"
-            variants={container}
-            initial="hidden"
             animate="show"
+            className="container mx-auto max-w-3xl space-y-8"
+            initial="hidden"
+            variants={container}
           >
             {/* Logo */}
-            <motion.div variants={item} className="text-center">
-              <Link href="/" className="inline-flex items-center gap-3 font-be-vietnam-pro font-bold">
-                <div className="relative w-14 h-14 rounded-full bg-background/90 shadow-sm flex items-center justify-center border">
+            <motion.div className="text-center" variants={item}>
+              <Link
+                className="inline-flex items-center gap-3 font-be-vietnam-pro font-bold"
+                href="/"
+              >
+                <div className="relative flex h-14 w-14 items-center justify-center rounded-full border bg-background/90 shadow-sm">
                   <SciraLogo className="size-8 opacity-90" />
                 </div>
               </Link>
             </motion.div>
 
-            <motion.div variants={item} className="text-center">
-              <h1 className="text-4xl font-bold tracking-tight">Privacy Policy</h1>
-              <p className="text-muted-foreground mt-3">Last updated: July 24, 2025</p>
+            <motion.div className="text-center" variants={item}>
+              <h1 className="font-bold text-4xl tracking-tight">
+                Privacy Policy
+              </h1>
+              <p className="mt-3 text-muted-foreground">
+                Last updated: July 24, 2025
+              </p>
             </motion.div>
           </motion.div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="py-16 px-4">
-        <div className="container max-w-3xl mx-auto prose dark:prose-invert prose-neutral prose-headings:font-be-vietnam-pro prose-p:text-muted-foreground prose-a:text-foreground prose-a:no-underline hover:prose-a:text-foreground/80 prose-headings:tracking-tight">
+      <div className="px-4 py-16">
+        <div className="prose dark:prose-invert prose-neutral container mx-auto max-w-3xl prose-headings:font-be-vietnam-pro prose-a:text-foreground prose-p:text-muted-foreground prose-headings:tracking-tight prose-a:no-underline hover:prose-a:text-foreground/80">
           <p className="text-lg">
-            At Scira AI, we respect your privacy and are committed to protecting your personal data. This Privacy Policy
-            explains how we collect, use, and safeguard your information when you use our AI-powered search engine.
+            At Scira AI, we respect your privacy and are committed to protecting
+            your personal data. This Privacy Policy explains how we collect,
+            use, and safeguard your information when you use our AI-powered
+            search engine.
           </p>
 
           <h2>Information We Collect</h2>
           <p>We may collect the following types of information:</p>
           <ul>
             <li>
-              <strong>Search Queries:</strong> The questions and searches you submit to our search engine.
+              <strong>Search Queries:</strong> The questions and searches you
+              submit to our search engine.
             </li>
             <li>
-              <strong>Usage Data:</strong> Information about how you interact with our service, including features used
-              and time spent on the platform.
+              <strong>Usage Data:</strong> Information about how you interact
+              with our service, including features used and time spent on the
+              platform.
             </li>
             <li>
-              <strong>Device Information:</strong> Information about your device, browser type, IP address, and
-              operating system.
+              <strong>Device Information:</strong> Information about your
+              device, browser type, IP address, and operating system.
             </li>
             <li>
-              <strong>Account Information:</strong> Email address and profile information when you create an account.
+              <strong>Account Information:</strong> Email address and profile
+              information when you create an account.
             </li>
             <li>
-              <strong>Subscription Data:</strong> Information about your subscription status and payment history (but
-              not payment details).
+              <strong>Subscription Data:</strong> Information about your
+              subscription status and payment history (but not payment details).
             </li>
             <li>
-              <strong>Cookies and Similar Technologies:</strong> We use cookies and similar tracking technologies to
-              enhance your experience and collect usage information.
+              <strong>Cookies and Similar Technologies:</strong> We use cookies
+              and similar tracking technologies to enhance your experience and
+              collect usage information.
             </li>
           </ul>
           <p>
-            <strong>Important Note on Payment Data:</strong> Scira AI does not collect, store, or process any payment
-            card details, bank information, UPI details, or other sensitive payment data. All payment information is
-            handled directly by our payment processor (Polar) and is subject to its
-            privacy policies and security standards.
+            <strong>Important Note on Payment Data:</strong> Scira AI does not
+            collect, store, or process any payment card details, bank
+            information, UPI details, or other sensitive payment data. All
+            payment information is handled directly by our payment processor
+            (Polar) and is subject to its privacy policies and security
+            standards.
           </p>
 
           <h2>How We Use Your Information</h2>
@@ -109,42 +124,48 @@ export default function PrivacyPage() {
           <p>We may share your information in the following circumstances:</p>
           <ul>
             <li>
-              <strong>Service Providers:</strong> With third-party service providers who help us operate, improve, and
-              analyze our service. Specifically, we use services from:
+              <strong>Service Providers:</strong> With third-party service
+              providers who help us operate, improve, and analyze our service.
+              Specifically, we use services from:
             </li>
             <ul>
               <li>
                 <strong>Vercel:</strong> Our hosting and infrastructure provider
               </li>
               <li>
-                <strong>AI Processing Partners:</strong> We utilize services from companies including OpenAI, Anthropic,
-                xAI, and others to process search queries and provide results
+                <strong>AI Processing Partners:</strong> We utilize services
+                from companies including OpenAI, Anthropic, xAI, and others to
+                process search queries and provide results
               </li>
               <li>
-                <strong>Payment Processor:</strong> We use Polar to process payments and manage
-                subscriptions. This provider handles all payment data directly and has its own privacy policy
-                governing payment information.
+                <strong>Payment Processor:</strong> We use Polar to process
+                payments and manage subscriptions. This provider handles all
+                payment data directly and has its own privacy policy governing
+                payment information.
               </li>
             </ul>
             <li>
-              <strong>Compliance with Laws:</strong> When required by applicable law, regulation, legal process, or
-              governmental request.
+              <strong>Compliance with Laws:</strong> When required by applicable
+              law, regulation, legal process, or governmental request.
             </li>
             <li>
-              <strong>Business Transfers:</strong> In connection with a merger, acquisition, or sale of assets.
+              <strong>Business Transfers:</strong> In connection with a merger,
+              acquisition, or sale of assets.
             </li>
           </ul>
           <p>
-            <strong>Payment Data:</strong> When you make a payment, your payment information is transmitted directly to
-            our payment processor (Polar) and is not stored on
-            our servers. We only receive confirmation of successful payments and subscription status updates.
+            <strong>Payment Data:</strong> When you make a payment, your payment
+            information is transmitted directly to our payment processor (Polar)
+            and is not stored on our servers. We only receive confirmation of
+            successful payments and subscription status updates.
           </p>
 
           <h2>Data Security</h2>
           <p>
-            We implement appropriate technical and organizational measures to protect your personal information.
-            However, no method of transmission over the Internet or electronic storage is 100% secure, and we cannot
-            guarantee absolute security.
+            We implement appropriate technical and organizational measures to
+            protect your personal information. However, no method of
+            transmission over the Internet or electronic storage is 100% secure,
+            and we cannot guarantee absolute security.
           </p>
 
           <h2>Your Rights</h2>
@@ -159,29 +180,34 @@ export default function PrivacyPage() {
 
           <h2>Children&apos;s Privacy</h2>
           <p>
-            Our service is not directed to children under the age of 13. We do not knowingly collect personal
-            information from children under 13. If you are a parent or guardian and believe your child has provided us
-            with personal information, please contact us.
+            Our service is not directed to children under the age of 13. We do
+            not knowingly collect personal information from children under 13.
+            If you are a parent or guardian and believe your child has provided
+            us with personal information, please contact us.
           </p>
 
           <h2>Changes to This Privacy Policy</h2>
           <p>
-            We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new
-            Privacy Policy on this page and updating the &quot;Last updated&quot; date.
+            We may update our Privacy Policy from time to time. We will notify
+            you of any changes by posting the new Privacy Policy on this page
+            and updating the &quot;Last updated&quot; date.
           </p>
 
           <h2>Contact Us</h2>
-          <p>If you have any questions about this Privacy Policy, please contact us at:</p>
           <p>
-            <a href="mailto:zaid@scira.ai" className="flex items-center gap-1">
+            If you have any questions about this Privacy Policy, please contact
+            us at:
+          </p>
+          <p>
+            <a className="flex items-center gap-1" href="mailto:zaid@scira.ai">
               zaid@scira.ai <ExternalLink className="h-4 w-4" />
             </a>
           </p>
 
           <div className="my-8 border-t pt-8">
-            <p className="text-sm text-muted-foreground">
-              By using Scira AI, you agree to our Privacy Policy and our{' '}
-              <Link href="/terms" className="underline">
+            <p className="text-muted-foreground text-sm">
+              By using Scira AI, you agree to our Privacy Policy and our{" "}
+              <Link className="underline" href="/terms">
                 Terms of Service
               </Link>
               .

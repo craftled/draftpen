@@ -1,20 +1,16 @@
-'use client';
+"use client";
 
-import {
-  Brain,
-  Search,
-  ArrowUpRight,
-  Bot,
-  GraduationCap,
-  Eye,
-  Zap,
-  Image as ImageIcon,
-  FileText,
-  Sparkles,
-} from 'lucide-react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { GithubLogoIcon } from "@phosphor-icons/react";
+import { ArrowUpRight, Bot, Brain, Eye, Search, Sparkles } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+// import { Checkbox } from '@/components/ui/checkbox';
+// import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useRouter } from "next/navigation";
+import { ElevenLabsLogo } from "@/components/logos/elevenlabs-logo";
+import { ExaLogo } from "@/components/logos/exa-logo";
+import { VercelLogo } from "@/components/logos/vercel-logo";
+import { Badge } from "@/components/ui/badge";
 // import {
 //   Dialog,
 //   DialogContent,
@@ -23,28 +19,20 @@ import { useState, useEffect } from 'react';
 //   DialogHeader,
 //   DialogTitle,
 // } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-// import { Checkbox } from '@/components/ui/checkbox';
-// import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useRouter } from 'next/navigation';
-import { GithubLogoIcon, XLogoIcon } from '@phosphor-icons/react';
-import { Badge } from '@/components/ui/badge';
+import { Button } from "@/components/ui/button";
 import {
   ProAccordion,
+  ProAccordionContent,
   ProAccordionItem,
   ProAccordionTrigger,
-  ProAccordionContent,
-} from '@/components/ui/pro-accordion';
-import { useGitHubStars } from '@/hooks/use-github-stars';
-import { VercelLogo } from '@/components/logos/vercel-logo';
-import { ExaLogo } from '@/components/logos/exa-logo';
-import { ElevenLabsLogo } from '@/components/logos/elevenlabs-logo';
-import { LOOKOUT_LIMITS } from '@/app/lookout/constants';
+} from "@/components/ui/pro-accordion";
+import { useGitHubStars } from "@/hooks/use-github-stars";
+
 // import removed: pricing and limits not shown on About page
 
-import { ThemeSwitcher } from '@/components/theme-switcher';
-import { SciraLogo } from '@/components/logos/scira-logo';
-import { SiteFooter } from '@/components/site-footer';
+import { SciraLogo } from "@/components/logos/scira-logo";
+import { SiteFooter } from "@/components/site-footer";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 
 export default function AboutPage() {
   const router = useRouter();
@@ -88,7 +76,7 @@ export default function AboutPage() {
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const query = formData.get('query')?.toString();
+    const query = formData.get("query")?.toString();
     if (query) {
       router.push(`/?q=${encodeURIComponent(query)}`);
     }
@@ -189,39 +177,41 @@ export default function AboutPage() {
       </Dialog>
       */}
       {/* Navigation */}
-      <header className="sticky top-0 z-50 backdrop-blur-lg bg-background/80 border-b border-border/50">
-        <div className="container max-w-6xl mx-auto px-4 sm:px-1">
-          <div className="flex justify-between items-center h-16">
+      <header className="sticky top-0 z-50 border-border/50 border-b bg-background/80 backdrop-blur-lg">
+        <div className="container mx-auto max-w-6xl px-4 sm:px-1">
+          <div className="flex h-16 items-center justify-between">
             {/* Logo */}
-            <Link href="/" className="flex justify-items-end gap-1.5 group">
+            <Link className="group flex justify-items-end gap-1.5" href="/">
               <SciraLogo className="size-7 transition-transform group-hover:scale-110" />
-              <span className="text-2xl font-normal tracking-tighter font-be-vietnam-pro">Scira</span>
+              <span className="font-be-vietnam-pro font-normal text-2xl tracking-tighter">
+                Scira
+              </span>
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center">
+            <nav className="hidden items-center md:flex">
               <div className="flex items-center gap-1">
                 <Link
+                  className="rounded-lg px-4 py-2 font-medium text-muted-foreground text-sm transition-colors hover:bg-accent/50 hover:text-foreground"
                   href="/"
-                  className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg transition-colors"
                 >
                   Search
                 </Link>
                 <Link
+                  className="rounded-lg px-4 py-2 font-medium text-muted-foreground text-sm transition-colors hover:bg-accent/50 hover:text-foreground"
                   href="/pricing"
-                  className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg transition-colors"
                 >
                   Pricing
                 </Link>
                 <Link
+                  className="rounded-lg px-4 py-2 font-medium text-muted-foreground text-sm transition-colors hover:bg-accent/50 hover:text-foreground"
                   href="/terms"
-                  className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg transition-colors"
                 >
                   Terms
                 </Link>
                 <Link
+                  className="rounded-lg px-4 py-2 font-medium text-muted-foreground text-sm transition-colors hover:bg-accent/50 hover:text-foreground"
                   href="/privacy-policy"
-                  className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg transition-colors"
                 >
                   Privacy
                 </Link>
@@ -231,30 +221,32 @@ export default function AboutPage() {
             {/* Right Side Actions */}
             <div className="flex items-center gap-4">
               <Link
+                className="flex items-center gap-2 rounded-md px-3 py-2 font-medium text-muted-foreground text-sm transition-colors hover:bg-accent hover:text-foreground"
                 href="https://git.new/scira"
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
                 target="_blank"
               >
                 <GithubLogoIcon className="h-4 w-4" />
                 <span className="hidden sm:inline">
                   {!isLoadingStars && githubStars && (
-                    <Badge variant="secondary" className="ml-1 text-xs">
-                      {githubStars > 1000 ? `${(githubStars / 1000).toFixed(1)}k` : githubStars}
+                    <Badge className="ml-1 text-xs" variant="secondary">
+                      {githubStars > 1000
+                        ? `${(githubStars / 1000).toFixed(1)}k`
+                        : githubStars}
                     </Badge>
                   )}
                 </span>
               </Link>
 
-              <div className="w-px h-6 bg-border hidden sm:block" />
+              <div className="hidden h-6 w-px bg-border sm:block" />
 
               <ThemeSwitcher />
 
-              <div className="w-px h-6 bg-border hidden sm:block" />
+              <div className="hidden h-6 w-px bg-border sm:block" />
 
               <Button
+                className="bg-primary font-medium text-primary-foreground hover:bg-primary/90"
+                onClick={() => router.push("/")}
                 size="sm"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
-                onClick={() => router.push('/')}
               >
                 Try Free
               </Button>
@@ -263,37 +255,40 @@ export default function AboutPage() {
         </div>
       </header>
       {/* Hero Section */}
-      <section className="py-24 px-4">
-        <div className="container max-w-4xl mx-auto text-center space-y-12">
+      <section className="px-4 py-24">
+        <div className="container mx-auto max-w-4xl space-y-12 text-center">
           <div className="space-y-6">
-            <div className="flex items-end justify-center gap-1 mb-8">
+            <div className="mb-8 flex items-end justify-center gap-1">
               <SciraLogo className="size-12" />
-              <h1 className="text-4xl font-normal font-be-vietnam-pro tracking-tighter">Scira</h1>
+              <h1 className="font-be-vietnam-pro font-normal text-4xl tracking-tighter">
+                Scira
+              </h1>
             </div>
 
-            <h2 className="text-2xl md:text-3xl font-semibold text-foreground max-w-3xl mx-auto">
+            <h2 className="mx-auto max-w-3xl font-semibold text-2xl text-foreground md:text-3xl">
               Open Source AI-Powered Search Engine
             </h2>
 
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              A clean, minimalistic search engine with RAG and search grounding capabilities. Get accurate, up-to-date
-              answers from reliable sources.
+            <p className="mx-auto max-w-2xl text-lg text-muted-foreground leading-relaxed">
+              A clean, minimalistic search engine with RAG and search grounding
+              capabilities. Get accurate, up-to-date answers from reliable
+              sources.
             </p>
           </div>
 
           {/* Search Interface */}
-          <div className="max-w-2xl mx-auto">
+          <div className="mx-auto max-w-2xl">
             <form onSubmit={handleSearch}>
               <div className="relative">
                 <input
-                  type="text"
+                  className="h-14 w-full rounded-lg border-2 border-border bg-background px-6 pr-20 text-base transition-colors placeholder:text-muted-foreground focus:border-primary focus:outline-none"
                   name="query"
                   placeholder="Ask anything..."
-                  className="w-full h-14 px-6 pr-20 text-base rounded-lg bg-background border-2 border-border focus:border-primary focus:outline-none transition-colors placeholder:text-muted-foreground"
+                  type="text"
                 />
                 <button
+                  className="absolute top-2 right-2 h-10 rounded-md bg-primary px-5 font-medium text-primary-foreground transition-colors hover:bg-primary/90"
                   type="submit"
-                  className="absolute right-2 top-2 h-10 px-5 rounded-md bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
                 >
                   Search
                 </button>
@@ -302,23 +297,23 @@ export default function AboutPage() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link
+              className="inline-flex h-11 items-center gap-2 rounded-lg bg-foreground px-6 text-background transition-colors hover:bg-foreground/90"
               href="https://git.new/scira"
-              className="inline-flex h-11 items-center gap-2 px-6 rounded-lg bg-foreground text-background hover:bg-foreground/90 transition-colors"
               target="_blank"
             >
               <GithubLogoIcon className="h-4 w-4" />
               <span className="font-medium">View Source</span>
               {!isLoadingStars && githubStars && (
-                <Badge variant="secondary" className="ml-2">
+                <Badge className="ml-2" variant="secondary">
                   {githubStars.toLocaleString()}
                 </Badge>
               )}
             </Link>
             <Link
+              className="inline-flex h-11 items-center gap-2 rounded-lg border-2 border-border px-6 transition-colors hover:border-primary hover:bg-accent"
               href="/"
-              className="inline-flex h-11 items-center gap-2 px-6 rounded-lg border-2 border-border hover:border-primary hover:bg-accent transition-colors"
             >
               <span className="font-medium">Try Now</span>
               <ArrowUpRight className="h-4 w-4" />
@@ -327,23 +322,23 @@ export default function AboutPage() {
         </div>
       </section>
       {/* Stats Section */}
-      <section className="py-16 px-4 border-y border-border">
-        <div className="container max-w-4xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+      <section className="border-border border-y px-4 py-16">
+        <div className="container mx-auto max-w-4xl">
+          <div className="grid grid-cols-1 gap-8 text-center md:grid-cols-3">
             <div className="space-y-2">
-              <div className="text-3xl font-bold">1M+</div>
+              <div className="font-bold text-3xl">1M+</div>
               <p className="text-muted-foreground">Questions Answered</p>
             </div>
             <div className="space-y-2">
-              <div className="text-3xl font-bold">100K+</div>
+              <div className="font-bold text-3xl">100K+</div>
               <p className="text-muted-foreground">Active Users</p>
             </div>
             <div className="space-y-2">
-              <div className="text-3xl font-bold">
+              <div className="font-bold text-3xl">
                 {isLoadingStars ? (
                   <span className="animate-pulse">...</span>
                 ) : (
-                  `${githubStars?.toLocaleString() || '9,000'}+`
+                  `${githubStars?.toLocaleString() || "9,000"}+`
                 )}
               </div>
               <p className="text-muted-foreground">GitHub Stars</p>
@@ -353,9 +348,15 @@ export default function AboutPage() {
 
         {/* Elegant CTA */}
         <div className="mt-20 text-center">
-          <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-muted/50 border border-border/50 hover:border-border transition-colors">
-            <span className="text-sm text-muted-foreground">Ready to explore?</span>
-            <Button onClick={() => router.push('/')} size="sm" className="h-8 px-4 text-xs font-medium">
+          <div className="inline-flex items-center gap-3 rounded-full border border-border/50 bg-muted/50 px-6 py-3 transition-colors hover:border-border">
+            <span className="text-muted-foreground text-sm">
+              Ready to explore?
+            </span>
+            <Button
+              className="h-8 px-4 font-medium text-xs"
+              onClick={() => router.push("/")}
+              size="sm"
+            >
               Start Searching
               <ArrowUpRight className="ml-1 h-3 w-3" />
             </Button>
@@ -363,68 +364,73 @@ export default function AboutPage() {
         </div>
       </section>
       {/* Awards Section */}
-      <section className="py-16 px-4">
-        <div className="container max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl font-semibold mb-4">Recognition & Awards</h2>
-            <p className="text-muted-foreground">Recognized by leading platforms and communities</p>
+      <section className="px-4 py-16">
+        <div className="container mx-auto max-w-4xl">
+          <div className="mb-12 text-center">
+            <h2 className="mb-4 font-semibold text-2xl">
+              Recognition & Awards
+            </h2>
+            <p className="text-muted-foreground">
+              Recognized by leading platforms and communities
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-            <div className="bg-card border border-border rounded-lg p-8 text-center">
+          <div className="mb-12 grid grid-cols-1 gap-8 md:grid-cols-2">
+            <div className="rounded-lg border border-border bg-card p-8 text-center">
               <div className="mb-4">
                 <Image
-                  src="https://cdn.prod.website-files.com/657b3d8ca1cab4015f06c850/680a4d679063da73487739e0_No1prgold-caps-removebg-preview.png"
                   alt="Tiny Startups #1 Product"
-                  width={64}
+                  className="mx-auto size-16 object-contain"
                   height={64}
-                  className="size-16 object-contain mx-auto"
+                  src="https://cdn.prod.website-files.com/657b3d8ca1cab4015f06c850/680a4d679063da73487739e0_No1prgold-caps-removebg-preview.png"
+                  width={64}
                 />
               </div>
-              <h3 className="font-semibold mb-1">#1 Product of the Week</h3>
-              <p className="text-sm text-muted-foreground">Tiny Startups</p>
+              <h3 className="mb-1 font-semibold">#1 Product of the Week</h3>
+              <p className="text-muted-foreground text-sm">Tiny Startups</p>
             </div>
 
-            <div className="bg-card border border-border rounded-lg p-8 text-center">
+            <div className="rounded-lg border border-border bg-card p-8 text-center">
               <div className="mb-4">
                 <Image
-                  src="/Winner-Medal-Weekly.svg"
                   alt="Peerlist #1 Project"
-                  width={64}
+                  className="mx-auto h-16 w-16 object-contain"
                   height={64}
-                  className="h-16 w-16 object-contain mx-auto"
+                  src="/Winner-Medal-Weekly.svg"
+                  width={64}
                 />
               </div>
-              <h3 className="font-semibold mb-1">#1 Project of the Week</h3>
-              <p className="text-sm text-muted-foreground">Peerlist</p>
+              <h3 className="mb-1 font-semibold">#1 Project of the Week</h3>
+              <p className="text-muted-foreground text-sm">Peerlist</p>
             </div>
           </div>
 
           <div className="text-center">
             <a
-              href="https://openalternative.co/scira?utm_source=openalternative&utm_medium=badge&utm_campaign=embed&utm_content=tool-scira"
-              target="_blank"
               className="inline-block"
+              href="https://openalternative.co/scira?utm_source=openalternative&utm_medium=badge&utm_campaign=embed&utm_content=tool-scira"
+              rel="noopener"
+              target="_blank"
             >
               <Image
-                src="https://openalternative.co/scira/badge.svg?theme=dark&width=200&height=50"
-                width={200}
-                height={50}
                 alt="Scira badge"
                 className="mx-auto"
+                height={50}
+                src="https://openalternative.co/scira/badge.svg?theme=dark&width=200&height=50"
+                width={200}
               />
             </a>
           </div>
 
           {/* Subtle CTA */}
           <div className="mt-16 text-center">
-            <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="inline-flex items-center gap-2 text-muted-foreground text-sm">
               <span>Try our award-winning search</span>
               <Button
-                onClick={() => router.push('/')}
-                variant="link"
+                className="h-auto p-0 font-normal text-primary text-sm hover:text-primary/80"
+                onClick={() => router.push("/")}
                 size="sm"
-                className="h-auto p-0 text-sm font-normal text-primary hover:text-primary/80"
+                variant="link"
               >
                 Get started
                 <ArrowUpRight className="ml-1 h-3 w-3" />
@@ -434,71 +440,82 @@ export default function AboutPage() {
         </div>
       </section>
       {/* Features Section */}
-      <section className="py-20 px-4 bg-muted/30">
-        <div className="container max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-2xl font-semibold mb-4">Key Features</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Built with modern AI technology to provide accurate and reliable search results
+      <section className="bg-muted/30 px-4 py-20">
+        <div className="container mx-auto max-w-6xl">
+          <div className="mb-16 text-center">
+            <h2 className="mb-4 font-semibold text-2xl">Key Features</h2>
+            <p className="mx-auto max-w-2xl text-muted-foreground">
+              Built with modern AI technology to provide accurate and reliable
+              search results
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="bg-card border border-border rounded-lg p-6">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-lg border border-border bg-card p-6">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                 <Brain className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Advanced AI Models</h3>
+              <h3 className="mb-2 font-semibold text-lg">Advanced AI Models</h3>
               <p className="text-muted-foreground">
-                Uses multiple state-of-the-art AI models to understand and answer complex questions accurately.
+                Uses multiple state-of-the-art AI models to understand and
+                answer complex questions accurately.
               </p>
             </div>
 
-            <div className="bg-card border border-border rounded-lg p-6">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+            <div className="rounded-lg border border-border bg-card p-6">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                 <Search className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Real-time Search</h3>
+              <h3 className="mb-2 font-semibold text-lg">Real-time Search</h3>
               <p className="text-muted-foreground">
-                Combines RAG and search grounding to retrieve up-to-date information from reliable sources.
+                Combines RAG and search grounding to retrieve up-to-date
+                information from reliable sources.
               </p>
             </div>
 
-            <div className="bg-card border border-border rounded-lg p-6">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+            <div className="rounded-lg border border-border bg-card p-6">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                 <Bot className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Open Source</h3>
+              <h3 className="mb-2 font-semibold text-lg">Open Source</h3>
               <p className="text-muted-foreground">
-                Fully open source and transparent. Contribute to development or self-host your own instance.
+                Fully open source and transparent. Contribute to development or
+                self-host your own instance.
               </p>
             </div>
 
-            <div className="bg-card border border-border rounded-lg p-6">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+            <div className="rounded-lg border border-border bg-card p-6">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                 <Eye className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Scira Lookout</h3>
+              <h3 className="mb-2 font-semibold text-lg">Scira Lookout</h3>
               <p className="text-muted-foreground">
-                Schedule automated searches to monitor trends and get regular updates on topics that matter to you.
+                Schedule automated searches to monitor trends and get regular
+                updates on topics that matter to you.
               </p>
             </div>
           </div>
 
           {/* Feature CTA */}
           <div className="mt-16 text-center">
-            <div className="max-w-md mx-auto p-4 sm:p-6 rounded-lg bg-gradient-to-br from-muted/50 to-muted/30 border border-border/50">
-              <p className="text-sm text-muted-foreground mb-4">Experience all features in action</p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button onClick={() => router.push('/')} size="sm" className="px-4 py-2 text-sm w-full sm:w-auto">
+            <div className="mx-auto max-w-md rounded-lg border border-border/50 bg-gradient-to-br from-muted/50 to-muted/30 p-4 sm:p-6">
+              <p className="mb-4 text-muted-foreground text-sm">
+                Experience all features in action
+              </p>
+              <div className="flex flex-col justify-center gap-3 sm:flex-row">
+                <Button
+                  className="w-full px-4 py-2 text-sm sm:w-auto"
+                  onClick={() => router.push("/")}
+                  size="sm"
+                >
                   Try Now
                   <ArrowUpRight className="ml-1 h-3 w-3" />
                 </Button>
                 <Button
-                  onClick={() => router.push('/lookout')}
-                  variant="outline"
+                  className="w-full px-4 py-2 text-sm sm:w-auto"
+                  onClick={() => router.push("/lookout")}
                   size="sm"
-                  className="px-4 py-2 text-sm w-full sm:w-auto"
+                  variant="outline"
                 >
                   Try Lookout
                   <Eye className="ml-1 h-3 w-3" />
@@ -509,46 +526,61 @@ export default function AboutPage() {
         </div>
       </section>
       {/* Technology Stack */}
-      <section className="py-20 px-4">
-        <div className="container max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-2xl font-semibold mb-4">Built With Industry Leaders</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
+      <section className="px-4 py-20">
+        <div className="container mx-auto max-w-6xl">
+          <div className="mb-16 text-center">
+            <h2 className="mb-4 font-semibold text-2xl">
+              Built With Industry Leaders
+            </h2>
+            <p className="mx-auto max-w-2xl text-muted-foreground">
               Powered by cutting-edge technology from leading companies
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-card border border-border rounded-lg p-8 text-center">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+            <div className="rounded-lg border border-border bg-card p-8 text-center">
               <div className="mb-6 flex justify-center">
                 <VercelLogo />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Vercel AI SDK</h3>
-              <p className="text-muted-foreground text-sm">Advanced AI framework powering intelligent responses</p>
+              <h3 className="mb-2 font-semibold text-lg">Vercel AI SDK</h3>
+              <p className="text-muted-foreground text-sm">
+                Advanced AI framework powering intelligent responses
+              </p>
             </div>
 
-            <div className="bg-card border border-border rounded-lg p-8 text-center">
+            <div className="rounded-lg border border-border bg-card p-8 text-center">
               <div className="mb-6 flex justify-center">
                 <ExaLogo />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Exa Search</h3>
-              <p className="text-muted-foreground text-sm">Real-time search grounding with reliable sources</p>
+              <h3 className="mb-2 font-semibold text-lg">Exa Search</h3>
+              <p className="text-muted-foreground text-sm">
+                Real-time search grounding with reliable sources
+              </p>
             </div>
 
-            <div className="bg-card border border-border rounded-lg p-8 text-center">
+            <div className="rounded-lg border border-border bg-card p-8 text-center">
               <div className="mb-6 flex justify-center">
                 <ElevenLabsLogo />
               </div>
-              <h3 className="text-lg font-semibold mb-2">ElevenLabs Voice</h3>
-              <p className="text-muted-foreground text-sm">Natural voice synthesis with human-like quality</p>
+              <h3 className="mb-2 font-semibold text-lg">ElevenLabs Voice</h3>
+              <p className="text-muted-foreground text-sm">
+                Natural voice synthesis with human-like quality
+              </p>
             </div>
           </div>
 
           {/* Tech Stack CTA */}
           <div className="mt-16 text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted/30 border border-border/30">
-              <span className="text-sm text-muted-foreground">Powered by the best</span>
-              <Button asChild variant="ghost" size="sm" className="h-6 px-2 text-xs text-primary hover:text-primary/80">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border/30 bg-muted/30 px-4 py-2">
+              <span className="text-muted-foreground text-sm">
+                Powered by the best
+              </span>
+              <Button
+                asChild
+                className="h-6 px-2 text-primary text-xs hover:text-primary/80"
+                size="sm"
+                variant="ghost"
+              >
                 <Link href="https://git.new/scira" target="_blank">
                   View source
                   <ArrowUpRight className="ml-1 h-3 w-3" />
@@ -559,34 +591,48 @@ export default function AboutPage() {
         </div>
       </section>
       {/* Featured on Vercel Section */}
-      <section className="py-16 px-4 border-y border-border">
-        <div className="container max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <section className="border-border border-y px-4 py-16">
+        <div className="container mx-auto max-w-6xl">
+          <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
             <div className="space-y-6">
-              <h2 className="text-2xl font-semibold">Featured on Vercel&apos;s Blog</h2>
+              <h2 className="font-semibold text-2xl">
+                Featured on Vercel&apos;s Blog
+              </h2>
               <p className="text-muted-foreground leading-relaxed">
-                Recognized for our innovative use of AI technology and contribution to the developer community through
-                the Vercel AI SDK.
+                Recognized for our innovative use of AI technology and
+                contribution to the developer community through the Vercel AI
+                SDK.
               </p>
               <Link
+                className="inline-flex items-center gap-2 font-medium text-primary transition-colors hover:text-primary/80"
                 href="https://vercel.com/blog/ai-sdk-4-1"
-                className="inline-flex items-center gap-2 font-medium text-primary hover:text-primary/80 transition-colors"
                 target="_blank"
               >
                 Read the Feature
                 <ArrowUpRight className="h-4 w-4" />
               </Link>
             </div>
-            <div className="relative aspect-video rounded-lg overflow-hidden border border-border">
-              <Image src="/vercel-featured.png" alt="Featured on Vercel Blog" fill className="object-cover" />
+            <div className="relative aspect-video overflow-hidden rounded-lg border border-border">
+              <Image
+                alt="Featured on Vercel Blog"
+                className="object-cover"
+                fill
+                src="/vercel-featured.png"
+              />
             </div>
           </div>
 
           {/* Vercel CTA */}
           <div className="mt-12 text-center">
-            <div className="inline-flex flex-col sm:flex-row items-center gap-3 px-4 sm:px-5 py-3 rounded-lg bg-gradient-to-r from-background to-muted/20 border border-border/50 max-w-xs sm:max-w-none mx-auto">
-              <span className="text-sm text-muted-foreground text-center">Featured technology</span>
-              <Button onClick={() => router.push('/')} size="sm" className="h-7 px-3 text-xs w-full sm:w-auto">
+            <div className="mx-auto inline-flex max-w-xs flex-col items-center gap-3 rounded-lg border border-border/50 bg-gradient-to-r from-background to-muted/20 px-4 py-3 sm:max-w-none sm:flex-row sm:px-5">
+              <span className="text-center text-muted-foreground text-sm">
+                Featured technology
+              </span>
+              <Button
+                className="h-7 w-full px-3 text-xs sm:w-auto"
+                onClick={() => router.push("/")}
+                size="sm"
+              >
                 Try it now
                 <Sparkles className="ml-1 h-3 w-3" />
               </Button>
@@ -595,143 +641,190 @@ export default function AboutPage() {
         </div>
       </section>
       {/* Pricing Section */}
-      <section className="py-20 px-4">
-        <div className="container max-w-4xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-2xl font-medium mb-4 tracking-tight">Pricing</h2>
-            <p className="text-muted-foreground/80 max-w-lg mx-auto">Simple, transparent pricing for everyone</p>
+      <section className="px-4 py-20">
+        <div className="container mx-auto max-w-4xl">
+          <div className="mb-16 text-center">
+            <h2 className="mb-4 font-medium text-2xl tracking-tight">
+              Pricing
+            </h2>
+            <p className="mx-auto max-w-lg text-muted-foreground/80">
+              Simple, transparent pricing for everyone
+            </p>
           </div>
 
-          <div className="grid gap-6 max-w-3xl mx-auto">
+          <div className="mx-auto grid max-w-3xl gap-6">
             {/* Draftpen Pro */}
-            <div className="bg-background border border-primary/30 rounded-xl p-8 relative hover:border-primary/50 transition-colors flex flex-col">
-              <div className="absolute -top-px left-8 right-8 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent"></div>
+            <div className="relative flex flex-col rounded-xl border border-primary/30 bg-background p-8 transition-colors hover:border-primary/50">
+              <div className="-top-px absolute right-8 left-8 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
 
               <div className="mb-8">
-                <div className="flex items-center gap-3 mb-2">
-                  <h3 className="text-xl font-medium">Draftpen Pro</h3>
-                  <span className="text-xs font-medium text-primary/80 bg-primary/10 px-2.5 py-1 rounded-full">
+                <div className="mb-2 flex items-center gap-3">
+                  <h3 className="font-medium text-xl">Draftpen Pro</h3>
+                  <span className="rounded-full bg-primary/10 px-2.5 py-1 font-medium text-primary/80 text-xs">
                     7-day free trial
                   </span>
                 </div>
-                <p className="text-muted-foreground/70 mb-4">Everything you need for serious work</p>
-                <p className="text-muted-foreground/80">Start your 7-day free trial. See Pricing page for current monthly price.</p>
+                <p className="mb-4 text-muted-foreground/70">
+                  Everything you need for serious work
+                </p>
+                <p className="text-muted-foreground/80">
+                  Start your 7-day free trial. See Pricing page for current
+                  monthly price.
+                </p>
               </div>
 
-              <ul className="space-y-3 flex-1 mb-8">
+              <ul className="mb-8 flex-1 space-y-3">
                 <li className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></div>
-                  <span className="text-muted-foreground">Unlimited searches</span>
+                  <div className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
+                  <span className="text-muted-foreground">
+                    Unlimited searches
+                  </span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></div>
+                  <div className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
                   <span className="text-muted-foreground">All AI models</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></div>
+                  <div className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
                   <span className="text-muted-foreground">PDF analysis</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></div>
-                  <span className="text-muted-foreground">Priority support</span>
+                  <div className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
+                  <span className="text-muted-foreground">
+                    Priority support
+                  </span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0"></div>
+                  <div className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
                   <span className="text-muted-foreground">Scira Lookout</span>
                 </li>
               </ul>
 
-              <Button className="w-full" onClick={() => router.push('/pricing')}>
+              <Button
+                className="w-full"
+                onClick={() => router.push("/pricing")}
+              >
                 Start 7-day free trial
               </Button>
             </div>
           </div>
-
-
         </div>
       </section>
       {/* FAQ Section */}
-      <section className="py-20 px-4 bg-muted/30">
-        <div className="container max-w-4xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-2xl font-semibold mb-4">Frequently Asked Questions</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">Find answers to common questions about Scira</p>
+      <section className="bg-muted/30 px-4 py-20">
+        <div className="container mx-auto max-w-4xl">
+          <div className="mb-16 text-center">
+            <h2 className="mb-4 font-semibold text-2xl">
+              Frequently Asked Questions
+            </h2>
+            <p className="mx-auto max-w-2xl text-muted-foreground">
+              Find answers to common questions about Scira
+            </p>
           </div>
 
-          <ProAccordion type="single" collapsible className="w-full">
+          <ProAccordion className="w-full" collapsible type="single">
             <ProAccordionItem value="item-1">
               <ProAccordionTrigger>What is Scira?</ProAccordionTrigger>
               <ProAccordionContent>
-                Scira is an open-source AI-powered search engine that uses RAG (Retrieval-Augmented Generation) and
-                search grounding to provide accurate, up-to-date answers from reliable sources.
+                Scira is an open-source AI-powered search engine that uses RAG
+                (Retrieval-Augmented Generation) and search grounding to provide
+                accurate, up-to-date answers from reliable sources.
               </ProAccordionContent>
             </ProAccordionItem>
 
             <ProAccordionItem value="item-2">
-              <ProAccordionTrigger>What&apos;s included in the subscription?</ProAccordionTrigger>
+              <ProAccordionTrigger>
+                What&apos;s included in the subscription?
+              </ProAccordionTrigger>
               <ProAccordionContent>
-                Draftpen is a pro-only service at $99/month with a 7-day free trial. You get unlimited searches, 
-                access to all premium AI models (GPT-4, Claude 3.5, and more), PDF document analysis, web research 
-                with real-time data, and priority support.
+                Draftpen is a pro-only service at $99/month with a 7-day free
+                trial. You get unlimited searches, access to all premium AI
+                models (GPT-4, Claude 3.5, and more), PDF document analysis, web
+                research with real-time data, and priority support.
               </ProAccordionContent>
             </ProAccordionItem>
 
             <ProAccordionItem value="item-3">
-              <ProAccordionTrigger>Are there any discounts available?</ProAccordionTrigger>
+              <ProAccordionTrigger>
+                Are there any discounts available?
+              </ProAccordionTrigger>
               <ProAccordionContent>
-                We occasionally offer discount codes for special promotions. You can apply any available discount codes during checkout through Polar.
+                We occasionally offer discount codes for special promotions. You
+                can apply any available discount codes during checkout through
+                Polar.
               </ProAccordionContent>
             </ProAccordionItem>
 
             <ProAccordionItem value="item-4">
-              <ProAccordionTrigger>Can I cancel my subscription anytime?</ProAccordionTrigger>
+              <ProAccordionTrigger>
+                Can I cancel my subscription anytime?
+              </ProAccordionTrigger>
               <ProAccordionContent>
-                Yes, you can cancel your Pro subscription at any time. Your benefits will continue until the end of your
-                current billing period.
+                Yes, you can cancel your Pro subscription at any time. Your
+                benefits will continue until the end of your current billing
+                period.
               </ProAccordionContent>
             </ProAccordionItem>
 
             <ProAccordionItem value="item-5">
-              <ProAccordionTrigger>What AI models does Scira use?</ProAccordionTrigger>
+              <ProAccordionTrigger>
+                What AI models does Scira use?
+              </ProAccordionTrigger>
               <ProAccordionContent>
-                Scira uses a range of advanced AI models including OpenAI GPT and Claude to provide
-                the best possible answers for different types of queries.
+                Scira uses a range of advanced AI models including OpenAI GPT
+                and Claude to provide the best possible answers for different
+                types of queries.
               </ProAccordionContent>
             </ProAccordionItem>
 
             <ProAccordionItem value="item-6">
-              <ProAccordionTrigger>How does Scira ensure information accuracy?</ProAccordionTrigger>
+              <ProAccordionTrigger>
+                How does Scira ensure information accuracy?
+              </ProAccordionTrigger>
               <ProAccordionContent>
-                Scira combines RAG technology with search grounding to retrieve information from reliable sources and
-                verify it before providing answers. Each response includes source attribution for transparency.
+                Scira combines RAG technology with search grounding to retrieve
+                information from reliable sources and verify it before providing
+                answers. Each response includes source attribution for
+                transparency.
               </ProAccordionContent>
             </ProAccordionItem>
           </ProAccordion>
 
-          <div className="text-center mt-12 space-y-6">
+          <div className="mt-12 space-y-6 text-center">
             <p className="text-muted-foreground">
-              Have more questions?{' '}
-              <a href="mailto:zaid@scira.ai" className="text-primary hover:text-primary/80 transition-colors">
+              Have more questions?{" "}
+              <a
+                className="text-primary transition-colors hover:text-primary/80"
+                href="mailto:zaid@scira.ai"
+              >
                 Contact us
               </a>
             </p>
 
             {/* FAQ CTA */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4 px-4 sm:px-6 py-4 rounded-xl bg-muted/40 border border-border/40 max-w-lg mx-auto">
-              <div className="text-center sm:text-left flex-1">
-                <p className="text-sm font-medium text-foreground">Ready to get started?</p>
-                <p className="text-xs text-muted-foreground">Join thousands using Scira</p>
+            <div className="mx-auto flex max-w-lg flex-col gap-4 rounded-xl border border-border/40 bg-muted/40 px-4 py-4 sm:flex-row sm:items-center sm:px-6">
+              <div className="flex-1 text-center sm:text-left">
+                <p className="font-medium text-foreground text-sm">
+                  Ready to get started?
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  Join thousands using Scira
+                </p>
               </div>
-              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                <Button onClick={() => router.push('/')} size="sm" className="px-4 py-2 text-sm w-full sm:w-auto">
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                <Button
+                  className="w-full px-4 py-2 text-sm sm:w-auto"
+                  onClick={() => router.push("/")}
+                  size="sm"
+                >
                   Start now
                   <Search className="ml-1 h-3 w-3" />
                 </Button>
                 <Button
-                  onClick={() => router.push('/pricing')}
-                  variant="outline"
+                  className="w-full px-4 py-2 text-sm sm:w-auto"
+                  onClick={() => router.push("/pricing")}
                   size="sm"
-                  className="px-4 py-2 text-sm w-full sm:w-auto"
+                  variant="outline"
                 >
                   View pricing
                 </Button>

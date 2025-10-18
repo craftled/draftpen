@@ -7,27 +7,29 @@ export const convertTo12Hour = (hour24: number): number => {
 };
 
 export const convertTo24Hour = (hour12: number, ampm: string): number => {
-  if (ampm === 'AM') {
+  if (ampm === "AM") {
     return hour12 === 12 ? 0 : hour12;
-  } else {
-    return hour12 === 12 ? 12 : hour12 + 12;
   }
+  return hour12 === 12 ? 12 : hour12 + 12;
 };
 
 export const formatTime12Hour = (time24: string) => {
-  const [hour, minute] = time24.split(':');
-  const hour24 = parseInt(hour);
+  const [hour, minute] = time24.split(":");
+  const hour24 = Number.parseInt(hour);
   const hour12 = convertTo12Hour(hour24);
-  const ampm = hour24 < 12 ? 'AM' : 'PM';
+  const ampm = hour24 < 12 ? "AM" : "PM";
   return { hour12: hour12.toString(), minute, ampm };
 };
 
-export const formatNextRun = (date: Date | string, timezone: string): string => {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  return new Intl.DateTimeFormat('en-US', {
+export const formatNextRun = (
+  date: Date | string,
+  timezone: string
+): string => {
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+  return new Intl.DateTimeFormat("en-US", {
     timeZone: timezone,
-    dateStyle: 'medium',
-    timeStyle: 'short',
+    dateStyle: "medium",
+    timeStyle: "short",
   }).format(dateObj);
 };
 
@@ -37,13 +39,13 @@ export const formatFrequency = (frequency: string, time: string): string => {
   const displayTime = `${hour12}:${minute} ${ampm}`;
 
   switch (frequency) {
-    case 'daily':
+    case "daily":
       return `Daily at ${displayTime}`;
-    case 'weekly':
+    case "weekly":
       return `Thursdays at ${displayTime}`;
-    case 'monthly':
+    case "monthly":
       return `Monthly on the 1st at ${displayTime}`;
-    case 'once':
+    case "once":
       return `Once at ${displayTime}`;
     default:
       return `${frequency} at ${displayTime}`;
@@ -51,14 +53,15 @@ export const formatFrequency = (frequency: string, time: string): string => {
 };
 
 export const formatRelativeTime = (date: Date | string): string => {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const dateObj = typeof date === "string" ? new Date(date) : date;
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - dateObj.getTime()) / 1000);
 
-  if (diffInSeconds < 60) return 'Just now';
+  if (diffInSeconds < 60) return "Just now";
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  if (diffInSeconds < 86_400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  if (diffInSeconds < 604_800)
+    return `${Math.floor(diffInSeconds / 86_400)}d ago`;
 
   return dateObj.toLocaleDateString();
 };
@@ -66,7 +69,7 @@ export const formatRelativeTime = (date: Date | string): string => {
 export const isTimeInPast = (time: string, selectedDate?: Date): boolean => {
   if (!selectedDate) return false;
 
-  const [hours, minutes] = time.split(':').map(Number);
+  const [hours, minutes] = time.split(":").map(Number);
   const targetDateTime = new Date(selectedDate);
   targetDateTime.setHours(hours, minutes, 0, 0);
 

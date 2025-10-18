@@ -1,2 +1,2 @@
-export { ShareDialog } from './share-dialog';
-export { ShareButton } from './share-button';
+export { ShareButton } from "./share-button";
+export { ShareDialog } from "./share-dialog";

@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import React from "react";
+import { toast } from "sonner";
 import {
   createScheduledLookout,
-  getUserLookouts,
-  updateLookoutStatusAction,
-  updateLookoutAction,
   deleteLookoutAction,
+  getUserLookouts,
   testLookoutAction,
-} from '@/app/actions';
+  updateLookoutAction,
+  updateLookoutStatusAction,
+} from "@/app/actions";
 
 interface Lookout {
   id: string;
@@ -19,7 +19,7 @@ interface Lookout {
   frequency: string;
   timezone: string;
   nextRunAt: Date;
-  status: 'active' | 'paused' | 'archived' | 'running';
+  status: "active" | "paused" | "archived" | "running";
   lastRunAt?: Date | null;
   lastRunChatId?: string | null;
   createdAt: Date;
@@ -28,10 +28,10 @@ interface Lookout {
 
 // Query key factory
 export const lookoutKeys = {
-  all: ['lookouts'] as const,
-  lists: () => [...lookoutKeys.all, 'list'] as const,
+  all: ["lookouts"] as const,
+  lists: () => [...lookoutKeys.all, "list"] as const,
   list: (filters: string) => [...lookoutKeys.lists(), { filters }] as const,
-  details: () => [...lookoutKeys.all, 'detail'] as const,
+  details: () => [...lookoutKeys.all, "detail"] as const,
   detail: (id: string) => [...lookoutKeys.details(), id] as const,
 };
 
@@ -62,13 +62,13 @@ export function useLookouts() {
       if (result.success) {
         return (result.lookouts || []) as Lookout[];
       }
-      throw new Error(result.error || 'Failed to load lookouts');
+      throw new Error(result.error || "Failed to load lookouts");
     },
     staleTime: 1000 * 2, // Consider data fresh for 2 seconds
     refetchInterval: 1000 * 5, // Refetch every 5 seconds for real-time updates
     refetchIntervalInBackground: false, // Don't poll when tab is not focused
     gcTime: 1000 * 30, // Keep in cache for 30 seconds
-    networkMode: 'always', // Always try to refetch
+    networkMode: "always", // Always try to refetch
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     refetchOnMount: true, // Always refetch when component mounts
@@ -77,29 +77,31 @@ export function useLookouts() {
       if (failureCount < 3) return true;
       return false;
     },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30_000),
     // Enable query deduplication for performance
     structuralSharing: true,
 
     // Prevent unnecessary re-renders
-    notifyOnChangeProps: ['data', 'error', 'isLoading'],
+    notifyOnChangeProps: ["data", "error", "isLoading"],
   });
 
   // Detect lookout completions and show appropriate toast
   React.useEffect(() => {
-    if (!lookouts.length || !previousLookutsRef.current.length) {
+    if (!(lookouts.length && previousLookutsRef.current.length)) {
       previousLookutsRef.current = lookouts;
       return;
     }
 
     // Check for lookouts that transitioned from 'running' to 'active' or 'paused'
     const completedLookouts = lookouts.filter((current) => {
-      const previous = previousLookutsRef.current.find((prev) => prev.id === current.id);
+      const previous = previousLookutsRef.current.find(
+        (prev) => prev.id === current.id
+      );
       const completionKey = `${current.id}-${current.lastRunAt?.getTime()}`;
 
       return (
-        previous?.status === 'running' &&
-        (current.status === 'active' || current.status === 'paused') &&
+        previous?.status === "running" &&
+        (current.status === "active" || current.status === "paused") &&
         current.lastRunAt !== previous.lastRunAt && // Ensure it's a new completion
         !recentCompletionsRef.current.has(completionKey) // Prevent duplicate toasts
       );
@@ -110,13 +112,14 @@ export function useLookouts() {
       const completionKey = `${lookout.id}-${lookout.lastRunAt?.getTime()}`;
       recentCompletionsRef.current.add(completionKey);
 
-      const statusText = lookout.frequency === 'once' ? 'completed' : 'run finished';
+      const statusText =
+        lookout.frequency === "once" ? "completed" : "run finished";
       toast.success(`Lookout "${lookout.title}" ${statusText} successfully!`);
 
       // Clear completion key after 30 seconds to allow future notifications
       setTimeout(() => {
         recentCompletionsRef.current.delete(completionKey);
-      }, 30000);
+      }, 30_000);
     });
 
     previousLookutsRef.current = lookouts;
@@ -127,7 +130,7 @@ export function useLookouts() {
     mutationFn: async (params: {
       title: string;
       prompt: string;
-      frequency: 'once' | 'daily' | 'weekly' | 'monthly';
+      frequency: "once" | "daily" | "weekly" | "monthly";
       time: string;
       timezone: string;
       date?: string;
@@ -136,14 +139,14 @@ export function useLookouts() {
       const { onSuccess: successCallback, ...mutationParams } = params;
       const result = await createScheduledLookout(mutationParams);
       if (!result.success) {
-        throw new Error(result.error || 'Failed to create lookout');
+        throw new Error(result.error || "Failed to create lookout");
       }
       return { result, onSuccess: successCallback };
     },
     onSuccess: (data) => {
       // Only show create toast for actual user-initiated creation
       if (isActualCreateRef.current) {
-        toast.success('Lookout created successfully!');
+        toast.success("Lookout created successfully!");
         isActualCreateRef.current = false; // Reset flag
       }
       // Immediate cache invalidation for real-time updates
@@ -161,10 +164,13 @@ export function useLookouts() {
 
   // Update lookout status mutation
   const updateStatusMutation = useMutation({
-    mutationFn: async (params: { id: string; status: 'active' | 'paused' | 'archived' | 'running' }) => {
+    mutationFn: async (params: {
+      id: string;
+      status: "active" | "paused" | "archived" | "running";
+    }) => {
       const result = await updateLookoutStatusAction(params);
       if (!result.success) {
-        throw new Error(result.error || 'Failed to update lookout');
+        throw new Error(result.error || "Failed to update lookout");
       }
       return { ...params, result };
     },
@@ -173,24 +179,28 @@ export function useLookouts() {
       await queryClient.cancelQueries({ queryKey: lookoutKeys.lists() });
 
       // Snapshot the previous value
-      const previousLookouts = queryClient.getQueryData<Lookout[]>(lookoutKeys.lists());
+      const previousLookouts = queryClient.getQueryData<Lookout[]>(
+        lookoutKeys.lists()
+      );
 
       // Optimistically update
       queryClient.setQueryData<Lookout[]>(lookoutKeys.lists(), (old = []) =>
-        old.map((lookout) => (lookout.id === id ? { ...lookout, status } : lookout)),
+        old.map((lookout) =>
+          lookout.id === id ? { ...lookout, status } : lookout
+        )
       );
 
       return { previousLookouts };
     },
     onSuccess: (data) => {
       const statusText =
-        data.status === 'active'
-          ? 'activated'
-          : data.status === 'paused'
-            ? 'paused'
-            : data.status === 'archived'
-              ? 'archived'
-              : 'updated';
+        data.status === "active"
+          ? "activated"
+          : data.status === "paused"
+            ? "paused"
+            : data.status === "archived"
+              ? "archived"
+              : "updated";
       toast.success(`Lookout ${statusText}`);
     },
     onError: (error: Error, variables, context) => {
@@ -213,7 +223,7 @@ export function useLookouts() {
       id: string;
       title: string;
       prompt: string;
-      frequency: 'once' | 'daily' | 'weekly' | 'monthly';
+      frequency: "once" | "daily" | "weekly" | "monthly";
       time: string;
       timezone: string;
       onSuccess?: () => void;
@@ -221,12 +231,12 @@ export function useLookouts() {
       const { onSuccess: successCallback, ...mutationParams } = params;
       const result = await updateLookoutAction(mutationParams);
       if (!result.success) {
-        throw new Error(result.error || 'Failed to update lookout');
+        throw new Error(result.error || "Failed to update lookout");
       }
       return { result, onSuccess: successCallback };
     },
     onSuccess: (data) => {
-      toast.success('Lookout updated successfully!');
+      toast.success("Lookout updated successfully!");
       // Immediate cache invalidation and refetch for real-time updates
       queryClient.invalidateQueries({ queryKey: lookoutKeys.lists() });
       queryClient.refetchQueries({ queryKey: lookoutKeys.lists() });
@@ -244,7 +254,7 @@ export function useLookouts() {
     mutationFn: async (params: { id: string }) => {
       const result = await deleteLookoutAction(params);
       if (!result.success) {
-        throw new Error(result.error || 'Failed to delete lookout');
+        throw new Error(result.error || "Failed to delete lookout");
       }
       return params;
     },
@@ -253,17 +263,19 @@ export function useLookouts() {
       await queryClient.cancelQueries({ queryKey: lookoutKeys.lists() });
 
       // Snapshot the previous value
-      const previousLookouts = queryClient.getQueryData<Lookout[]>(lookoutKeys.lists());
+      const previousLookouts = queryClient.getQueryData<Lookout[]>(
+        lookoutKeys.lists()
+      );
 
       // Optimistically update
       queryClient.setQueryData<Lookout[]>(lookoutKeys.lists(), (old = []) =>
-        old.filter((lookout) => lookout.id !== id),
+        old.filter((lookout) => lookout.id !== id)
       );
 
       return { previousLookouts };
     },
     onSuccess: () => {
-      toast.success('Lookout deleted successfully');
+      toast.success("Lookout deleted successfully");
       // Force immediate refetch after delete
       queryClient.refetchQueries({ queryKey: lookoutKeys.lists() });
     },
@@ -286,7 +298,7 @@ export function useLookouts() {
     mutationFn: async (params: { id: string }) => {
       const result = await testLookoutAction(params);
       if (!result.success) {
-        throw new Error(result.error || 'Failed to test lookout');
+        throw new Error(result.error || "Failed to test lookout");
       }
       return params;
     },
@@ -295,11 +307,17 @@ export function useLookouts() {
       await queryClient.cancelQueries({ queryKey: lookoutKeys.lists() });
 
       // Snapshot the previous value
-      const previousLookouts = queryClient.getQueryData<Lookout[]>(lookoutKeys.lists());
+      const previousLookouts = queryClient.getQueryData<Lookout[]>(
+        lookoutKeys.lists()
+      );
 
       // Optimistically update to 'running' status
       queryClient.setQueryData<Lookout[]>(lookoutKeys.lists(), (old = []) =>
-        old.map((lookout) => (lookout.id === id ? { ...lookout, status: 'running' as const } : lookout)),
+        old.map((lookout) =>
+          lookout.id === id
+            ? { ...lookout, status: "running" as const }
+            : lookout
+        )
       );
 
       return { previousLookouts };
@@ -329,19 +347,23 @@ export function useLookouts() {
     await queryClient.invalidateQueries({ queryKey: lookoutKeys.lists() });
     return queryClient.refetchQueries({
       queryKey: lookoutKeys.lists(),
-      type: 'active', // Only refetch active queries
+      type: "active", // Only refetch active queries
     });
   };
 
   // Optimized cache invalidation for running lookouts
   React.useEffect(() => {
-    const hasRunningLookouts = lookouts.some((lookout) => lookout.status === 'running');
+    const hasRunningLookouts = lookouts.some(
+      (lookout) => lookout.status === "running"
+    );
 
     if (!hasRunningLookouts) return;
 
     const interval = setInterval(() => {
       // Only invalidate if there are still running lookouts
-      const currentRunning = lookouts.some((lookout) => lookout.status === 'running');
+      const currentRunning = lookouts.some(
+        (lookout) => lookout.status === "running"
+      );
       if (currentRunning) {
         queryClient.invalidateQueries({ queryKey: lookoutKeys.lists() });
       }
@@ -389,13 +411,19 @@ export function useLookouts() {
 }
 
 // Helper hook for filtered lookouts
-export function useFilteredLookouts(filter: 'active' | 'archived' | 'all' = 'all') {
+export function useFilteredLookouts(
+  filter: "active" | "archived" | "all" = "all"
+) {
   const { lookouts, ...rest } = useLookouts();
 
   const filteredLookouts = lookouts.filter((lookout) => {
-    if (filter === 'active')
-      return lookout.status === 'active' || lookout.status === 'paused' || lookout.status === 'running';
-    if (filter === 'archived') return lookout.status === 'archived';
+    if (filter === "active")
+      return (
+        lookout.status === "active" ||
+        lookout.status === "paused" ||
+        lookout.status === "running"
+      );
+    if (filter === "archived") return lookout.status === "archived";
     return true;
   });
 

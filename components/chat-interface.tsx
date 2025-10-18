@@ -1,53 +1,57 @@
-'use client';
+"use client";
+
 /* eslint-disable @next/next/no-img-element */
 
-// React and React-related imports
-import React, { memo, useCallback, useEffect, useMemo, useRef, useReducer, useState } from 'react';
-
 // Third-party library imports
-import { useChat } from '@ai-sdk/react';
-import { HugeiconsIcon } from '@hugeicons/react';
-import { Crown02Icon } from '@hugeicons/core-free-icons';
-import { useRouter } from 'next/navigation';
-import { parseAsString, useQueryState } from 'nuqs';
-import { toast } from 'sonner';
-import { v4 as uuidv4 } from 'uuid';
-
+import { useChat } from "@ai-sdk/react";
+import { Crown02Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { DefaultChatTransport } from "ai";
+import { Clock } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { parseAsString, useQueryState } from "nuqs";
+// React and React-related imports
+import type React from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
+import { toast } from "sonner";
+import { v4 as uuidv4 } from "uuid";
+import { requiresProSubscription } from "@/ai/providers";
 // Internal app imports
-import { suggestQuestions, updateChatVisibility } from '@/app/actions';
-
+import { suggestQuestions, updateChatVisibility } from "@/app/actions";
 // Component imports
-import { ChatDialogs } from '@/components/chat-dialogs';
-import Messages from '@/components/messages';
-import { Navbar } from '@/components/navbar';
-import { Button } from '@/components/ui/button';
-import FormComponent from '@/components/ui/form-component';
-
-// Hook imports
-import { useAutoResume } from '@/hooks/use-auto-resume';
-import { useLocalStorage } from '@/hooks/use-local-storage';
-import { useUsageData } from '@/hooks/use-usage-data';
-import { useUser } from '@/contexts/user-context';
-import { Clock } from 'lucide-react';
-import { useOptimizedScroll } from '@/hooks/use-optimized-scroll';
-
-// Utility and type imports
-import { SEARCH_LIMITS } from '@/lib/constants';
-import { ChatSDKError } from '@/lib/errors';
-import { cn, SearchGroupId, invalidateChatsCache } from '@/lib/utils';
-import { requiresProSubscription } from '@/ai/providers';
-import { ConnectorProvider } from '@/lib/connectors';
-
+import { ChatDialogs } from "@/components/chat-dialogs";
 // State management imports
-import { chatReducer, createInitialState } from '@/components/chat-state';
-import { useDataStream } from './data-stream-provider';
-import { DefaultChatTransport } from 'ai';
-import { ChatMessage } from '@/lib/types';
+import { chatReducer, createInitialState } from "@/components/chat-state";
+import Messages from "@/components/messages";
+import { Navbar } from "@/components/navbar";
+import { Button } from "@/components/ui/button";
+import FormComponent from "@/components/ui/form-component";
+import { useUser } from "@/contexts/user-context";
+// Hook imports
+import { useAutoResume } from "@/hooks/use-auto-resume";
+import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useOptimizedScroll } from "@/hooks/use-optimized-scroll";
+import { useUsageData } from "@/hooks/use-usage-data";
+import type { ConnectorProvider } from "@/lib/connectors";
+// Utility and type imports
+import { SEARCH_LIMITS } from "@/lib/constants";
+import { ChatSDKError } from "@/lib/errors";
+import type { ChatMessage } from "@/lib/types";
+import { cn, invalidateChatsCache, type SearchGroupId } from "@/lib/utils";
+import { useDataStream } from "./data-stream-provider";
 
 interface ChatInterfaceProps {
   initialChatId?: string;
   initialMessages?: any[];
-  initialVisibility?: 'public' | 'private';
+  initialVisibility?: "public" | "private";
   isOwner?: boolean;
 }
 
@@ -55,28 +59,35 @@ const ChatInterface = memo(
   ({
     initialChatId,
     initialMessages,
-    initialVisibility = 'private',
+    initialVisibility = "private",
     isOwner = true,
   }: ChatInterfaceProps): React.JSX.Element => {
     const router = useRouter();
-    const [query] = useQueryState('query', parseAsString.withDefault(''));
-    const [q] = useQueryState('q', parseAsString.withDefault(''));
-    const [input, setInput] = useState<string>('');
+    const [query] = useQueryState("query", parseAsString.withDefault(""));
+    const [q] = useQueryState("q", parseAsString.withDefault(""));
+    const [input, setInput] = useState<string>("");
 
-    const [selectedModel, setSelectedModel] = useLocalStorage('selected-model', 'gpt5-mini');
-    const [selectedGroup, setSelectedGroup] = useLocalStorage<SearchGroupId>('scira-selected-group', 'web');
-    const [selectedConnectors, setSelectedConnectors] = useState<ConnectorProvider[]>([]);
-    const [isCustomInstructionsEnabled, setIsCustomInstructionsEnabled] = useLocalStorage(
-      'scira-custom-instructions-enabled',
-      true,
+    const [selectedModel, setSelectedModel] = useLocalStorage(
+      "selected-model",
+      "gpt5-mini"
     );
+    const [selectedGroup, setSelectedGroup] = useLocalStorage<SearchGroupId>(
+      "scira-selected-group",
+      "web"
+    );
+    const [selectedConnectors, setSelectedConnectors] = useState<
+      ConnectorProvider[]
+    >([]);
+    const [isCustomInstructionsEnabled, setIsCustomInstructionsEnabled] =
+      useLocalStorage("scira-custom-instructions-enabled", true);
 
     // Settings dialog state management with URL hash support
     const [settingsOpen, setSettingsOpen] = useState(false);
-    const [settingsInitialTab, setSettingsInitialTab] = useState<string>('profile');
+    const [settingsInitialTab, setSettingsInitialTab] =
+      useState<string>("profile");
 
     // Function to open settings with a specific tab
-    const handleOpenSettings = useCallback((tab: string = 'profile') => {
+    const handleOpenSettings = useCallback((tab = "profile") => {
       setSettingsInitialTab(tab);
       setSettingsOpen(true);
     }, []);
@@ -85,7 +96,7 @@ const ChatInterface = memo(
     useEffect(() => {
       const handleHashChange = () => {
         const hash = window.location.hash;
-        if (hash === '#settings') {
+        if (hash === "#settings") {
           setSettingsOpen(true);
         }
       };
@@ -94,10 +105,10 @@ const ChatInterface = memo(
       handleHashChange();
 
       // Listen for hash changes
-      window.addEventListener('hashchange', handleHashChange);
+      window.addEventListener("hashchange", handleHashChange);
 
       return () => {
-        window.removeEventListener('hashchange', handleHashChange);
+        window.removeEventListener("hashchange", handleHashChange);
       };
     }, []);
 
@@ -105,36 +116,35 @@ const ChatInterface = memo(
     useEffect(() => {
       if (settingsOpen) {
         // Only update hash if it's not already #settings to prevent infinite loops
-        if (window.location.hash !== '#settings') {
-          window.history.pushState(null, '', '#settings');
+        if (window.location.hash !== "#settings") {
+          window.history.pushState(null, "", "#settings");
         }
       } else {
         // Remove hash if settings is closed and hash is #settings
-        if (window.location.hash === '#settings') {
+        if (window.location.hash === "#settings") {
           // Use replaceState to avoid adding to browser history
-          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          window.history.replaceState(
+            null,
+            "",
+            window.location.pathname + window.location.search
+          );
         }
       }
     }, [settingsOpen]);
 
     // Get persisted values for dialog states
-    const [persistedHasShownUpgradeDialog, setPersitedHasShownUpgradeDialog] = useLocalStorage(
-      'scira-upgrade-prompt-shown',
-      false,
-    );
-    const [persistedHasShownSignInPrompt, setPersitedHasShownSignInPrompt] = useLocalStorage(
-      'scira-signin-prompt-shown',
-      false,
-    );
-    const [persistedHasShownLookoutAnnouncement, setPersitedHasShownLookoutAnnouncement] = useLocalStorage(
-      'scira-lookout-announcement-shown',
-      false,
-    );
+    const [persistedHasShownUpgradeDialog, setPersitedHasShownUpgradeDialog] =
+      useLocalStorage("scira-upgrade-prompt-shown", false);
+    const [persistedHasShownSignInPrompt, setPersitedHasShownSignInPrompt] =
+      useLocalStorage("scira-signin-prompt-shown", false);
+    const [
+      persistedHasShownLookoutAnnouncement,
+      setPersitedHasShownLookoutAnnouncement,
+    ] = useLocalStorage("scira-lookout-announcement-shown", false);
 
-    const [searchProvider, _] = useLocalStorage<'exa' | 'parallel' | 'firecrawl'>(
-      'scira-search-provider',
-      'parallel',
-    );
+    const [searchProvider, _] = useLocalStorage<
+      "exa" | "parallel" | "firecrawl"
+    >("scira-search-provider", "parallel");
 
     // Use reducer for complex state management
     const [chatState, dispatch] = useReducer(
@@ -143,8 +153,8 @@ const ChatInterface = memo(
         initialVisibility,
         persistedHasShownUpgradeDialog,
         persistedHasShownSignInPrompt,
-        persistedHasShownLookoutAnnouncement,
-      ),
+        persistedHasShownLookoutAnnouncement
+      )
     );
 
     const {
@@ -157,9 +167,13 @@ const ChatInterface = memo(
       isInTrial,
       daysLeftInTrial,
     } = useUser();
-    
+
     // Debug: Check what useUser returns
-    console.log('💡 ChatInterface useUser:', { isInTrial, daysLeftInTrial, polarSub: user?.polarSubscription });
+    console.log("💡 ChatInterface useUser:", {
+      isInTrial,
+      daysLeftInTrial,
+      polarSub: user?.polarSubscription,
+    });
 
     const { setDataStream } = useDataStream();
 
@@ -167,7 +181,7 @@ const ChatInterface = memo(
       () => ({
         query: query || q,
       }),
-      [query, q],
+      [query, q]
     );
 
     const lastSubmittedQueryRef = useRef(initialState.query);
@@ -177,21 +191,24 @@ const ChatInterface = memo(
     const initializedRef = useRef(false);
 
     // Use optimized scroll hook
-    const { scrollToBottom, markManualScroll, resetManualScroll } = useOptimizedScroll(bottomRef);
+    const { scrollToBottom, markManualScroll, resetManualScroll } =
+      useOptimizedScroll(bottomRef);
 
     // Listen for manual scroll (wheel and touch)
     useEffect(() => {
       const handleManualScroll = () => markManualScroll();
-      window.addEventListener('wheel', handleManualScroll);
-      window.addEventListener('touchmove', handleManualScroll);
+      window.addEventListener("wheel", handleManualScroll);
+      window.addEventListener("touchmove", handleManualScroll);
       return () => {
-        window.removeEventListener('wheel', handleManualScroll);
-        window.removeEventListener('touchmove', handleManualScroll);
+        window.removeEventListener("wheel", handleManualScroll);
+        window.removeEventListener("touchmove", handleManualScroll);
       };
     }, [markManualScroll]);
 
     // Use clean React Query hooks for all data fetching
-    const { data: usageData, refetch: refetchUsage } = useUsageData(user || null);
+    const { data: usageData, refetch: refetchUsage } = useUsageData(
+      user || null
+    );
 
     // Sign-in prompt timer
     const signInTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -217,12 +234,20 @@ const ChatInterface = memo(
 
       // If current model requires pro but user is not pro, switch to default
       // Also prevent infinite loops by ensuring we're not already on the default model
-      if (currentModelRequiresPro && !isUserPro && selectedModel !== 'gpt5-mini') {
-        console.log(`Auto-switching from pro model '${selectedModel}' to 'gpt5-mini' - user lost pro access`);
-        setSelectedModel('gpt5-mini');
+      if (
+        currentModelRequiresPro &&
+        !isUserPro &&
+        selectedModel !== "gpt5-mini"
+      ) {
+        console.log(
+          `Auto-switching from pro model '${selectedModel}' to 'gpt5-mini' - user lost pro access`
+        );
+        setSelectedModel("gpt5-mini");
 
         // Show a toast notification to inform the user
-        toast.info('Switched to default model - Pro subscription required for premium models');
+        toast.info(
+          "Switched to default model - Pro subscription required for premium models"
+        );
       }
     }, [selectedModel, isUserPro, proStatusLoading, setSelectedModel]);
 
@@ -240,7 +265,7 @@ const ChatInterface = memo(
       }
 
       // Only start timer if user is not authenticated and hasn't been shown the prompt yet
-      if (!user && !chatState.hasShownSignInPrompt) {
+      if (!(user || chatState.hasShownSignInPrompt)) {
         // Clear any existing timer
         if (signInTimerRef.current) {
           clearTimeout(signInTimerRef.current);
@@ -248,10 +273,10 @@ const ChatInterface = memo(
 
         // Set timer for 1 minute (60000 ms)
         signInTimerRef.current = setTimeout(() => {
-          dispatch({ type: 'SET_SHOW_SIGNIN_PROMPT', payload: true });
-          dispatch({ type: 'SET_HAS_SHOWN_SIGNIN_PROMPT', payload: true });
+          dispatch({ type: "SET_SHOW_SIGNIN_PROMPT", payload: true });
+          dispatch({ type: "SET_HAS_SHOWN_SIGNIN_PROMPT", payload: true });
           setPersitedHasShownSignInPrompt(true);
-        }, 60000);
+        }, 60_000);
       }
 
       // Cleanup timer on unmount
@@ -266,16 +291,23 @@ const ChatInterface = memo(
     useEffect(() => {
       if (user && !chatState.hasShownAnnouncementDialog) {
         const timer = setTimeout(() => {
-          dispatch({ type: 'SET_SHOW_ANNOUNCEMENT_DIALOG', payload: true });
-          dispatch({ type: 'SET_HAS_SHOWN_ANNOUNCEMENT_DIALOG', payload: true });
+          dispatch({ type: "SET_SHOW_ANNOUNCEMENT_DIALOG", payload: true });
+          dispatch({
+            type: "SET_HAS_SHOWN_ANNOUNCEMENT_DIALOG",
+            payload: true,
+          });
           setPersitedHasShownLookoutAnnouncement(true);
         }, 3000);
 
         return () => clearTimeout(timer);
       }
-    }, [user, chatState.hasShownAnnouncementDialog, setPersitedHasShownLookoutAnnouncement]);
+    }, [
+      user,
+      chatState.hasShownAnnouncementDialog,
+      setPersitedHasShownLookoutAnnouncement,
+    ]);
 
-    type VisibilityType = 'public' | 'private';
+    type VisibilityType = "public" | "private";
 
     // Create refs to store current values to avoid closure issues
     const selectedModelRef = useRef(selectedModel);
@@ -291,11 +323,20 @@ const ChatInterface = memo(
     searchProviderRef.current = searchProvider;
     selectedConnectorsRef.current = selectedConnectors;
 
-    const { messages, sendMessage, setMessages, regenerate, stop, status, error, resumeStream } = useChat<ChatMessage>({
+    const {
+      messages,
+      sendMessage,
+      setMessages,
+      regenerate,
+      stop,
+      status,
+      error,
+      resumeStream,
+    } = useChat<ChatMessage>({
       id: chatId,
       messages: initialMessages ?? [],
       transport: new DefaultChatTransport({
-        api: '/api/search',
+        api: "/api/search",
         prepareSendMessagesRequest({ messages, body }) {
           // Use ref values to get current state
           return {
@@ -305,7 +346,8 @@ const ChatInterface = memo(
               model: selectedModelRef.current,
               group: selectedGroupRef.current,
               timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-              isCustomInstructionsEnabled: isCustomInstructionsEnabledRef.current,
+              isCustomInstructionsEnabled:
+                isCustomInstructionsEnabledRef.current,
               searchProvider: searchProviderRef.current,
               selectedConnectors: selectedConnectorsRef.current,
               selectedVisibilityType: chatState.selectedVisibilityType,
@@ -317,11 +359,11 @@ const ChatInterface = memo(
       }),
       experimental_throttle: 100,
       onData: (dataPart) => {
-        console.log('onData<Client>', dataPart);
+        console.log("onData<Client>", dataPart);
         setDataStream((ds) => (ds ? [...ds, dataPart as any] : []));
       },
       onFinish: async ({ message }) => {
-        console.log('onFinish<Client>', message.parts);
+        console.log("onFinish<Client>", message.parts);
         // Refresh usage data after message completion for authenticated users
         if (user) {
           refetchUsage();
@@ -330,7 +372,7 @@ const ChatInterface = memo(
         // Check if this is the first message completion and user is not Pro
         const isFirstMessage = messages.length <= 1;
 
-        console.log('Upgrade dialog check:', {
+        console.log("Upgrade dialog check:", {
           isFirstMessage,
           isProUser: isUserPro,
           hasShownUpgradeDialog: chatState.hasShownUpgradeDialog,
@@ -339,41 +381,56 @@ const ChatInterface = memo(
         });
 
         // Show upgrade dialog after first message if user is not Pro and hasn't seen it before
-        if (isFirstMessage && !isUserPro && !proStatusLoading && !chatState.hasShownUpgradeDialog && user) {
-          console.log('Showing upgrade dialog...');
+        if (
+          isFirstMessage &&
+          !isUserPro &&
+          !proStatusLoading &&
+          !chatState.hasShownUpgradeDialog &&
+          user
+        ) {
+          console.log("Showing upgrade dialog...");
           setTimeout(() => {
-            dispatch({ type: 'SET_SHOW_UPGRADE_DIALOG', payload: true });
-            dispatch({ type: 'SET_HAS_SHOWN_UPGRADE_DIALOG', payload: true });
+            dispatch({ type: "SET_SHOW_UPGRADE_DIALOG", payload: true });
+            dispatch({ type: "SET_HAS_SHOWN_UPGRADE_DIALOG", payload: true });
             setPersitedHasShownUpgradeDialog(true);
           }, 1000);
         }
 
         // Only generate suggested questions if authenticated user or private chat
-        if (message.parts && message.role === 'assistant' && (user || chatState.selectedVisibilityType === 'private')) {
+        if (
+          message.parts &&
+          message.role === "assistant" &&
+          (user || chatState.selectedVisibilityType === "private")
+        ) {
           const lastPart = message.parts[message.parts.length - 1];
-          const lastPartText = lastPart.type === 'text' ? lastPart.text : '';
+          const lastPartText = lastPart.type === "text" ? lastPart.text : "";
           const newHistory = [
-            { role: 'user', content: lastSubmittedQueryRef.current },
-            { role: 'assistant', content: lastPartText },
+            { role: "user", content: lastSubmittedQueryRef.current },
+            { role: "assistant", content: lastPartText },
           ];
-          console.log('newHistory', newHistory);
+          console.log("newHistory", newHistory);
           const { questions } = await suggestQuestions(newHistory);
-          dispatch({ type: 'SET_SUGGESTED_QUESTIONS', payload: questions });
+          dispatch({ type: "SET_SUGGESTED_QUESTIONS", payload: questions });
         }
       },
       onError: (error) => {
         // Don't show toast for ChatSDK errors as they will be handled by the enhanced error display
         if (error instanceof ChatSDKError) {
-          console.log('ChatSDK Error:', error.type, error.surface, error.message);
+          console.log(
+            "ChatSDK Error:",
+            error.type,
+            error.surface,
+            error.message
+          );
           // Only show toast for certain error types that need immediate attention
-          if (error.type === 'offline' || error.surface === 'stream') {
-            toast.error('Connection Error', {
+          if (error.type === "offline" || error.surface === "stream") {
+            toast.error("Connection Error", {
               description: error.message,
             });
           }
         } else {
-          console.error('Chat error:', error.cause, error.message);
-          toast.error('An error occurred.', {
+          console.error("Chat error:", error.cause, error.message);
+          toast.error("An error occurred.", {
             description: `Oops! An error occurred while processing your request. ${error.cause || error.message}`,
           });
         }
@@ -383,28 +440,37 @@ const ChatInterface = memo(
     // Handle text highlighting and quoting
     const handleHighlight = useCallback(
       (text: string) => {
-        const quotedText = `> ${text.replace(/\n/g, '\n> ')}\n\n`;
+        const quotedText = `> ${text.replace(/\n/g, "\n> ")}\n\n`;
         setInput((prev: string) => prev + quotedText);
 
         // Focus the input after adding the quote
         setTimeout(() => {
-          const inputElement = document.querySelector('textarea[placeholder*="Ask"]') as HTMLTextAreaElement;
+          const inputElement = document.querySelector(
+            'textarea[placeholder*="Ask"]'
+          ) as HTMLTextAreaElement;
           if (inputElement) {
             inputElement.focus();
             // Move cursor to end
-            inputElement.setSelectionRange(inputElement.value.length, inputElement.value.length);
+            inputElement.setSelectionRange(
+              inputElement.value.length,
+              inputElement.value.length
+            );
           }
         }, 100);
       },
-      [setInput],
+      [setInput]
     );
 
     // Debug error structure
     if (error) {
-      console.log('[useChat error]:', error);
-      console.log('[error type]:', typeof error);
-      console.log('[error message]:', error.message);
-      console.log('[error instance]:', error instanceof Error, error instanceof ChatSDKError);
+      console.log("[useChat error]:", error);
+      console.log("[error type]:", typeof error);
+      console.log("[error message]:", error.message);
+      console.log(
+        "[error instance]:",
+        error instanceof Error,
+        error instanceof ChatSDKError
+      );
     }
 
     useAutoResume({
@@ -416,29 +482,39 @@ const ChatInterface = memo(
 
     useEffect(() => {
       if (status) {
-        console.log('[status]:', status);
+        console.log("[status]:", status);
       }
     }, [status]);
 
-
     useEffect(() => {
-      if (user && status === 'streaming' && messages.length > 0) {
-        console.log('[chatId]:', chatId);
+      if (user && status === "streaming" && messages.length > 0) {
+        console.log("[chatId]:", chatId);
         // Invalidate chats cache to refresh the list
         invalidateChatsCache();
       }
     }, [user, status, router, chatId, initialChatId, messages.length]);
 
     useEffect(() => {
-      if (!initializedRef.current && initialState.query && !messages.length && !initialChatId) {
+      if (
+        !initializedRef.current &&
+        initialState.query &&
+        !messages.length &&
+        !initialChatId
+      ) {
         initializedRef.current = true;
-        console.log('[initial query]:', initialState.query);
+        console.log("[initial query]:", initialState.query);
         sendMessage({
-          parts: [{ type: 'text', text: initialState.query }],
-          role: 'user',
+          parts: [{ type: "text", text: initialState.query }],
+          role: "user",
         });
       }
-    }, [initialState.query, sendMessage, setInput, messages.length, initialChatId]);
+    }, [
+      initialState.query,
+      sendMessage,
+      setInput,
+      messages.length,
+      initialChatId,
+    ]);
 
     // Generate suggested questions when opening a chat directly
     useEffect(() => {
@@ -449,58 +525,73 @@ const ChatInterface = memo(
           initialMessages &&
           initialMessages.length >= 2 &&
           !chatState.suggestedQuestions.length &&
-          (user || chatState.selectedVisibilityType === 'private') &&
-          status === 'ready'
+          (user || chatState.selectedVisibilityType === "private") &&
+          status === "ready"
         ) {
-          const lastUserMessage = initialMessages.filter((m) => m.role === 'user').pop();
-          const lastAssistantMessage = initialMessages.filter((m) => m.role === 'assistant').pop();
+          const lastUserMessage = initialMessages
+            .filter((m) => m.role === "user")
+            .pop();
+          const lastAssistantMessage = initialMessages
+            .filter((m) => m.role === "assistant")
+            .pop();
 
           if (lastUserMessage && lastAssistantMessage) {
             // Extract content from parts similar to onFinish callback
             const getUserContent = (message: typeof lastUserMessage) => {
               if (message.parts && message.parts.length > 0) {
                 const lastPart = message.parts[message.parts.length - 1];
-                return lastPart.type === 'text' ? lastPart.text : '';
+                return lastPart.type === "text" ? lastPart.text : "";
               }
-              return message.content || '';
+              return message.content || "";
             };
 
-            const getAssistantContent = (message: typeof lastAssistantMessage) => {
+            const getAssistantContent = (
+              message: typeof lastAssistantMessage
+            ) => {
               if (message.parts && message.parts.length > 0) {
                 const lastPart = message.parts[message.parts.length - 1];
-                return lastPart.type === 'text' ? lastPart.text : '';
+                return lastPart.type === "text" ? lastPart.text : "";
               }
-              return message.content || '';
+              return message.content || "";
             };
 
             const newHistory = [
-              { role: 'user', content: getUserContent(lastUserMessage) },
-              { role: 'assistant', content: getAssistantContent(lastAssistantMessage) },
+              { role: "user", content: getUserContent(lastUserMessage) },
+              {
+                role: "assistant",
+                content: getAssistantContent(lastAssistantMessage),
+              },
             ];
             try {
               const { questions } = await suggestQuestions(newHistory);
-              dispatch({ type: 'SET_SUGGESTED_QUESTIONS', payload: questions });
+              dispatch({ type: "SET_SUGGESTED_QUESTIONS", payload: questions });
             } catch (error) {
-              console.error('Error generating suggested questions:', error);
+              console.error("Error generating suggested questions:", error);
             }
           }
         }
       };
 
       generateSuggestionsForInitialMessages();
-    }, [initialMessages, chatState.suggestedQuestions.length, status, user, chatState.selectedVisibilityType]);
+    }, [
+      initialMessages,
+      chatState.suggestedQuestions.length,
+      status,
+      user,
+      chatState.selectedVisibilityType,
+    ]);
 
     // Reset suggested questions when status changes to streaming
     useEffect(() => {
-      if (status === 'streaming') {
+      if (status === "streaming") {
         // Clear suggested questions when a new message is being streamed
-        dispatch({ type: 'RESET_SUGGESTED_QUESTIONS' });
+        dispatch({ type: "RESET_SUGGESTED_QUESTIONS" });
       }
     }, [status]);
 
     const lastUserMessageIndex = useMemo(() => {
       for (let i = messages.length - 1; i >= 0; i--) {
-        if (messages[i].role === 'user') {
+        if (messages[i].role === "user") {
           return i;
         }
       }
@@ -509,7 +600,7 @@ const ChatInterface = memo(
 
     useEffect(() => {
       // Reset manual scroll when streaming starts
-      if (status === 'streaming') {
+      if (status === "streaming") {
         resetManualScroll();
         scrollToBottom();
       }
@@ -517,7 +608,7 @@ const ChatInterface = memo(
 
     // Auto-scroll during streaming when messages change
     useEffect(() => {
-      if (status === 'streaming') {
+      if (status === "streaming") {
         scrollToBottom();
       }
     }, [messages, status, scrollToBottom]);
@@ -525,7 +616,7 @@ const ChatInterface = memo(
     // Dialog management state - track command dialog state in chat state
     useEffect(() => {
       dispatch({
-        type: 'SET_ANY_DIALOG_OPEN',
+        type: "SET_ANY_DIALOG_OPEN",
         payload:
           chatState.commandDialogOpen ||
           chatState.showSignInPrompt ||
@@ -542,14 +633,17 @@ const ChatInterface = memo(
     // Keyboard shortcut for command dialog
     useEffect(() => {
       const down = (e: KeyboardEvent) => {
-        if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+        if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
           e.preventDefault();
-          dispatch({ type: 'SET_COMMAND_DIALOG_OPEN', payload: !chatState.commandDialogOpen });
+          dispatch({
+            type: "SET_COMMAND_DIALOG_OPEN",
+            payload: !chatState.commandDialogOpen,
+          });
         }
       };
 
-      document.addEventListener('keydown', down);
-      return () => document.removeEventListener('keydown', down);
+      document.addEventListener("keydown", down);
+      return () => document.removeEventListener("keydown", down);
     }, [chatState.commandDialogOpen]);
 
     // Define the model change handler
@@ -557,28 +651,36 @@ const ChatInterface = memo(
       (model: string) => {
         setSelectedModel(model);
       },
-      [setSelectedModel],
+      [setSelectedModel]
     );
 
     const resetSuggestedQuestions = useCallback(() => {
-      dispatch({ type: 'RESET_SUGGESTED_QUESTIONS' });
+      dispatch({ type: "RESET_SUGGESTED_QUESTIONS" });
     }, []);
 
     // Handle visibility change
     const handleVisibilityChange = useCallback(
       async (visibility: VisibilityType) => {
-        console.log('🔄 handleVisibilityChange called with:', { chatId, visibility });
+        console.log("🔄 handleVisibilityChange called with:", {
+          chatId,
+          visibility,
+        });
 
         if (!chatId) {
-          console.warn('⚠️ handleVisibilityChange: No chatId provided, returning early');
+          console.warn(
+            "⚠️ handleVisibilityChange: No chatId provided, returning early"
+          );
           return;
         }
 
         try {
-          console.log('📡 Calling updateChatVisibility with:', { chatId, visibility });
+          console.log("📡 Calling updateChatVisibility with:", {
+            chatId,
+            visibility,
+          });
           const result = await updateChatVisibility(chatId, visibility);
-          console.log('✅ updateChatVisibility response:', result);
-          console.log('🔍 Result structure analysis:', {
+          console.log("✅ updateChatVisibility response:", result);
+          console.log("🔍 Result structure analysis:", {
             result,
             typeof_result: typeof result,
             has_result: !!result,
@@ -587,111 +689,134 @@ const ChatInterface = memo(
             has_rowCount: result?.rowCount !== undefined,
             rowCount_value: result?.rowCount,
             rowCount_type: typeof result?.rowCount,
-            keys: result ? Object.keys(result) : 'no result',
+            keys: result ? Object.keys(result) : "no result",
           });
 
           // Check if the update was successful - be more forgiving with validation
           if (result && result.success) {
-            dispatch({ type: 'SET_VISIBILITY_TYPE', payload: visibility });
-            console.log('🔄 Dispatched SET_VISIBILITY_TYPE with:', visibility);
+            dispatch({ type: "SET_VISIBILITY_TYPE", payload: visibility });
+            console.log("🔄 Dispatched SET_VISIBILITY_TYPE with:", visibility);
 
             toast.success(`Chat is now ${visibility}`);
-            console.log('🍞 Success toast shown:', `Chat is now ${visibility}`);
+            console.log("🍞 Success toast shown:", `Chat is now ${visibility}`);
 
             // Invalidate cache to refresh the list with updated visibility
             invalidateChatsCache();
-            console.log('🗑️ Cache invalidated');
+            console.log("🗑️ Cache invalidated");
           } else {
-            console.error('❌ Update failed - unsuccessful result:', {
+            console.error("❌ Update failed - unsuccessful result:", {
               result,
               success_check: result?.success,
             });
-            toast.error('Failed to update chat visibility');
-            console.log('🍞 Error toast shown: Failed to update chat visibility');
+            toast.error("Failed to update chat visibility");
+            console.log(
+              "🍞 Error toast shown: Failed to update chat visibility"
+            );
           }
         } catch (error) {
-          console.error('❌ Error updating chat visibility:', {
+          console.error("❌ Error updating chat visibility:", {
             chatId,
             visibility,
             error: error instanceof Error ? error.message : error,
             stack: error instanceof Error ? error.stack : undefined,
           });
-          toast.error('Failed to update chat visibility');
-          console.log('🍞 Error toast shown: Failed to update chat visibility');
+          toast.error("Failed to update chat visibility");
+          console.log("🍞 Error toast shown: Failed to update chat visibility");
         }
       },
-      [chatId],
+      [chatId]
     );
 
     return (
-      <div className="flex flex-col font-sans! items-center h-screen bg-background text-foreground transition-all duration-500 w-full overflow-x-hidden !scrollbar-thin !scrollbar-thumb-muted-foreground dark:!scrollbar-thumb-muted-foreground !scrollbar-track-transparent hover:!scrollbar-thumb-foreground dark:!hover:scrollbar-thumb-foreground">
+      <div className="!scrollbar-thin !scrollbar-thumb-muted-foreground dark:!scrollbar-thumb-muted-foreground !scrollbar-track-transparent hover:!scrollbar-thumb-foreground dark:!hover:scrollbar-thumb-foreground flex h-screen w-full flex-col items-center overflow-x-hidden bg-background font-sans! text-foreground transition-all duration-500">
         <Navbar
-          isDialogOpen={chatState.anyDialogOpen}
           chatId={initialChatId || (messages.length > 0 ? chatId : null)}
-          selectedVisibilityType={chatState.selectedVisibilityType}
-          onVisibilityChange={handleVisibilityChange}
-          status={status}
-          user={user || null}
-          onHistoryClick={() => dispatch({ type: 'SET_COMMAND_DIALOG_OPEN', payload: true })}
-          isOwner={isOwner}
-          subscriptionData={subscriptionData}
-          isProUser={isUserPro}
-          isProStatusLoading={proStatusLoading}
-          isInTrial={isInTrial}
           daysLeftInTrial={daysLeftInTrial}
           isCustomInstructionsEnabled={isCustomInstructionsEnabled}
+          isDialogOpen={chatState.anyDialogOpen}
+          isInTrial={isInTrial}
+          isOwner={isOwner}
+          isProStatusLoading={proStatusLoading}
+          isProUser={isUserPro}
+          onHistoryClick={() =>
+            dispatch({ type: "SET_COMMAND_DIALOG_OPEN", payload: true })
+          }
+          onVisibilityChange={handleVisibilityChange}
+          selectedVisibilityType={chatState.selectedVisibilityType}
           setIsCustomInstructionsEnabled={setIsCustomInstructionsEnabled}
-          settingsOpen={settingsOpen}
           setSettingsOpen={setSettingsOpen}
           settingsInitialTab={settingsInitialTab}
+          settingsOpen={settingsOpen}
+          status={status}
+          subscriptionData={subscriptionData}
+          user={user || null}
         />
 
         {/* Chat Dialogs Component */}
         <ChatDialogs
           commandDialogOpen={chatState.commandDialogOpen}
-          setCommandDialogOpen={(open) => dispatch({ type: 'SET_COMMAND_DIALOG_OPEN', payload: open })}
-          showSignInPrompt={chatState.showSignInPrompt}
-          setShowSignInPrompt={(open) => dispatch({ type: 'SET_SHOW_SIGNIN_PROMPT', payload: open })}
-          hasShownSignInPrompt={chatState.hasShownSignInPrompt}
-          setHasShownSignInPrompt={(value) => {
-            dispatch({ type: 'SET_HAS_SHOWN_SIGNIN_PROMPT', payload: value });
-            setPersitedHasShownSignInPrompt(value);
-          }}
-          showUpgradeDialog={chatState.showUpgradeDialog}
-          setShowUpgradeDialog={(open) => dispatch({ type: 'SET_SHOW_UPGRADE_DIALOG', payload: open })}
-          hasShownUpgradeDialog={chatState.hasShownUpgradeDialog}
-          setHasShownUpgradeDialog={(value) => {
-            dispatch({ type: 'SET_HAS_SHOWN_UPGRADE_DIALOG', payload: value });
-            setPersitedHasShownUpgradeDialog(value);
-          }}
-          showLookoutAnnouncement={chatState.showAnnouncementDialog}
-          setShowLookoutAnnouncement={(open) => dispatch({ type: 'SET_SHOW_ANNOUNCEMENT_DIALOG', payload: open })}
           hasShownLookoutAnnouncement={chatState.hasShownAnnouncementDialog}
+          hasShownSignInPrompt={chatState.hasShownSignInPrompt}
+          hasShownUpgradeDialog={chatState.hasShownUpgradeDialog}
+          setAnyDialogOpen={(open) =>
+            dispatch({ type: "SET_ANY_DIALOG_OPEN", payload: open })
+          }
+          setCommandDialogOpen={(open) =>
+            dispatch({ type: "SET_COMMAND_DIALOG_OPEN", payload: open })
+          }
           setHasShownLookoutAnnouncement={(value) => {
-            dispatch({ type: 'SET_HAS_SHOWN_ANNOUNCEMENT_DIALOG', payload: value });
+            dispatch({
+              type: "SET_HAS_SHOWN_ANNOUNCEMENT_DIALOG",
+              payload: value,
+            });
             setPersitedHasShownLookoutAnnouncement(value);
           }}
+          setHasShownSignInPrompt={(value) => {
+            dispatch({ type: "SET_HAS_SHOWN_SIGNIN_PROMPT", payload: value });
+            setPersitedHasShownSignInPrompt(value);
+          }}
+          setHasShownUpgradeDialog={(value) => {
+            dispatch({ type: "SET_HAS_SHOWN_UPGRADE_DIALOG", payload: value });
+            setPersitedHasShownUpgradeDialog(value);
+          }}
+          setShowLookoutAnnouncement={(open) =>
+            dispatch({ type: "SET_SHOW_ANNOUNCEMENT_DIALOG", payload: open })
+          }
+          setShowSignInPrompt={(open) =>
+            dispatch({ type: "SET_SHOW_SIGNIN_PROMPT", payload: open })
+          }
+          setShowUpgradeDialog={(open) =>
+            dispatch({ type: "SET_SHOW_UPGRADE_DIALOG", payload: open })
+          }
+          showLookoutAnnouncement={chatState.showAnnouncementDialog}
+          showSignInPrompt={chatState.showSignInPrompt}
+          showUpgradeDialog={chatState.showUpgradeDialog}
           user={user}
-          setAnyDialogOpen={(open) => dispatch({ type: 'SET_ANY_DIALOG_OPEN', payload: open })}
         />
 
-
         <div
-          className={`w-full p-2 sm:p-4 relative ${
-            status === 'ready' && messages.length === 0
-              ? 'flex-1 !flex !flex-col !items-center !justify-center' // Center everything when no messages
-              : '!mt-20 sm:!mt-16 flex !flex-col' // Add top margin when showing messages
+          className={`relative w-full p-2 sm:p-4 ${
+            status === "ready" && messages.length === 0
+              ? "!flex !flex-col !items-center !justify-center flex-1" // Center everything when no messages
+              : "!mt-20 sm:!mt-16 !flex-col flex" // Add top margin when showing messages
           }`}
         >
-          <div className={`w-full max-w-[95%] sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300`}>
-            {status === 'ready' && messages.length === 0 && (
-              <div className="text-center m-0 mb-2">
+          <div
+            className={
+              "mx-auto w-full max-w-[95%] space-y-6 p-0 transition-all duration-300 sm:max-w-2xl"
+            }
+          >
+            {status === "ready" && messages.length === 0 && (
+              <div className="m-0 mb-2 text-center">
                 <div className="inline-flex items-center gap-3">
-                  <h1 className="text-4xl sm:text-5xl !mb-0 text-foreground dark:text-foreground font-be-vietnam-pro! font-light tracking-tighter">
+                  <h1 className="!mb-0 font-be-vietnam-pro! font-light text-4xl text-foreground tracking-tighter sm:text-5xl dark:text-foreground">
                     Draftpen
                   </h1>
                   {isUserPro && (
-                    <h1 className="text-2xl font-baumans! leading-4 inline-flex items-center gap-1.5 !px-3 !pt-1 !pb-2.5 rounded-xl shadow-sm !m-0 !mt-2 bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground ring-1 ring-ring/35 ring-offset-1 ring-offset-background dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground" suppressHydrationWarning>
+                    <h1
+                      className="!px-3 !pt-1 !pb-2.5 !m-0 !mt-2 inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 font-baumans! text-2xl text-foreground leading-4 shadow-sm ring-1 ring-ring/35 ring-offset-1 ring-offset-background dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground"
+                      suppressHydrationWarning
+                    >
                       {isInTrial && daysLeftInTrial > 0 ? (
                         <>
                           <Clock className="h-4 w-4" />
@@ -707,47 +832,62 @@ const ChatInterface = memo(
             )}
 
             {/* Show initial limit exceeded message */}
-            {status === 'ready' && messages.length === 0 && isLimitBlocked && (
-              <div className="mt-16 mx-auto max-w-sm">
-                <div className="bg-card backdrop-blur-xl border border-border/40 rounded-2xl shadow-2xl overflow-hidden">
+            {status === "ready" && messages.length === 0 && isLimitBlocked && (
+              <div className="mx-auto mt-16 max-w-sm">
+                <div className="overflow-hidden rounded-2xl border border-border/40 bg-card shadow-2xl backdrop-blur-xl">
                   {/* Header Section */}
-                  <div className="text-center px-8 pt-8 pb-6">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-muted/30 rounded-full mb-6">
-                      <HugeiconsIcon icon={Crown02Icon} size={28} className="text-muted-foreground" strokeWidth={1.5} />
+                  <div className="px-8 pt-8 pb-6 text-center">
+                    <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-full bg-muted/30">
+                      <HugeiconsIcon
+                        className="text-muted-foreground"
+                        icon={Crown02Icon}
+                        size={28}
+                        strokeWidth={1.5}
+                      />
                     </div>
-                    <h2 className="text-2xl font-semibold text-foreground mb-3 tracking-tight">Daily limit reached</h2>
+                    <h2 className="mb-3 font-semibold text-2xl text-foreground tracking-tight">
+                      Daily limit reached
+                    </h2>
                   </div>
 
                   {/* Content Section */}
-                  <div className="text-center px-8 pb-8">
-                    <div className="space-y-4 mb-8">
-                      <p className="text-base text-foreground leading-relaxed font-medium">
-                        You&apos;ve used all{' '}
-                        <span className="text-primary font-semibold">{SEARCH_LIMITS.DAILY_SEARCH_LIMIT}</span> searches
-                        for today
+                  <div className="px-8 pb-8 text-center">
+                    <div className="mb-8 space-y-4">
+                      <p className="font-medium text-base text-foreground leading-relaxed">
+                        You&apos;ve used all{" "}
+                        <span className="font-semibold text-primary">
+                          {SEARCH_LIMITS.DAILY_SEARCH_LIMIT}
+                        </span>{" "}
+                        searches for today
                       </p>
-                      <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
-                        Upgrade to Pro for unlimited searches, faster responses, and premium features
+                      <p className="mx-auto max-w-xs text-muted-foreground text-sm leading-relaxed">
+                        Upgrade to Pro for unlimited searches, faster responses,
+                        and premium features
                       </p>
                     </div>
 
                     {/* Actions Section */}
                     <div className="space-y-3">
                       <Button
+                        className="h-11 w-full font-semibold text-base"
                         onClick={() => {
-                          window.location.href = '/pricing';
+                          window.location.href = "/pricing";
                         }}
-                        className="w-full h-11 font-semibold text-base"
                       >
-                        <HugeiconsIcon icon={Crown02Icon} size={18} className="mr-2.5" strokeWidth={1.5} />
+                        <HugeiconsIcon
+                          className="mr-2.5"
+                          icon={Crown02Icon}
+                          size={18}
+                          strokeWidth={1.5}
+                        />
                         Upgrade to Pro
                       </Button>
                       <Button
-                        variant="ghost"
+                        className="h-10 w-full font-medium text-muted-foreground hover:text-foreground"
                         onClick={() => {
                           refetchUsage();
                         }}
-                        className="w-full h-10 text-muted-foreground hover:text-foreground font-medium"
+                        variant="ghost"
                       >
                         Try refreshing
                       </Button>
@@ -760,26 +900,33 @@ const ChatInterface = memo(
             {/* Use the Messages component */}
             {messages.length > 0 && (
               <Messages
-                messages={messages as ChatMessage[]}
-                lastUserMessageIndex={lastUserMessageIndex}
+                chatId={
+                  initialChatId || (messages.length > 0 ? chatId : undefined)
+                }
+                error={error ?? null}
+                initialMessages={initialMessages}
                 input={input}
+                isOwner={isOwner}
+                lastUserMessageIndex={lastUserMessageIndex}
+                messages={messages as ChatMessage[]}
+                onHighlight={handleHighlight}
+                onVisibilityChange={handleVisibilityChange}
+                regenerate={regenerate}
+                selectedVisibilityType={chatState.selectedVisibilityType}
+                sendMessage={sendMessage}
                 setInput={setInput}
                 setMessages={(messages) => {
                   setMessages(messages as ChatMessage[]);
                 }}
-                sendMessage={sendMessage}
-                regenerate={regenerate}
-                suggestedQuestions={chatState.suggestedQuestions}
-                setSuggestedQuestions={(questions) => dispatch({ type: 'SET_SUGGESTED_QUESTIONS', payload: questions })}
+                setSuggestedQuestions={(questions) =>
+                  dispatch({
+                    type: "SET_SUGGESTED_QUESTIONS",
+                    payload: questions,
+                  })
+                }
                 status={status}
-                error={error ?? null}
+                suggestedQuestions={chatState.suggestedQuestions}
                 user={user}
-                selectedVisibilityType={chatState.selectedVisibilityType}
-                chatId={initialChatId || (messages.length > 0 ? chatId : undefined)}
-                onVisibilityChange={handleVisibilityChange}
-                initialMessages={initialMessages}
-                isOwner={isOwner}
-                onHighlight={handleHighlight}
               />
             )}
 
@@ -787,101 +934,113 @@ const ChatInterface = memo(
           </div>
 
           {/* Single Form Component with dynamic positioning */}
-          {((user && isOwner) || !initialChatId || (!user && chatState.selectedVisibilityType === 'private')) &&
+          {((user && isOwner) ||
+            !initialChatId ||
+            (!user && chatState.selectedVisibilityType === "private")) &&
             !isLimitBlocked && (
               <div
                 className={cn(
-                  'transition-all duration-500',
+                  "transition-all duration-500",
                   messages.length === 0 && !chatState.hasSubmitted
-                    ? 'relative w-full max-w-2xl mx-auto'
-                    : 'fixed bottom-0 left-0 right-0 z-20 !pb-6 mt-1 mx-4 sm:mx-2 p-0',
+                    ? "relative mx-auto w-full max-w-2xl"
+                    : "!pb-6 fixed right-0 bottom-0 left-0 z-20 mx-4 mt-1 p-0 sm:mx-2"
                 )}
               >
                 <FormComponent
-                  chatId={chatId}
-                  user={user!}
-                  subscriptionData={subscriptionData}
-                  input={input}
-                  setInput={setInput}
                   attachments={chatState.attachments}
+                  chatId={chatId}
+                  fileInputRef={fileInputRef}
+                  input={input}
+                  inputRef={inputRef}
+                  isLimitBlocked={isLimitBlocked}
+                  lastSubmittedQueryRef={lastSubmittedQueryRef}
+                  messages={messages as ChatMessage[]}
+                  onOpenSettings={handleOpenSettings}
+                  resetSuggestedQuestions={resetSuggestedQuestions}
+                  selectedConnectors={selectedConnectors}
+                  selectedGroup={selectedGroup}
+                  selectedModel={selectedModel}
+                  sendMessage={sendMessage}
                   setAttachments={(attachments) => {
                     const newAttachments =
-                      typeof attachments === 'function' ? attachments(chatState.attachments) : attachments;
-                    dispatch({ type: 'SET_ATTACHMENTS', payload: newAttachments });
+                      typeof attachments === "function"
+                        ? attachments(chatState.attachments)
+                        : attachments;
+                    dispatch({
+                      type: "SET_ATTACHMENTS",
+                      payload: newAttachments,
+                    });
                   }}
-                  fileInputRef={fileInputRef}
-                  inputRef={inputRef}
-                  stop={stop}
-                  messages={messages as ChatMessage[]}
-                  sendMessage={sendMessage}
-                  selectedModel={selectedModel}
-                  setSelectedModel={handleModelChange}
-                  resetSuggestedQuestions={resetSuggestedQuestions}
-                  lastSubmittedQueryRef={lastSubmittedQueryRef}
-                  selectedGroup={selectedGroup}
-                  setSelectedGroup={setSelectedGroup}
-                  showExperimentalModels={messages.length === 0}
-                  status={status}
                   setHasSubmitted={(hasSubmitted) => {
                     const newValue =
-                      typeof hasSubmitted === 'function' ? hasSubmitted(chatState.hasSubmitted) : hasSubmitted;
-                    dispatch({ type: 'SET_HAS_SUBMITTED', payload: newValue });
+                      typeof hasSubmitted === "function"
+                        ? hasSubmitted(chatState.hasSubmitted)
+                        : hasSubmitted;
+                    dispatch({ type: "SET_HAS_SUBMITTED", payload: newValue });
                   }}
-                  isLimitBlocked={isLimitBlocked}
-                  onOpenSettings={handleOpenSettings}
-                  selectedConnectors={selectedConnectors}
+                  setInput={setInput}
                   setSelectedConnectors={setSelectedConnectors}
+                  setSelectedGroup={setSelectedGroup}
+                  setSelectedModel={handleModelChange}
+                  showExperimentalModels={messages.length === 0}
+                  status={status}
+                  stop={stop}
+                  subscriptionData={subscriptionData}
+                  user={user!}
                 />
               </div>
             )}
 
           {/* Form backdrop overlay - hides content below form when in submitted mode */}
-          {((user && isOwner) || !initialChatId || (!user && chatState.selectedVisibilityType === 'private')) &&
+          {((user && isOwner) ||
+            !initialChatId ||
+            (!user && chatState.selectedVisibilityType === "private")) &&
             !isLimitBlocked &&
             (messages.length > 0 || chatState.hasSubmitted) && (
               <div
-                className="fixed left-0 right-0 z-10 bg-gradient-to-t from-background via-background/95 to-background/80 backdrop-blur-sm pointer-events-none"
+                className="pointer-events-none fixed right-0 left-0 z-10 bg-gradient-to-t from-background via-background/95 to-background/80 backdrop-blur-sm"
                 style={{
                   bottom: 0,
-                  height: '120px', // Adjust height as needed
+                  height: "120px", // Adjust height as needed
                 }}
               />
             )}
 
           {/* Show limit exceeded message */}
           {isLimitBlocked && messages.length > 0 && (
-            <div className="fixed bottom-8 sm:bottom-4 left-0 right-0 w-full max-w-[95%] sm:max-w-2xl mx-auto z-20">
-              <div className="p-3 bg-muted/30 dark:bg-muted/20 border border-border/60 dark:border-border/60 rounded-lg shadow-sm backdrop-blur-sm">
+            <div className="fixed right-0 bottom-8 left-0 z-20 mx-auto w-full max-w-[95%] sm:bottom-4 sm:max-w-2xl">
+              <div className="rounded-lg border border-border/60 bg-muted/30 p-3 shadow-sm backdrop-blur-sm dark:border-border/60 dark:bg-muted/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <HugeiconsIcon
+                      className="text-muted-foreground dark:text-muted-foreground"
+                      color="currentColor"
                       icon={Crown02Icon}
                       size={14}
-                      color="currentColor"
                       strokeWidth={1.5}
-                      className="text-muted-foreground dark:text-muted-foreground"
                     />
-                    <span className="text-sm text-foreground dark:text-foreground">
-                      Daily limit reached ({SEARCH_LIMITS.DAILY_SEARCH_LIMIT} searches used)
+                    <span className="text-foreground text-sm dark:text-foreground">
+                      Daily limit reached ({SEARCH_LIMITS.DAILY_SEARCH_LIMIT}{" "}
+                      searches used)
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      className="h-7 px-2 text-xs"
                       onClick={() => {
                         refetchUsage();
                       }}
-                      className="h-7 px-2 text-xs"
+                      size="sm"
+                      variant="ghost"
                     >
                       Refresh
                     </Button>
                     <Button
-                      size="sm"
+                      className="h-7 bg-primary px-3 text-primary-foreground text-xs hover:bg-primary/90 dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/90"
                       onClick={() => {
-                        window.location.href = '/pricing';
+                        window.location.href = "/pricing";
                       }}
-                      className="h-7 px-3 text-xs bg-primary hover:bg-primary/90 dark:bg-primary dark:hover:bg-primary/90 text-primary-foreground dark:text-primary-foreground"
+                      size="sm"
                     >
                       Upgrade
                     </Button>
@@ -893,10 +1052,10 @@ const ChatInterface = memo(
         </div>
       </div>
     );
-  },
+  }
 );
 
 // Add a display name for the memoized component for better debugging
-ChatInterface.displayName = 'ChatInterface';
+ChatInterface.displayName = "ChatInterface";
 
 export { ChatInterface };

@@ -1,32 +1,35 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { format } from 'date-fns';
-import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Activity01Icon,
-  CheckmarkCircle01Icon,
-  ArrowUpRightIcon,
-  Chart01Icon,
-  Settings01Icon,
-  PlayIcon,
   AlertCircleIcon,
+  ArrowUpRightIcon,
   Cancel01Icon,
+  Chart01Icon,
+  CheckmarkCircle01Icon,
+  PlayIcon,
+  Settings01Icon,
   TestTubeIcon,
-} from '@hugeicons/core-free-icons';
-
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { Button } from '@/components/ui/button';
-import { BorderTrail } from '@/components/core/border-trail';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import Link from 'next/link';
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { format } from "date-fns";
+import Link from "next/link";
+import React from "react";
+import { BorderTrail } from "@/components/core/border-trail";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface LookoutRun {
   runAt: string;
   chatId: string;
-  status: 'success' | 'error' | 'timeout';
+  status: "success" | "error" | "timeout";
   error?: string;
   duration?: number;
   tokensUsed?: number;
@@ -40,7 +43,7 @@ interface LookoutWithHistory {
   frequency: string;
   timezone: string;
   nextRunAt: Date;
-  status: 'active' | 'paused' | 'archived' | 'running';
+  status: "active" | "paused" | "archived" | "running";
   lastRunAt?: Date | null;
   lastRunChatId?: string | null;
   runHistory: LookoutRun[];
@@ -69,63 +72,69 @@ export function LookoutDetailsSidebar({
 }: LookoutDetailsSidebarProps) {
   const runHistory = lookout.runHistory || [];
   const totalRuns = runHistory.length;
-  const successfulRuns = runHistory.filter((run) => run.status === 'success').length;
-  const failedRuns = runHistory.filter((run) => run.status === 'error').length;
+  const successfulRuns = runHistory.filter(
+    (run) => run.status === "success"
+  ).length;
+  const failedRuns = runHistory.filter((run) => run.status === "error").length;
   const successRate = totalRuns > 0 ? (successfulRuns / totalRuns) * 100 : 0;
 
   const averageDuration =
-    runHistory.length > 0 ? runHistory.reduce((sum, run) => sum + (run.duration || 0), 0) / runHistory.length : 0;
+    runHistory.length > 0
+      ? runHistory.reduce((sum, run) => sum + (run.duration || 0), 0) /
+        runHistory.length
+      : 0;
 
   const lastWeekRuns = runHistory.filter(
-    (run) => new Date(run.runAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+    (run) =>
+      new Date(run.runAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
   ).length;
 
   // Get currently running lookouts
-  const runningLookouts = allLookouts.filter((l) => l.status === 'running');
+  const runningLookouts = allLookouts.filter((l) => l.status === "running");
 
   // Analytics view state
   const [showAnalytics, setShowAnalytics] = React.useState(false);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'success':
+      case "success":
         return (
           <HugeiconsIcon
+            className="text-green-500"
+            color="currentColor"
             icon={CheckmarkCircle01Icon}
             size={14}
-            color="currentColor"
             strokeWidth={1.5}
-            className="text-green-500"
           />
         );
-      case 'error':
+      case "error":
         return (
           <HugeiconsIcon
+            className="text-red-500"
+            color="currentColor"
             icon={Cancel01Icon}
             size={14}
-            color="currentColor"
             strokeWidth={1.5}
-            className="text-red-500"
           />
         );
-      case 'timeout':
+      case "timeout":
         return (
           <HugeiconsIcon
+            className="text-yellow-500"
+            color="currentColor"
             icon={AlertCircleIcon}
             size={14}
-            color="currentColor"
             strokeWidth={1.5}
-            className="text-yellow-500"
           />
         );
       default:
         return (
           <HugeiconsIcon
+            className="text-gray-500"
+            color="currentColor"
             icon={Activity01Icon}
             size={14}
-            color="currentColor"
             strokeWidth={1.5}
-            className="text-gray-500"
           />
         );
     }
@@ -133,49 +142,54 @@ export function LookoutDetailsSidebar({
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'active':
+      case "active":
         return (
           <Badge
+            className="bg-green-100 text-green-800 text-xs dark:bg-green-900 dark:text-green-200"
             variant="default"
-            className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs"
           >
             Active
           </Badge>
         );
-      case 'paused':
+      case "paused":
         return (
-          <Badge variant="secondary" className="text-xs">
+          <Badge className="text-xs" variant="secondary">
             Paused
           </Badge>
         );
-      case 'running':
+      case "running":
         return (
           <Badge
+            className="relative gap-1 overflow-hidden border-primary/20 bg-primary/10 text-primary text-xs"
             variant="default"
-            className="gap-1 bg-primary/10 text-primary border-primary/20 relative overflow-hidden text-xs"
           >
             <BorderTrail
               className="bg-primary/60"
               size={20}
               transition={{
                 duration: 2,
-                repeat: Infinity,
-                ease: 'linear',
+                repeat: Number.POSITIVE_INFINITY,
+                ease: "linear",
               }}
             />
-            <HugeiconsIcon icon={PlayIcon} size={10} color="currentColor" strokeWidth={1.5} />
+            <HugeiconsIcon
+              color="currentColor"
+              icon={PlayIcon}
+              size={10}
+              strokeWidth={1.5}
+            />
             Running
           </Badge>
         );
-      case 'archived':
+      case "archived":
         return (
-          <Badge variant="outline" className="text-xs">
+          <Badge className="text-xs" variant="outline">
             Archived
           </Badge>
         );
       default:
         return (
-          <Badge variant="outline" className="text-xs">
+          <Badge className="text-xs" variant="outline">
             {status}
           </Badge>
         );
@@ -183,74 +197,108 @@ export function LookoutDetailsSidebar({
   };
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="px-3 sm:px-4 py-4 space-y-6 flex-1 overflow-y-auto">
+    <div className="flex h-full flex-col">
+      <div className="flex-1 space-y-6 overflow-y-auto px-3 py-4 sm:px-4">
         {showAnalytics ? (
           /* Analytics View */
           <div className="space-y-5">
             <div>
-              <h3 className="text-sm font-medium text-foreground mb-3">Performance Metrics</h3>
-              <div className="p-3 border rounded-md bg-muted/30 space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">Success Rate</span>
-                  <span className="text-sm font-medium">{successRate.toFixed(1)}%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">Average Duration</span>
-                  <span className="text-sm font-medium">
-                    {averageDuration > 0 ? `${(averageDuration / 1000).toFixed(1)}s` : 'N/A'}
+              <h3 className="mb-3 font-medium text-foreground text-sm">
+                Performance Metrics
+              </h3>
+              <div className="space-y-3 rounded-md border bg-muted/30 p-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-xs">
+                    Success Rate
+                  </span>
+                  <span className="font-medium text-sm">
+                    {successRate.toFixed(1)}%
                   </span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">Total Runs</span>
-                  <span className="text-sm font-medium">{totalRuns}</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-xs">
+                    Average Duration
+                  </span>
+                  <span className="font-medium text-sm">
+                    {averageDuration > 0
+                      ? `${(averageDuration / 1000).toFixed(1)}s`
+                      : "N/A"}
+                  </span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">Failed Runs</span>
-                  <span className="text-sm font-medium text-red-600">{failedRuns}</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-xs">
+                    Total Runs
+                  </span>
+                  <span className="font-medium text-sm">{totalRuns}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-xs">
+                    Failed Runs
+                  </span>
+                  <span className="font-medium text-red-600 text-sm">
+                    {failedRuns}
+                  </span>
                 </div>
               </div>
             </div>
 
             <div>
-              <h3 className="text-sm font-medium text-foreground mb-3">Activity Summary</h3>
-              <div className="p-3 border rounded-md bg-muted/30 space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">This Week</span>
-                  <span className="text-sm font-medium">{lastWeekRuns} runs</span>
+              <h3 className="mb-3 font-medium text-foreground text-sm">
+                Activity Summary
+              </h3>
+              <div className="space-y-3 rounded-md border bg-muted/30 p-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-xs">
+                    This Week
+                  </span>
+                  <span className="font-medium text-sm">
+                    {lastWeekRuns} runs
+                  </span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">Frequency</span>
-                  <span className="text-sm font-medium capitalize">{lookout.frequency}</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-xs">
+                    Frequency
+                  </span>
+                  <span className="font-medium text-sm capitalize">
+                    {lookout.frequency}
+                  </span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">Timezone</span>
-                  <span className="text-sm font-medium">{lookout.timezone}</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-xs">
+                    Timezone
+                  </span>
+                  <span className="font-medium text-sm">
+                    {lookout.timezone}
+                  </span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-muted-foreground">Status</span>
-                  <span className="text-sm font-medium capitalize">{lookout.status}</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-xs">Status</span>
+                  <span className="font-medium text-sm capitalize">
+                    {lookout.status}
+                  </span>
                 </div>
               </div>
             </div>
 
             {failedRuns > 0 && (
               <div>
-                <h3 className="text-sm font-medium text-foreground mb-3">Recent Errors</h3>
-                <div className="space-y-2 max-h-32 overflow-y-auto">
+                <h3 className="mb-3 font-medium text-foreground text-sm">
+                  Recent Errors
+                </h3>
+                <div className="max-h-32 space-y-2 overflow-y-auto">
                   {runHistory
-                    .filter((run) => run.status === 'error')
+                    .filter((run) => run.status === "error")
                     .slice(-3)
                     .map((run, index) => (
                       <div
+                        className="rounded border border-red-200 bg-red-50 p-2 dark:border-red-800 dark:bg-red-950/20"
                         key={index}
-                        className="p-2 bg-red-50 dark:bg-red-950/20 rounded border border-red-200 dark:border-red-800"
                       >
-                        <div className="text-xs font-medium text-red-700 dark:text-red-400 mb-1">
-                          {format(new Date(run.runAt), 'MMM d, h:mm a')}
+                        <div className="mb-1 font-medium text-red-700 text-xs dark:text-red-400">
+                          {format(new Date(run.runAt), "MMM d, h:mm a")}
                         </div>
-                        <div className="text-xs text-red-600 dark:text-red-300 leading-tight">
-                          {run.error || 'Unknown error'}
+                        <div className="text-red-600 text-xs leading-tight dark:text-red-300">
+                          {run.error || "Unknown error"}
                         </div>
                       </div>
                     ))}
@@ -265,45 +313,50 @@ export function LookoutDetailsSidebar({
             {runningLookouts.length > 0 && (
               <>
                 <div>
-                  <h3 className="text-sm font-medium text-foreground mb-3">
+                  <h3 className="mb-3 font-medium text-foreground text-sm">
                     Currently Running ({runningLookouts.length})
                   </h3>
                   <div className="space-y-2">
                     {runningLookouts.map((runningLookout) => (
                       <div
-                        key={runningLookout.id}
-                        className={`p-3 border rounded-md cursor-pointer transition-colors hover:bg-muted/50 ${
-                          runningLookout.id === lookout.id ? 'bg-muted border-primary/30' : ''
+                        className={`cursor-pointer rounded-md border p-3 transition-colors hover:bg-muted/50 ${
+                          runningLookout.id === lookout.id
+                            ? "border-primary/30 bg-muted"
+                            : ""
                         }`}
+                        key={runningLookout.id}
                         onClick={() => onLookoutChange?.(runningLookout)}
                       >
                         <div className="flex items-center gap-2">
-                          <div className="relative p-1 rounded border border-primary/20 overflow-hidden">
+                          <div className="relative overflow-hidden rounded border border-primary/20 p-1">
                             <BorderTrail
                               className="bg-primary/60"
                               size={14}
                               transition={{
                                 duration: 2,
-                                repeat: Infinity,
-                                ease: 'linear',
+                                repeat: Number.POSITIVE_INFINITY,
+                                ease: "linear",
                               }}
                             />
                             <HugeiconsIcon
+                              className="text-primary"
+                              color="currentColor"
                               icon={PlayIcon}
                               size={10}
-                              color="currentColor"
                               strokeWidth={1.5}
-                              className="text-primary"
                             />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{runningLookout.title}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {runningLookout.frequency} • {runningLookout.timezone}
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-medium text-sm">
+                              {runningLookout.title}
+                            </p>
+                            <p className="text-muted-foreground text-xs">
+                              {runningLookout.frequency} •{" "}
+                              {runningLookout.timezone}
                             </p>
                           </div>
                           {runningLookout.id === lookout.id && (
-                            <Badge variant="outline" className="text-xs">
+                            <Badge className="text-xs" variant="outline">
                               Current
                             </Badge>
                           )}
@@ -319,52 +372,75 @@ export function LookoutDetailsSidebar({
             {/* Basic Info */}
             <div>
               <div className="mb-4">
-                <h2 className="text-base font-semibold text-foreground mb-2">{lookout.title}</h2>
+                <h2 className="mb-2 font-semibold text-base text-foreground">
+                  {lookout.title}
+                </h2>
                 <div className="flex items-center gap-2">
                   {getStatusBadge(lookout.status)}
-                  <Badge variant="outline" className="text-xs">
+                  <Badge className="text-xs" variant="outline">
                     {lookout.frequency}
                   </Badge>
                 </div>
               </div>
 
-              <div className="space-y-2 text-xs text-muted-foreground mb-4">
-                <p>Created {format(new Date(lookout.createdAt), 'MMM d, yyyy')}</p>
-                {lookout.nextRunAt && lookout.status === 'active' && (
-                  <p>Next run {format(new Date(lookout.nextRunAt), 'MMM d, h:mm a')}</p>
+              <div className="mb-4 space-y-2 text-muted-foreground text-xs">
+                <p>
+                  Created {format(new Date(lookout.createdAt), "MMM d, yyyy")}
+                </p>
+                {lookout.nextRunAt && lookout.status === "active" && (
+                  <p>
+                    Next run{" "}
+                    {format(new Date(lookout.nextRunAt), "MMM d, h:mm a")}
+                  </p>
                 )}
               </div>
 
-              <div className="p-3 bg-muted/50 rounded-md border gap-2">
+              <div className="gap-2 rounded-md border bg-muted/50 p-3">
                 <p className="text-xs leading-relaxed">{lookout.prompt}</p>
-                <p className="text-xs leading-relaxed border-t mt-2 pt-2">Grok 4・Extreme Research</p>
+                <p className="mt-2 border-t pt-2 text-xs leading-relaxed">
+                  Grok 4・Extreme Research
+                </p>
               </div>
             </div>
 
             {/* Statistics */}
             <div>
-              <h3 className="text-sm font-medium text-foreground mb-3">Statistics</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="p-3 border rounded-md bg-muted/30">
-                  <div className="text-xs text-muted-foreground mb-1">Total Runs</div>
-                  <div className="text-lg font-semibold">{totalRuns}</div>
+              <h3 className="mb-3 font-medium text-foreground text-sm">
+                Statistics
+              </h3>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="rounded-md border bg-muted/30 p-3">
+                  <div className="mb-1 text-muted-foreground text-xs">
+                    Total Runs
+                  </div>
+                  <div className="font-semibold text-lg">{totalRuns}</div>
                 </div>
 
-                <div className="p-3 border rounded-md bg-muted/30">
-                  <div className="text-xs text-muted-foreground mb-1">Success Rate</div>
-                  <div className="text-lg font-semibold">{successRate.toFixed(1)}%</div>
-                  <Progress value={successRate} className="mt-2 h-1" />
+                <div className="rounded-md border bg-muted/30 p-3">
+                  <div className="mb-1 text-muted-foreground text-xs">
+                    Success Rate
+                  </div>
+                  <div className="font-semibold text-lg">
+                    {successRate.toFixed(1)}%
+                  </div>
+                  <Progress className="mt-2 h-1" value={successRate} />
                 </div>
 
-                <div className="p-3 border rounded-md bg-muted/30">
-                  <div className="text-xs text-muted-foreground mb-1">This Week</div>
-                  <div className="text-lg font-semibold">{lastWeekRuns}</div>
+                <div className="rounded-md border bg-muted/30 p-3">
+                  <div className="mb-1 text-muted-foreground text-xs">
+                    This Week
+                  </div>
+                  <div className="font-semibold text-lg">{lastWeekRuns}</div>
                 </div>
 
-                <div className="p-3 border rounded-md bg-muted/30">
-                  <div className="text-xs text-muted-foreground mb-1">Avg Duration</div>
-                  <div className="text-lg font-semibold">
-                    {averageDuration > 0 ? `${(averageDuration / 1000).toFixed(1)}s` : 'N/A'}
+                <div className="rounded-md border bg-muted/30 p-3">
+                  <div className="mb-1 text-muted-foreground text-xs">
+                    Avg Duration
+                  </div>
+                  <div className="font-semibold text-lg">
+                    {averageDuration > 0
+                      ? `${(averageDuration / 1000).toFixed(1)}s`
+                      : "N/A"}
                   </div>
                 </div>
               </div>
@@ -372,40 +448,60 @@ export function LookoutDetailsSidebar({
 
             {/* Recent Runs */}
             <div>
-              <h3 className="text-sm font-medium text-foreground mb-3">Recent Runs ({runHistory.length})</h3>
+              <h3 className="mb-3 font-medium text-foreground text-sm">
+                Recent Runs ({runHistory.length})
+              </h3>
               <div className="space-y-2">
                 {runHistory
                   .slice(-10)
                   .reverse()
                   .map((run, index) => (
                     <div
+                      className="rounded-md border p-3 transition-colors hover:bg-muted/30"
                       key={`${run.chatId}-${index}`}
-                      className="p-3 border rounded-md hover:bg-muted/30 transition-colors"
                     >
                       <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-2 flex-1">
+                        <div className="flex flex-1 items-start gap-2">
                           {getStatusIcon(run.status)}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-xs text-muted-foreground">
-                                {format(new Date(run.runAt), 'MMM d, h:mm a')}
+                          <div className="min-w-0 flex-1">
+                            <div className="mb-1 flex items-center gap-2">
+                              <span className="text-muted-foreground text-xs">
+                                {format(new Date(run.runAt), "MMM d, h:mm a")}
                               </span>
                               {run.duration && (
-                                <Badge variant="outline" className="text-xs h-4">
+                                <Badge
+                                  className="h-4 text-xs"
+                                  variant="outline"
+                                >
                                   {(run.duration / 1000).toFixed(1)}s
                                 </Badge>
                               )}
                             </div>
-                            {run.error && <p className="text-xs text-red-600 mb-1 leading-tight">{run.error}</p>}
-                            {typeof run.searchesPerformed === 'number' && (
-                              <p className="text-xs text-muted-foreground">{run.searchesPerformed} searches</p>
+                            {run.error && (
+                              <p className="mb-1 text-red-600 text-xs leading-tight">
+                                {run.error}
+                              </p>
+                            )}
+                            {typeof run.searchesPerformed === "number" && (
+                              <p className="text-muted-foreground text-xs">
+                                {run.searchesPerformed} searches
+                              </p>
                             )}
                           </div>
                         </div>
-                        {run.status === 'success' && (
+                        {run.status === "success" && (
                           <Link href={`/search/${run.chatId}`}>
-                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                              <HugeiconsIcon icon={ArrowUpRightIcon} size={12} color="currentColor" strokeWidth={1.5} />
+                            <Button
+                              className="h-6 w-6 p-0"
+                              size="sm"
+                              variant="ghost"
+                            >
+                              <HugeiconsIcon
+                                color="currentColor"
+                                icon={ArrowUpRightIcon}
+                                size={12}
+                                strokeWidth={1.5}
+                              />
                             </Button>
                           </Link>
                         )}
@@ -414,14 +510,14 @@ export function LookoutDetailsSidebar({
                   ))}
 
                 {runHistory.length === 0 && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <div className="p-3 rounded-full bg-muted/50 w-12 h-12 mx-auto mb-3 flex items-center justify-center">
+                  <div className="py-8 text-center text-muted-foreground">
+                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted/50 p-3">
                       <HugeiconsIcon
+                        className="opacity-50"
+                        color="currentColor"
                         icon={Activity01Icon}
                         size={16}
-                        color="currentColor"
                         strokeWidth={1.5}
-                        className="opacity-50"
                       />
                     </div>
                     <p className="text-xs">No runs yet</p>
@@ -434,68 +530,86 @@ export function LookoutDetailsSidebar({
       </div>
 
       {/* Footer */}
-      <div className="border-t px-3 sm:px-4 py-3 flex-shrink-0">
+      <div className="flex-shrink-0 border-t px-3 py-3 sm:px-4">
         <div className="flex gap-2">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 text-xs h-8"
+                className="h-8 flex-1 text-xs"
+                disabled={lookout.status === "running"}
                 onClick={() => onEditLookout?.(lookout)}
-                disabled={lookout.status === 'running'}
+                size="sm"
+                variant="outline"
               >
                 <HugeiconsIcon
+                  className="mr-1"
+                  color="currentColor"
                   icon={Settings01Icon}
                   size={14}
-                  color="currentColor"
                   strokeWidth={1.5}
-                  className="mr-1"
                 />
                 Edit
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{lookout.status === 'running' ? 'Cannot edit while running' : 'Edit lookout settings'}</p>
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 text-xs h-8"
-                onClick={() => onTest?.(lookout.id)}
-                disabled={lookout.status === 'running' || lookout.status === 'archived'}
-              >
-                <HugeiconsIcon icon={TestTubeIcon} size={14} color="currentColor" strokeWidth={1.5} className="mr-1" />
-                Test
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
               <p>
-                {lookout.status === 'running'
-                  ? 'Cannot test while running'
-                  : lookout.status === 'archived'
-                    ? 'Cannot test archived lookout'
-                    : 'Run test now'}
+                {lookout.status === "running"
+                  ? "Cannot edit while running"
+                  : "Edit lookout settings"}
               </p>
             </TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant={showAnalytics ? 'default' : 'outline'}
+                className="h-8 flex-1 text-xs"
+                disabled={
+                  lookout.status === "running" || lookout.status === "archived"
+                }
+                onClick={() => onTest?.(lookout.id)}
                 size="sm"
-                className="flex-1 text-xs h-8"
-                onClick={() => setShowAnalytics(!showAnalytics)}
+                variant="outline"
               >
-                <HugeiconsIcon icon={Chart01Icon} size={14} color="currentColor" strokeWidth={1.5} className="mr-1" />
-                {showAnalytics ? 'Overview' : 'Analytics'}
+                <HugeiconsIcon
+                  className="mr-1"
+                  color="currentColor"
+                  icon={TestTubeIcon}
+                  size={14}
+                  strokeWidth={1.5}
+                />
+                Test
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>{showAnalytics ? 'Show overview' : 'Show analytics'}</p>
+              <p>
+                {lookout.status === "running"
+                  ? "Cannot test while running"
+                  : lookout.status === "archived"
+                    ? "Cannot test archived lookout"
+                    : "Run test now"}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                className="h-8 flex-1 text-xs"
+                onClick={() => setShowAnalytics(!showAnalytics)}
+                size="sm"
+                variant={showAnalytics ? "default" : "outline"}
+              >
+                <HugeiconsIcon
+                  className="mr-1"
+                  color="currentColor"
+                  icon={Chart01Icon}
+                  size={14}
+                  strokeWidth={1.5}
+                />
+                {showAnalytics ? "Overview" : "Analytics"}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{showAnalytics ? "Show overview" : "Show analytics"}</p>
             </TooltipContent>
           </Tooltip>
         </div>

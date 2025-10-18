@@ -1,7 +1,12 @@
-'use client';
-import { cn } from '@/lib/utils';
-import { AnimatePresence, motion, Transition, Variants } from 'motion/react';
-import { useMemo, useId } from 'react';
+"use client";
+import {
+  AnimatePresence,
+  motion,
+  type Transition,
+  type Variants,
+} from "motion/react";
+import { useId, useMemo } from "react";
+import { cn } from "@/lib/utils";
 
 export type TextMorphProps = {
   children: string;
@@ -12,19 +17,26 @@ export type TextMorphProps = {
   transition?: Transition;
 };
 
-export function TextMorph({ children, as: Component = 'p', className, style, variants, transition }: TextMorphProps) {
+export function TextMorph({
+  children,
+  as: Component = "p",
+  className,
+  style,
+  variants,
+  transition,
+}: TextMorphProps) {
   const uniqueId = useId();
 
   const characters = useMemo(() => {
     const charCounts: Record<string, number> = {};
 
-    return children.split('').map((char) => {
+    return children.split("").map((char) => {
       const lowerChar = char.toLowerCase();
       charCounts[lowerChar] = (charCounts[lowerChar] || 0) + 1;
 
       return {
         id: `${uniqueId}-${lowerChar}${charCounts[lowerChar]}`,
-        label: char === ' ' ? '\u00A0' : char,
+        label: char === " " ? "\u00A0" : char,
       };
     });
   }, [children, uniqueId]);
@@ -36,26 +48,26 @@ export function TextMorph({ children, as: Component = 'p', className, style, var
   };
 
   const defaultTransition: Transition = {
-    type: 'spring',
+    type: "spring",
     stiffness: 280,
     damping: 18,
     mass: 0.3,
   };
 
   return (
-    <Component className={cn(className)} aria-label={children} style={style}>
-      <AnimatePresence mode="popLayout" initial={false}>
+    <Component aria-label={children} className={cn(className)} style={style}>
+      <AnimatePresence initial={false} mode="popLayout">
         {characters.map((character) => (
           <motion.span
+            animate="animate"
+            aria-hidden="true"
+            className="inline-block"
+            exit="exit"
+            initial="initial"
             key={character.id}
             layoutId={character.id}
-            className="inline-block"
-            aria-hidden="true"
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            variants={variants || defaultVariants}
             transition={transition || defaultTransition}
+            variants={variants || defaultVariants}
           >
             {character.label}
           </motion.span>

@@ -5,18 +5,15 @@
 // ----> Use structured source collection to provide comprehensive research results
 // ----> Return all collected sources and research data to the user
 
-import Exa from 'exa-js';
-import { generateObject, generateText, stepCountIs, tool } from 'ai';
-import type { UIMessageStreamWriter } from 'ai';
-import { z } from 'zod';
-import { serverEnv } from '@/env/server';
-import { modelProvider } from '@/ai/providers';
-import { ChatMessage } from '../types';
-import FirecrawlApp from '@mendable/firecrawl-js';
-import { getTweet } from 'react-tweet/api';
-
-
-
+import FirecrawlApp from "@mendable/firecrawl-js";
+import type { UIMessageStreamWriter } from "ai";
+import { generateObject, generateText, stepCountIs, tool } from "ai";
+import Exa from "exa-js";
+import { getTweet } from "react-tweet/api";
+import { z } from "zod";
+import { modelProvider } from "@/ai/providers";
+import { serverEnv } from "@/env/server";
+import type { ChatMessage } from "../types";
 
 const exa = new Exa(serverEnv.EXA_API_KEY);
 const firecrawl = new FirecrawlApp({ apiKey: serverEnv.FIRECRAWL_API_KEY });
@@ -37,19 +34,23 @@ export type Research = {
 };
 
 enum SearchCategory {
-  NEWS = 'news',
-  COMPANY = 'company',
-  RESEARCH_PAPER = 'research paper',
-  GITHUB = 'github',
-  FINANCIAL_REPORT = 'financial report',
+  NEWS = "news",
+  COMPANY = "company",
+  RESEARCH_PAPER = "research paper",
+  GITHUB = "github",
+  FINANCIAL_REPORT = "financial report",
 }
 
-const searchWeb = async (query: string, category?: SearchCategory, include_domains?: string[]) => {
+const searchWeb = async (
+  query: string,
+  category?: SearchCategory,
+  include_domains?: string[]
+) => {
   console.log(`searchWeb called with query: "${query}", category: ${category}`);
   try {
     const { results } = await exa.searchAndContents(query, {
       numResults: 8,
-      type: 'auto',
+      type: "auto",
       ...(category
         ? {
             category: category as SearchCategory,
@@ -57,7 +58,7 @@ const searchWeb = async (query: string, category?: SearchCategory, include_domai
         : {}),
       ...(include_domains
         ? {
-            include_domains: include_domains,
+            include_domains,
           }
         : {}),
     });
@@ -74,7 +75,7 @@ const searchWeb = async (query: string, category?: SearchCategory, include_domai
     console.log(`searchWeb returning ${mappedResults.length} results`);
     return mappedResults;
   } catch (error) {
-    console.error('Error in searchWeb:', error);
+    console.error("Error in searchWeb:", error);
     return [];
   }
 };
@@ -91,19 +92,23 @@ const getContents = async (links: string[]) => {
         maxCharacters: 3000,
         includeHtmlTags: false,
       },
-      livecrawl: 'preferred',
+      livecrawl: "preferred",
     });
-    console.log(`getContents received ${result.results.length} results from Exa API`);
+    console.log(
+      `getContents received ${result.results.length} results from Exa API`
+    );
 
     // Process Exa results
     for (const r of result.results) {
       if (r.text && r.text.trim()) {
         results.push({
-          title: r.title || r.url.split('/').pop() || 'Retrieved Content',
+          title: r.title || r.url.split("/").pop() || "Retrieved Content",
           url: r.url,
           content: r.text,
-          publishedDate: r.publishedDate || '',
-          favicon: r.favicon || `https://www.google.com/s2/favicons?domain=${new URL(r.url).hostname}&sz=128`,
+          publishedDate: r.publishedDate || "",
+          favicon:
+            r.favicon ||
+            `https://www.google.com/s2/favicons?domain=${new URL(r.url).hostname}&sz=128`,
         });
       } else {
         // Add URLs with no content to failed list for Firecrawl fallback
@@ -116,32 +121,39 @@ const getContents = async (links: string[]) => {
     const missingUrls = links.filter((url) => !exaUrls.includes(url));
     failedUrls.push(...missingUrls);
   } catch (error) {
-    console.error('Exa API error:', error);
-    console.log('Adding all URLs to Firecrawl fallback list');
+    console.error("Exa API error:", error);
+    console.log("Adding all URLs to Firecrawl fallback list");
     failedUrls.push(...links);
   }
 
   // Use Firecrawl as fallback for failed URLs
   if (failedUrls.length > 0) {
-    console.log(`Using Firecrawl fallback for ${failedUrls.length} URLs:`, failedUrls);
+    console.log(
+      `Using Firecrawl fallback for ${failedUrls.length} URLs:`,
+      failedUrls
+    );
 
     for (const url of failedUrls) {
       try {
         const scrapeResponse = await firecrawl.scrape(url, {
-          formats: ['markdown'],
-          proxy: 'auto',
+          formats: ["markdown"],
+          proxy: "auto",
           storeInCache: true,
-          parsers: ['pdf'],
+          parsers: ["pdf"],
         });
 
         if (scrapeResponse.markdown) {
           console.log(`Firecrawl successfully scraped ${url}`);
 
           results.push({
-            title: scrapeResponse.metadata?.title || url.split('/').pop() || 'Retrieved Content',
-            url: url,
+            title:
+              scrapeResponse.metadata?.title ||
+              url.split("/").pop() ||
+              "Retrieved Content",
+            url,
             content: scrapeResponse.markdown.slice(0, 3000), // Match maxCharacters from Exa
-            publishedDate: (scrapeResponse.metadata?.publishedDate as string) || '',
+            publishedDate:
+              (scrapeResponse.metadata?.publishedDate as string) || "",
             favicon: `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=128`,
           });
         } else {
@@ -154,37 +166,45 @@ const getContents = async (links: string[]) => {
   }
 
   console.log(
-    `getContents returning ${results.length} total results (${results.length - failedUrls.length + results.filter((r) => failedUrls.includes(r.url)).length} from Exa, ${results.filter((r) => failedUrls.includes(r.url)).length} from Firecrawl)`,
+    `getContents returning ${results.length} total results (${results.length - failedUrls.length + results.filter((r) => failedUrls.includes(r.url)).length} from Exa, ${results.filter((r) => failedUrls.includes(r.url)).length} from Firecrawl)`
   );
   return results;
 };
 
 async function extremeSearch(
   prompt: string,
-  dataStream: UIMessageStreamWriter<ChatMessage> | undefined,
+  dataStream: UIMessageStreamWriter<ChatMessage> | undefined
 ): Promise<Research> {
   const allSources: SearchResult[] = [];
 
   if (dataStream) {
     dataStream.write({
-      type: 'data-extreme_search',
+      type: "data-extreme_search",
       data: {
-        kind: 'plan',
-        status: { title: 'Planning research' },
+        kind: "plan",
+        status: { title: "Planning research" },
       },
     });
   }
 
   // plan out the research
   const { object: result } = await generateObject({
-    model: modelProvider.languageModel('gpt5-mini'),
+    model: modelProvider.languageModel("gpt5-mini"),
     schema: z.object({
       plan: z
         .array(
           z.object({
-            title: z.string().min(10).max(70).describe('A title for the research topic'),
-            todos: z.array(z.string()).min(3).max(5).describe('A list of what to research for the given title'),
-          }),
+            title: z
+              .string()
+              .min(10)
+              .max(70)
+              .describe("A title for the research topic"),
+            todos: z
+              .array(z.string())
+              .min(3)
+              .max(5)
+              .describe("A list of what to research for the given title"),
+          })
         )
         .min(1)
         .max(5),
@@ -192,7 +212,7 @@ async function extremeSearch(
     prompt: `
 Plan out the research for the following topic: ${prompt}.
 
-Today's Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}
+Today's Date: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}
 
 Plan Guidelines:
 - Break down the topic into key aspects to research
@@ -220,25 +240,25 @@ Plan Guidelines:
 
   if (dataStream) {
     dataStream.write({
-      type: 'data-extreme_search',
+      type: "data-extreme_search",
       data: {
-        kind: 'plan',
-        status: { title: 'Research plan ready, starting up research agent' },
+        kind: "plan",
+        status: { title: "Research plan ready, starting up research agent" },
         plan,
       },
     });
   }
 
-  let toolResults: any[] = [];
+  const toolResults: any[] = [];
 
   // Create the autonomous research agent with tools
   const { text } = await generateText({
-    model: modelProvider.languageModel('gpt5-mini'),
+    model: modelProvider.languageModel("gpt5-mini"),
     stopWhen: stepCountIs(totalTodos),
     system: `
 You are an autonomous deep research analyst. Your goal is to research the given research plan thoroughly with the given tools.
 
-Today's Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
+Today's Date: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
 
 ### PRIMARY FOCUS: SEARCH-DRIVEN RESEARCH (95% of your work)
 Your main job is to SEARCH extensively and gather comprehensive information. Search should be your go-to approach for almost everything.
@@ -311,28 +331,39 @@ ${JSON.stringify(plan)}
 `,
     prompt,
     temperature: 0,
-    providerOptions: {
-    },
+    providerOptions: {},
     tools: {
       webSearch: {
-        description: 'Search the web for information on a topic',
+        description: "Search the web for information on a topic",
         inputSchema: z.object({
-          query: z.string().describe('The search query to achieve the todo').max(150),
-          category: z.nativeEnum(SearchCategory).optional().describe('The category of the search if relevant'),
-          includeDomains: z.array(z.string()).optional().describe('The domains to include in the search for results'),
+          query: z
+            .string()
+            .describe("The search query to achieve the todo")
+            .max(150),
+          category: z
+            .nativeEnum(SearchCategory)
+            .optional()
+            .describe("The category of the search if relevant"),
+          includeDomains: z
+            .array(z.string())
+            .optional()
+            .describe("The domains to include in the search for results"),
         }),
-        execute: async ({ query, category, includeDomains }, { toolCallId }) => {
-          console.log('Web search query:', query);
-          console.log('Category:', category);
+        execute: async (
+          { query, category, includeDomains },
+          { toolCallId }
+        ) => {
+          console.log("Web search query:", query);
+          console.log("Category:", category);
 
           if (dataStream) {
             dataStream.write({
-              type: 'data-extreme_search',
+              type: "data-extreme_search",
               data: {
-                kind: 'query',
+                kind: "query",
                 queryId: toolCallId,
-                query: query,
-                status: 'started',
+                query,
+                status: "started",
               },
             });
           }
@@ -346,9 +377,9 @@ ${JSON.stringify(plan)}
           if (dataStream) {
             results.forEach(async (source) => {
               dataStream.write({
-                type: 'data-extreme_search',
+                type: "data-extreme_search",
                 data: {
-                  kind: 'source',
+                  kind: "source",
                   queryId: toolCallId,
                   source: {
                     title: source.title,
@@ -364,12 +395,12 @@ ${JSON.stringify(plan)}
             try {
               if (dataStream) {
                 dataStream.write({
-                  type: 'data-extreme_search',
+                  type: "data-extreme_search",
                   data: {
-                    kind: 'query',
+                    kind: "query",
                     queryId: toolCallId,
-                    query: query,
-                    status: 'reading_content',
+                    query,
+                    status: "reading_content",
                   },
                 });
               }
@@ -386,15 +417,15 @@ ${JSON.stringify(plan)}
                 if (dataStream) {
                   contentsResults.forEach((content) => {
                     dataStream.write({
-                      type: 'data-extreme_search',
+                      type: "data-extreme_search",
                       data: {
-                        kind: 'content',
+                        kind: "content",
                         queryId: toolCallId,
                         content: {
-                          title: content.title || '',
+                          title: content.title || "",
                           url: content.url,
-                          text: (content.content || '').slice(0, 500) + '...', // Truncate for annotation
-                          favicon: content.favicon || '',
+                          text: (content.content || "").slice(0, 500) + "...", // Truncate for annotation
+                          favicon: content.favicon || "",
                         },
                       },
                     });
@@ -402,33 +433,40 @@ ${JSON.stringify(plan)}
                 }
                 // Update results with full content, but keep original results as fallback
                 results = contentsResults.map((content) => {
-                  const originalResult = results.find((r) => r.url === content.url);
+                  const originalResult = results.find(
+                    (r) => r.url === content.url
+                  );
                   return {
-                    title: content.title || originalResult?.title || '',
+                    title: content.title || originalResult?.title || "",
                     url: content.url,
-                    content: content.content || originalResult?.content || '',
-                    publishedDate: content.publishedDate || originalResult?.publishedDate || '',
-                    favicon: content.favicon || originalResult?.favicon || '',
+                    content: content.content || originalResult?.content || "",
+                    publishedDate:
+                      content.publishedDate ||
+                      originalResult?.publishedDate ||
+                      "",
+                    favicon: content.favicon || originalResult?.favicon || "",
                   };
                 }) as SearchResult[];
               } else {
-                console.log('getContents returned no results, using original search results');
+                console.log(
+                  "getContents returned no results, using original search results"
+                );
               }
             } catch (error) {
-              console.error('Error fetching content:', error);
-              console.log('Using original search results due to error');
+              console.error("Error fetching content:", error);
+              console.log("Using original search results due to error");
             }
           }
 
           // Mark query as completed
           if (dataStream) {
             dataStream.write({
-              type: 'data-extreme_search',
+              type: "data-extreme_search",
               data: {
-                kind: 'query',
+                kind: "query",
                 queryId: toolCallId,
-                query: query,
-                status: 'completed',
+                query,
+                status: "completed",
               },
             });
           }
@@ -442,40 +480,63 @@ ${JSON.stringify(plan)}
         },
       },
       xSearch: {
-        description: '[DISABLED] X (formerly Twitter) search is currently disabled',
+        description:
+          "[DISABLED] X (formerly Twitter) search is currently disabled",
         inputSchema: z.object({
-          query: z.string().describe('The search query for X posts').max(150),
+          query: z.string().describe("The search query for X posts").max(150),
           startDate: z
             .string()
-            .describe('The start date of the search in the format YYYY-MM-DD (default to 7 days ago if not specified)')
+            .describe(
+              "The start date of the search in the format YYYY-MM-DD (default to 7 days ago if not specified)"
+            )
             .optional(),
           endDate: z
             .string()
-            .describe('The end date of the search in the format YYYY-MM-DD (default to today if not specified)')
+            .describe(
+              "The end date of the search in the format YYYY-MM-DD (default to today if not specified)"
+            )
             .optional(),
           xHandles: z
             .array(z.string())
             .optional()
             .describe(
-              'Optional list of X handles/usernames to search from (without @ symbol). Only include if user explicitly mentions specific handles',
+              "Optional list of X handles/usernames to search from (without @ symbol). Only include if user explicitly mentions specific handles"
             ),
-          maxResults: z.number().optional().describe('Maximum number of search results to return (default 15)'),
+          maxResults: z
+            .number()
+            .optional()
+            .describe(
+              "Maximum number of search results to return (default 15)"
+            ),
         }),
-        execute: async ({ query, startDate, endDate, xHandles, maxResults = 15 }, { toolCallId }) => { throw new Error('X search is disabled');
-          console.log('X search query:', query);
-          console.log('X search parameters:', { startDate, endDate, xHandles, maxResults });
+        execute: async (
+          { query, startDate, endDate, xHandles, maxResults = 15 },
+          { toolCallId }
+        ) => {
+          throw new Error("X search is disabled");
+          console.log("X search query:", query);
+          console.log("X search parameters:", {
+            startDate,
+            endDate,
+            xHandles,
+            maxResults,
+          });
 
           if (dataStream) {
             dataStream?.write({
-              type: 'data-extreme_search',
+              type: "data-extreme_search",
               data: {
-                kind: 'x_search',
+                kind: "x_search",
                 xSearchId: toolCallId,
-                query: query,
-                startDate: startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                endDate: endDate || new Date().toISOString().split('T')[0],
+                query,
+                startDate:
+                  startDate ||
+                  new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+                    .toISOString()
+                    .split("T")[0],
+                endDate: endDate || new Date().toISOString().split("T")[0],
                 handles: xHandles || [],
-                status: 'started',
+                status: "started",
               },
             });
           }
@@ -483,15 +544,19 @@ ${JSON.stringify(plan)}
           try {
             // Set default dates if not provided
             const searchStartDate =
-              startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-            const searchEndDate = endDate || new Date().toISOString().split('T')[0];
+              startDate ||
+              new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+                .toISOString()
+                .split("T")[0];
+            const searchEndDate =
+              endDate || new Date().toISOString().split("T")[0];
 
             const { text, sources } = await generateText({
-              model: modelProvider.languageModel('gpt5-mini'),
-              system: `You are a helpful assistant that searches for X posts and returns the results in a structured format. You will be given a search query and a list of X handles to search from. You will then search for the posts and return the results in a structured format. You will also cite the sources in the format [Source No.]. Go very deep in the search and return the most relevant results.`,
-              messages: [{ role: 'user', content: query }],
+              model: modelProvider.languageModel("gpt5-mini"),
+              system:
+                "You are a helpful assistant that searches for X posts and returns the results in a structured format. You will be given a search query and a list of X handles to search from. You will then search for the posts and return the results in a structured format. You will also cite the sources in the format [Source No.]. Go very deep in the search and return the most relevant results.",
+              messages: [{ role: "user", content: query }],
               maxOutputTokens: 10,
-
             });
 
             const citations = sources || [];
@@ -499,11 +564,12 @@ ${JSON.stringify(plan)}
 
             if (citations.length > 0) {
               const tweetFetchPromises = citations
-                .filter((link) => link.sourceType === 'url')
+                .filter((link) => link.sourceType === "url")
                 .map(async (link) => {
                   try {
-                    const tweetUrl = link.sourceType === 'url' ? link.url : '';
-                    const tweetId = tweetUrl.match(/\/status\/(\d+)/)?.[1] || '';
+                    const tweetUrl = link.sourceType === "url" ? link.url : "";
+                    const tweetId =
+                      tweetUrl.match(/\/status\/(\d+)/)?.[1] || "";
 
                     const tweetData = await getTweet(tweetId);
                     if (!tweetData) return null;
@@ -512,28 +578,37 @@ ${JSON.stringify(plan)}
                     if (!text) return null;
 
                     // Generate a better title with user handle and text preview
-                    const userHandle = tweetData.user?.screen_name || tweetData.user?.name || 'unknown';
-                    const textPreview = text.slice(0, 20) + (text.length > 20 ? '...' : '');
+                    const userHandle =
+                      tweetData.user?.screen_name ||
+                      tweetData.user?.name ||
+                      "unknown";
+                    const textPreview =
+                      text.slice(0, 20) + (text.length > 20 ? "..." : "");
                     const generatedTitle = `Post from @${userHandle}: ${textPreview}`;
 
                     return {
-                      text: text,
+                      text,
                       link: tweetUrl,
                       title: generatedTitle,
                     };
                   } catch (error) {
-                    console.error(`Error fetching tweet data for ${link.sourceType === 'url' ? link.url : ''}:`, error);
+                    console.error(
+                      `Error fetching tweet data for ${link.sourceType === "url" ? link.url : ""}:`,
+                      error
+                    );
                     return null;
                   }
                 });
 
               const tweetResults = await Promise.all(tweetFetchPromises);
-              allSources.push(...tweetResults.filter((result) => result !== null));
+              allSources.push(
+                ...tweetResults.filter((result) => result !== null)
+              );
             }
 
             const result = {
               content: text,
-              citations: citations,
+              citations,
               sources: allSources,
               dateRange: `${searchStartDate} to ${searchEndDate}`,
               handles: xHandles || [],
@@ -541,35 +616,39 @@ ${JSON.stringify(plan)}
 
             if (dataStream) {
               dataStream?.write({
-                type: 'data-extreme_search',
+                type: "data-extreme_search",
                 data: {
-                  kind: 'x_search',
+                  kind: "x_search",
                   xSearchId: toolCallId,
-                  query: query,
+                  query,
                   startDate: searchStartDate,
                   endDate: searchEndDate,
                   handles: xHandles || [],
-                  status: 'completed',
-                  result: result,
+                  status: "completed",
+                  result,
                 },
               });
             }
 
             return result;
           } catch (error) {
-            console.error('X search error:', error);
+            console.error("X search error:", error);
 
             if (dataStream) {
               dataStream?.write({
-                type: 'data-extreme_search',
+                type: "data-extreme_search",
                 data: {
-                  kind: 'x_search',
+                  kind: "x_search",
                   xSearchId: toolCallId,
-                  query: query,
-                  startDate: startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                  endDate: endDate || new Date().toISOString().split('T')[0],
+                  query,
+                  startDate:
+                    startDate ||
+                    new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+                      .toISOString()
+                      .split("T")[0],
+                  endDate: endDate || new Date().toISOString().split("T")[0],
                   handles: xHandles || [],
-                  status: 'error',
+                  status: "error",
                 },
               });
             }
@@ -580,10 +659,10 @@ ${JSON.stringify(plan)}
       },
     },
     onStepFinish: (step) => {
-      console.log('Step finished:', step.finishReason);
-      console.log('Step:', step);
+      console.log("Step finished:", step.finishReason);
+      console.log("Step:", step);
       if (step.toolResults) {
-        console.log('Tool results:', step.toolResults);
+        console.log("Tool results:", step.toolResults);
         toolResults.push(...step.toolResults);
       }
     },
@@ -591,48 +670,57 @@ ${JSON.stringify(plan)}
 
   if (dataStream) {
     dataStream.write({
-      type: 'data-extreme_search',
+      type: "data-extreme_search",
       data: {
-        kind: 'plan',
-        status: { title: 'Research completed' },
+        kind: "plan",
+        status: { title: "Research completed" },
       },
     });
   }
 
   const chartResults = toolResults.filter(
     (result) =>
-      result.toolName === 'codeRunner' &&
-      typeof result.result === 'object' &&
+      result.toolName === "codeRunner" &&
+      typeof result.result === "object" &&
       result.result !== null &&
-      'charts' in result.result,
+      "charts" in result.result
   );
 
-  console.log('Chart results:', chartResults);
+  console.log("Chart results:", chartResults);
 
-  const charts = chartResults.flatMap((result) => (result.result as any).charts || []);
+  const charts = chartResults.flatMap(
+    (result) => (result.result as any).charts || []
+  );
 
-  console.log('Tool results:', toolResults);
-  console.log('Charts:', charts);
-  console.log('Source 2:', allSources[2]);
+  console.log("Tool results:", toolResults);
+  console.log("Charts:", charts);
+  console.log("Source 2:", allSources[2]);
 
   return {
     text,
     toolResults,
     sources: Array.from(
-      new Map(allSources.map((s) => [s.url, { ...s, content: s.content.slice(0, 3000) + '...' }])).values(),
+      new Map(
+        allSources.map((s) => [
+          s.url,
+          { ...s, content: s.content.slice(0, 3000) + "..." },
+        ])
+      ).values()
     ),
     charts,
   };
 }
 
-export function extremeSearchTool(dataStream: UIMessageStreamWriter<ChatMessage> | undefined) {
+export function extremeSearchTool(
+  dataStream: UIMessageStreamWriter<ChatMessage> | undefined
+) {
   return tool({
-    description: 'Use this tool to conduct an extreme search on a given topic.',
+    description: "Use this tool to conduct an extreme search on a given topic.",
     inputSchema: z.object({
       prompt: z
         .string()
         .describe(
-          "This should take the user's exact prompt. Extract from the context but do not infer or change in any way.",
+          "This should take the user's exact prompt. Extract from the context but do not infer or change in any way."
         ),
     }),
     execute: async ({ prompt }) => {

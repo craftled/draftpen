@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
-import { BinocularsIcon, Archive01Icon } from '@hugeicons/core-free-icons';
-import { Card, CardContent } from '@/components/ui/card';
+import { Archive01Icon, BinocularsIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import type React from "react";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface EmptyStateProps {
   icon?: any;
   title: string;
   description: string;
   children?: React.ReactNode;
-  variant?: 'default' | 'dashed';
+  variant?: "default" | "dashed";
 }
 
 export function EmptyState({
@@ -18,22 +18,28 @@ export function EmptyState({
   title,
   description,
   children,
-  variant = 'dashed',
+  variant = "dashed",
 }: EmptyStateProps) {
   return (
-    <Card className={variant === 'dashed' ? 'border-dashed shadow-none' : 'shadow-none'}>
+    <Card
+      className={
+        variant === "dashed" ? "border-dashed shadow-none" : "shadow-none"
+      }
+    >
       <CardContent className="flex flex-col items-center justify-center py-8">
-        <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
+        <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
           <HugeiconsIcon
+            className="text-muted-foreground"
+            color="currentColor"
             icon={icon}
             size={20}
-            color="currentColor"
             strokeWidth={1.5}
-            className="text-muted-foreground"
           />
         </div>
-        <h3 className="text-lg font-medium mb-1">{title}</h3>
-        <p className="text-sm text-muted-foreground text-center max-w-sm mb-4">{description}</p>
+        <h3 className="mb-1 font-medium text-lg">{title}</h3>
+        <p className="mb-4 max-w-sm text-center text-muted-foreground text-sm">
+          {description}
+        </p>
         {children}
       </CardContent>
     </Card>
@@ -44,9 +50,9 @@ export function EmptyState({
 export function NoActiveLookoutsEmpty() {
   return (
     <EmptyState
+      description="Schedule a lookout to automate searches and get reminders when they complete."
       icon={BinocularsIcon}
       title="Get started by adding a lookout"
-      description="Schedule a lookout to automate searches and get reminders when they complete."
     />
   );
 }
@@ -54,9 +60,9 @@ export function NoActiveLookoutsEmpty() {
 export function NoArchivedLookoutsEmpty() {
   return (
     <EmptyState
+      description="Archived lookouts will appear here."
       icon={Archive01Icon}
       title="No archived lookouts"
-      description="Archived lookouts will appear here."
       variant="default"
     />
   );

@@ -1,15 +1,12 @@
-import 'server-only';
+import "server-only";
 
-import { eq, and } from 'drizzle-orm';
-import { subscription, user, account } from './db/schema';
-import { db, maindb } from './db';
-import { auth } from './auth';
-import { headers } from 'next/headers';
-
-import { getCustomInstructionsByUserId } from './db/queries';
-import type { CustomInstructions } from './db/schema';
-
-
+import { and, eq } from "drizzle-orm";
+import { headers } from "next/headers";
+import { auth } from "./auth";
+import { maindb } from "./db";
+import { getCustomInstructionsByUserId } from "./db/queries";
+import type { CustomInstructions } from "./db/schema";
+import { account, subscription, user } from "./db/schema";
 
 // Single comprehensive user data type
 export type ComprehensiveUserData = {
@@ -21,8 +18,8 @@ export type ComprehensiveUserData = {
   createdAt: Date;
   updatedAt: Date;
   isProUser: boolean;
-  proSource: 'polar' | 'none';
-  subscriptionStatus: 'active' | 'canceled' | 'expired' | 'none';
+  proSource: "polar" | "none";
+  subscriptionStatus: "active" | "canceled" | "expired" | "none";
   polarSubscription?: {
     id: string;
     productId: string;
@@ -37,7 +34,6 @@ export type ComprehensiveUserData = {
     trialStart?: Date | null;
     trialEnd?: Date | null;
   };
-
 };
 
 // Lightweight user auth type for fast checks
@@ -47,8 +43,14 @@ export type LightweightUserAuth = {
   isProUser: boolean;
 };
 
-const userDataCache = new Map<string, { data: ComprehensiveUserData; expiresAt: number }>();
-const lightweightAuthCache = new Map<string, { data: LightweightUserAuth; expiresAt: number }>();
+const userDataCache = new Map<
+  string,
+  { data: ComprehensiveUserData; expiresAt: number }
+>();
+const lightweightAuthCache = new Map<
+  string,
+  { data: LightweightUserAuth; expiresAt: number }
+>();
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 const LIGHTWEIGHT_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes - shorter for lightweight checks
 
@@ -68,7 +70,11 @@ function getCachedUserData(userId: string): ComprehensiveUserData | null {
   if (cached && cached.expiresAt > Date.now()) {
     const data = cached.data;
     // If essential fields are empty, bypass cache to allow fresh resolution from session/provider
-    const bad = !data?.email || data.email.trim() === '' || !data?.name || data.name.trim() === '';
+    const bad =
+      !data?.email ||
+      data.email.trim() === "" ||
+      !data?.name ||
+      data.name.trim() === "";
     if (!bad) return data;
   }
   if (cached) {
@@ -109,7 +115,10 @@ function getCachedLightweightAuth(userId: string): LightweightUserAuth | null {
   return null;
 }
 
-function setCachedLightweightAuth(userId: string, data: LightweightUserAuth): void {
+function setCachedLightweightAuth(
+  userId: string,
+  data: LightweightUserAuth
+): void {
   lightweightAuthCache.set(userId, {
     data,
     expiresAt: Date.now() + LIGHTWEIGHT_CACHE_TTL_MS,
@@ -122,7 +131,7 @@ function setCachedLightweightAuth(userId: string, data: LightweightUserAuth): vo
  */
 export async function getCachedCustomInstructionsByUserId(
   userId: string,
-  options?: { ttlMs?: number },
+  options?: { ttlMs?: number }
 ): Promise<CustomInstructions | null> {
   const ttlMs = options?.ttlMs ?? CUSTOM_INSTRUCTIONS_CACHE_TTL_MS;
   const cached = customInstructionsCache.get(userId);
@@ -207,20 +216,24 @@ export async function getLightweightUserAuth(): Promise<LightweightUserAuth | nu
       .from(subscription)
       .where(eq(subscription.userId, userId));
 
-    const result = [{
-      userId: userRecord.userId,
-      email: userRecord.email,
-      subscriptionStatus: subscriptionRecord?.status || null,
-      subscriptionEnd: subscriptionRecord?.currentPeriodEnd || null,
-    }];
+    const result = [
+      {
+        userId: userRecord.userId,
+        email: userRecord.email,
+        subscriptionStatus: subscriptionRecord?.status || null,
+        subscriptionEnd: subscriptionRecord?.currentPeriodEnd || null,
+      },
+    ];
 
     if (!result || result.length === 0) {
       return null;
     }
 
     // Check for active Polar subscription (includes trialing)
-    const hasActivePolarSub = result.some((row) => 
-      row.subscriptionStatus === 'active' || row.subscriptionStatus === 'trialing'
+    const hasActivePolarSub = result.some(
+      (row) =>
+        row.subscriptionStatus === "active" ||
+        row.subscriptionStatus === "trialing"
     );
 
     const lightweightData: LightweightUserAuth = {
@@ -234,7 +247,7 @@ export async function getLightweightUserAuth(): Promise<LightweightUserAuth | nu
 
     return lightweightData;
   } catch (error) {
-    console.error('Error in lightweight auth check:', error);
+    console.error("Error in lightweight auth check:", error);
     return null;
   }
 }
@@ -293,46 +306,64 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
 
     const userData = userWithSubscriptions[0];
 
-
     // Try to enrich from provider account token (e.g., Google id_token)
-    let providerClaims: { email?: string; name?: string; picture?: string } = {};
+    const providerClaims: { email?: string; name?: string; picture?: string } =
+      {};
     try {
       const acct = await maindb.query.account.findFirst({
-        where: and(eq(account.userId, userId), eq(account.providerId, 'google')),
+        where: and(
+          eq(account.userId, userId),
+          eq(account.providerId, "google")
+        ),
         columns: { idToken: true },
       });
       const idToken = acct?.idToken;
-      if (idToken && idToken.includes('.')) {
-        const payloadB64 = idToken.split('.')[1];
-        const normalized = payloadB64.replace(/-/g, '+').replace(/_/g, '/');
-        const json = Buffer.from(normalized, 'base64').toString('utf8');
+      if (idToken && idToken.includes(".")) {
+        const payloadB64 = idToken.split(".")[1];
+        const normalized = payloadB64.replace(/-/g, "+").replace(/_/g, "/");
+        const json = Buffer.from(normalized, "base64").toString("utf8");
         const payload = JSON.parse(json);
         providerClaims.email = payload.email || undefined;
-        providerClaims.name = payload.name || [payload.given_name, payload.family_name].filter(Boolean).join(' ') || undefined;
+        providerClaims.name =
+          payload.name ||
+          [payload.given_name, payload.family_name].filter(Boolean).join(" ") ||
+          undefined;
         providerClaims.picture = payload.picture || undefined;
       }
     } catch (e) {
       // Non-fatal; continue with whatever we have
-      console.warn('Provider claims decode failed (non-fatal):', e);
+      console.warn("Provider claims decode failed (non-fatal):", e);
     }
 
     // Optionally backfill empty DB fields if we discovered trustworthy values
     try {
       const updates: Partial<typeof user.$inferInsert> = {} as any;
-      if ((userData.email?.trim?.() === '' || !userData.email) && (providerClaims.email)) {
+      if (
+        (userData.email?.trim?.() === "" || !userData.email) &&
+        providerClaims.email
+      ) {
         (updates as any).email = providerClaims.email;
       }
-      if ((userData.name?.trim?.() === '' || !userData.name) && (providerClaims.name)) {
+      if (
+        (userData.name?.trim?.() === "" || !userData.name) &&
+        providerClaims.name
+      ) {
         (updates as any).name = providerClaims.name;
       }
-      if ((userData.image == null || userData.image === '') && (providerClaims.picture)) {
+      if (
+        (userData.image == null || userData.image === "") &&
+        providerClaims.picture
+      ) {
         (updates as any).image = providerClaims.picture;
       }
       if (Object.keys(updates).length > 0) {
-        await maindb.update(user).set({ ...(updates as any), updatedAt: new Date() }).where(eq(user.id, userId));
+        await maindb
+          .update(user)
+          .set({ ...(updates as any), updatedAt: new Date() })
+          .where(eq(user.id, userId));
       }
     } catch (e) {
-      console.warn('Backfill of user profile fields failed (non-fatal):', e);
+      console.warn("Backfill of user profile fields failed (non-fatal):", e);
     }
 
     // Process Polar subscriptions from the joined data
@@ -354,46 +385,61 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
 
     // Process Polar subscription (includes trialing)
     const activePolarSubscription = polarSubscriptions
-      .filter((sub) => sub.status === 'active' || sub.status === 'trialing')
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+      .filter((sub) => sub.status === "active" || sub.status === "trialing")
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )[0];
 
     // Determine overall Pro status and source
     let isProUser = false;
-    let proSource: 'polar' | 'none' = 'none';
-    let subscriptionStatus: 'active' | 'canceled' | 'expired' | 'none' = 'none';
+    let proSource: "polar" | "none" = "none";
+    let subscriptionStatus: "active" | "canceled" | "expired" | "none" = "none";
 
     if (activePolarSubscription) {
       isProUser = true;
-      proSource = 'polar';
-      subscriptionStatus = activePolarSubscription.status === 'trialing' ? 'active' : 'active';
+      proSource = "polar";
+      subscriptionStatus =
+        activePolarSubscription.status === "trialing" ? "active" : "active";
     } else {
       // Check for expired/canceled Polar subscriptions
       const latestPolarSubscription = polarSubscriptions.sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       )[0];
 
       if (latestPolarSubscription) {
         const now = new Date();
-        const isExpired = new Date(latestPolarSubscription.currentPeriodEnd) < now;
-        const isCanceled = latestPolarSubscription.status === 'canceled';
+        const isExpired =
+          new Date(latestPolarSubscription.currentPeriodEnd) < now;
+        const isCanceled = latestPolarSubscription.status === "canceled";
 
         if (isCanceled) {
-          subscriptionStatus = 'canceled';
+          subscriptionStatus = "canceled";
         } else if (isExpired) {
-          subscriptionStatus = 'expired';
+          subscriptionStatus = "expired";
         }
       }
     }
 
     // Prefer provider/session values when DB fields are empty strings
-    const sessionUser = session?.user as { name?: string | null; email?: string | null; image?: string | null } | null;
-    const resolvedName = (userData.name && userData.name.trim())
-      ? userData.name
-      : (sessionUser?.name?.trim() || providerClaims.name || (userData.email ? userData.email.split('@')[0] : ''));
-    const resolvedEmail = (userData.email && userData.email.trim())
-      ? userData.email
-      : (sessionUser?.email?.trim() || providerClaims.email || '');
-    const resolvedImage = userData.image ?? sessionUser?.image ?? providerClaims.picture ?? null;
+    const sessionUser = session?.user as {
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+    } | null;
+    const resolvedName =
+      userData.name && userData.name.trim()
+        ? userData.name
+        : sessionUser?.name?.trim() ||
+          providerClaims.name ||
+          (userData.email ? userData.email.split("@")[0] : "");
+    const resolvedEmail =
+      userData.email && userData.email.trim()
+        ? userData.email
+        : sessionUser?.email?.trim() || providerClaims.email || "";
+    const resolvedImage =
+      userData.image ?? sessionUser?.image ?? providerClaims.picture ?? null;
 
     // Build comprehensive user data
     const comprehensiveData: ComprehensiveUserData = {
@@ -430,7 +476,7 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
 
     return comprehensiveData;
   } catch (error) {
-    console.error('Error getting comprehensive user data:', error);
+    console.error("Error getting comprehensive user data:", error);
     return null;
   }
 }
@@ -438,15 +484,17 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
 // Helper functions for backward compatibility and specific use cases
 export async function isUserPro(): Promise<boolean> {
   const userData = await getComprehensiveUserData();
-  return userData?.isProUser || false;
+  return userData?.isProUser ?? false;
 }
 
-export async function getUserSubscriptionStatus(): Promise<'active' | 'canceled' | 'expired' | 'none'> {
+export async function getUserSubscriptionStatus(): Promise<
+  "active" | "canceled" | "expired" | "none"
+> {
   const userData = await getComprehensiveUserData();
-  return userData?.subscriptionStatus || 'none';
+  return userData?.subscriptionStatus || "none";
 }
 
-export async function getProSource(): Promise<'polar' | 'none'> {
+export async function getProSource(): Promise<"polar" | "none"> {
   const userData = await getComprehensiveUserData();
-  return userData?.proSource || 'none';
+  return userData?.proSource || "none";
 }

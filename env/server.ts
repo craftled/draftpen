@@ -1,10 +1,9 @@
 // https://env.t3.gg/docs/nextjs#create-your-schema
-import { createEnv } from '@t3-oss/env-nextjs';
-import { z } from 'zod';
+import { createEnv } from "@t3-oss/env-nextjs";
+import { z } from "zod";
 
 export const serverEnv = createEnv({
   server: {
-
     OPENAI_API_KEY: z.string().min(1),
     ANTHROPIC_API_KEY: z.string().min(1),
     AI_GATEWAY_API_KEY: z.string().min(1).optional(),
@@ -31,7 +30,7 @@ export const serverEnv = createEnv({
     DATAFORSEO_PASSWORD: z.string().min(1).optional(),
     SERPER_API_KEY: z.string().min(1).optional(),
 
-    ALLOWED_ORIGINS: z.string().optional().default('http://localhost:3000'),
+    ALLOWED_ORIGINS: z.string().optional().default("http://localhost:3000"),
   },
   experimental__runtimeEnv: process.env,
 });

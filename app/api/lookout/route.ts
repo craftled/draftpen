@@ -1,42 +1,57 @@
 // /app/api/lookout/route.ts
-import { generateTitleFromUserMessage } from '@/app/actions';
-import { convertToModelMessages, streamText, createUIMessageStream, stepCountIs, JsonToSseTransformStream } from 'ai';
-import { modelProvider } from '@/ai/providers';
+
+import {
+  convertToModelMessages,
+  createUIMessageStream,
+  JsonToSseTransformStream,
+  stepCountIs,
+  streamText,
+} from "ai";
+import { CronExpressionParser } from "cron-parser";
+import { eq } from "drizzle-orm";
+import { after } from "next/server";
+import {
+  createResumableStreamContext,
+  type ResumableStreamContext,
+} from "resumable-stream";
+import { v4 as uuidv4 } from "uuid";
+import { modelProvider } from "@/ai/providers";
+import { generateTitleFromUserMessage } from "@/app/actions";
+import { db } from "@/lib/db";
 import {
   createStreamId,
+  getLookoutById,
+  getUserById,
+  incrementExtremeSearchUsage,
   saveChat,
   saveMessages,
-  incrementExtremeSearchUsage,
   updateChatTitleById,
-  getLookoutById,
-  updateLookoutLastRun,
   updateLookout,
+  updateLookoutLastRun,
   updateLookoutStatus,
-  getUserById,
-} from '@/lib/db/queries';
-import { createResumableStreamContext, type ResumableStreamContext } from 'resumable-stream';
-import { after } from 'next/server';
-import { v4 as uuidv4 } from 'uuid';
-import { CronExpressionParser } from 'cron-parser';
-import { sendLookoutCompletionEmail } from '@/lib/email';
-import { db } from '@/lib/db';
-import { subscription } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+} from "@/lib/db/queries";
+import { subscription } from "@/lib/db/schema";
+import { sendLookoutCompletionEmail } from "@/lib/email";
 
 // Import extreme search tool
-import { extremeSearchTool } from '@/lib/tools';
-import { ChatMessage } from '@/lib/types';
+import { extremeSearchTool } from "@/lib/tools";
+import type { ChatMessage } from "@/lib/types";
 
 // Helper function to check if a user is pro by userId
 async function checkUserIsProById(userId: string): Promise<boolean> {
   try {
     // Check for active Polar subscription
-    const polarSubscriptions = await db.select().from(subscription).where(eq(subscription.userId, userId));
+    const polarSubscriptions = await db
+      .select()
+      .from(subscription)
+      .where(eq(subscription.userId, userId));
 
     // Check if any Polar subscription is active
     const activePolarSubscription = polarSubscriptions.find((sub) => {
       const now = new Date();
-      const isActive = (sub.status === 'active' || sub.status === 'trialing') && new Date(sub.currentPeriodEnd) > now;
+      const isActive =
+        (sub.status === "active" || sub.status === "trialing") &&
+        new Date(sub.currentPeriodEnd) > now;
       return isActive;
     });
 
@@ -44,10 +59,9 @@ async function checkUserIsProById(userId: string): Promise<boolean> {
       return true;
     }
 
-
     return false;
   } catch (error) {
-    console.error('Error checking pro status:', error);
+    console.error("Error checking pro status:", error);
     return false; // Fail closed - don't allow access if we can't verify
   }
 }
@@ -61,8 +75,10 @@ function getStreamContext() {
         waitUntil: after,
       });
     } catch (error: any) {
-      if (error.message.includes('REDIS_URL')) {
-        console.log(' > Resumable streams are disabled due to missing REDIS_URL');
+      if (error.message.includes("REDIS_URL")) {
+        console.log(
+          " > Resumable streams are disabled due to missing REDIS_URL"
+        );
       } else {
         console.error(error);
       }
@@ -73,7 +89,7 @@ function getStreamContext() {
 }
 
 export async function POST(req: Request) {
-  console.log('🔍 Lookout API endpoint hit from QStash');
+  console.log("🔍 Lookout API endpoint hit from QStash");
 
   const requestStartTime = Date.now();
   let runDuration = 0;
@@ -82,11 +98,11 @@ export async function POST(req: Request) {
   try {
     const { lookoutId, prompt, userId } = await req.json();
 
-    console.log('--------------------------------');
-    console.log('Lookout ID:', lookoutId);
-    console.log('User ID:', userId);
-    console.log('Prompt:', prompt);
-    console.log('--------------------------------');
+    console.log("--------------------------------");
+    console.log("Lookout ID:", lookoutId);
+    console.log("User ID:", userId);
+    console.log("Prompt:", prompt);
+    console.log("--------------------------------");
 
     // Verify lookout exists and get details with retry logic
     let lookout: any = null;
@@ -98,49 +114,58 @@ export async function POST(req: Request) {
       if (!lookout) {
         retryCount++;
         if (retryCount < maxRetries) {
-          console.log(`Lookout not found on attempt ${retryCount}, retrying in ${retryCount * 500}ms...`);
+          console.log(
+            `Lookout not found on attempt ${retryCount}, retrying in ${retryCount * 500}ms...`
+          );
           await new Promise((resolve) => setTimeout(resolve, retryCount * 500)); // Exponential backoff
         }
       }
     }
 
     if (!lookout) {
-      console.error('Lookout not found after', maxRetries, 'attempts:', lookoutId);
-      return new Response('Lookout not found', { status: 404 });
+      console.error(
+        "Lookout not found after",
+        maxRetries,
+        "attempts:",
+        lookoutId
+      );
+      return new Response("Lookout not found", { status: 404 });
     }
 
     // Get user details
     const userResult = await getUserById(userId);
     if (!userResult) {
-      console.error('User not found:', userId);
-      return new Response('User not found', { status: 404 });
+      console.error("User not found:", userId);
+      return new Response("User not found", { status: 404 });
     }
 
     // Check if user is pro (lookouts are a pro feature)
     const isUserPro = await checkUserIsProById(userId);
     if (!isUserPro) {
-      console.error('User is not pro, cannot run lookout:', userId);
-      return new Response('Lookouts require a Pro subscription', { status: 403 });
+      console.error("User is not pro, cannot run lookout:", userId);
+      return new Response("Lookouts require a Pro subscription", {
+        status: 403,
+      });
     }
 
     // Generate a new chat ID for this scheduled search
     const chatId = uuidv4();
-    const streamId = 'stream-' + uuidv4();
+    const streamId = "stream-" + uuidv4();
 
     // Create the chat
     await saveChat({
       id: chatId,
       userId: userResult.id,
       title: `Scheduled: ${lookout.title}`,
-      visibility: 'private',
+      visibility: "private",
     });
 
     // Create user message
     const userMessage = {
       id: uuidv4(),
-      role: 'user' as const,
+      role: "user" as const,
       content: prompt,
-      parts: [{ type: 'text' as const, text: prompt }],
+      parts: [{ type: "text" as const, text: prompt }],
       experimental_attachments: [],
     };
 
@@ -151,11 +176,11 @@ export async function POST(req: Request) {
           {
             chatId,
             id: userMessage.id,
-            role: 'user',
+            role: "user",
             parts: userMessage.parts,
             attachments: [],
             createdAt: new Date(),
-            model: 'gpt5-mini',
+            model: "gpt5-mini",
             completionTime: null,
             inputTokens: null,
             outputTokens: null,
@@ -169,7 +194,7 @@ export async function POST(req: Request) {
     // Set lookout status to running
     await updateLookoutStatus({
       id: lookoutId,
-      status: 'running',
+      status: "running",
     });
 
     // Create data stream with execute function
@@ -179,16 +204,16 @@ export async function POST(req: Request) {
 
         // Start streaming
         const result = streamText({
-          model: modelProvider.languageModel('gpt5-mini'),
+          model: modelProvider.languageModel("gpt5-mini"),
           messages: convertToModelMessages([userMessage]),
           stopWhen: stepCountIs(2),
           maxRetries: 10,
-          activeTools: ['extreme_search'],
+          activeTools: ["extreme_search"],
           system: `# Scira AI Scheduled Research Assistant
 
 You are an advanced research assistant focused on deep analysis and comprehensive understanding with focus to be backed by citations in a 3-page research paper format.
 
-**Today's Date:** ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}
+**Today's Date:** ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}
 
 ---
 
@@ -367,33 +392,33 @@ $$
 - ❌ **PLAIN TABLES**: Never use plain text for tabular data - use markdown tables
 - ❌ **SHORT RESPONSES**: Never write brief responses - aim for 3-page research paper format
 - ❌ **BULLET-POINT RESPONSES**: Use paragraphs for main content, bullets only for Key Points section`,
-          toolChoice: 'auto',
+          toolChoice: "auto",
           tools: {
             extreme_search: extremeSearchTool(dataStream),
           },
           onChunk(event) {
-            if (event.chunk.type === 'tool-call') {
-              console.log('Called Tool: ', event.chunk.toolName);
+            if (event.chunk.type === "tool-call") {
+              console.log("Called Tool: ", event.chunk.toolName);
             }
           },
           onStepFinish(event) {
             if (event.warnings) {
-              console.log('Warnings: ', event.warnings);
+              console.log("Warnings: ", event.warnings);
             }
           },
           onFinish: async (event) => {
-            console.log('Finish reason: ', event.finishReason);
-            console.log('Steps: ', event.steps);
-            console.log('Usage: ', event.usage);
+            console.log("Finish reason: ", event.finishReason);
+            console.log("Steps: ", event.steps);
+            console.log("Usage: ", event.usage);
 
-            if (event.finishReason === 'stop') {
+            if (event.finishReason === "stop") {
               try {
                 // Generate title for the chat
                 const title = await generateTitleFromUserMessage({
                   message: userMessage,
                 });
 
-                console.log('Generated title: ', title);
+                console.log("Generated title: ", title);
 
                 // Update the chat with the generated title
                 await updateChatTitleById({
@@ -403,11 +428,13 @@ $$
 
                 // Track extreme search usage
                 const extremeSearchUsed = event.steps?.some((step) =>
-                  step.toolCalls?.some((toolCall) => toolCall.toolName === 'extreme_search'),
+                  step.toolCalls?.some(
+                    (toolCall) => toolCall.toolName === "extreme_search"
+                  )
                 );
 
                 if (extremeSearchUsed) {
-                  console.log('Extreme search was used, incrementing count');
+                  console.log("Extreme search was used, incrementing count");
                   await incrementExtremeSearchUsage({ userId: userResult.id });
                 }
 
@@ -416,23 +443,28 @@ $$
 
                 // Count searches performed (look for extreme_search tool calls)
                 const searchesPerformed =
-                  event.steps?.reduce((total, step) => {
-                    return total + (step.toolCalls?.filter((call) => call.toolName === 'extreme_search').length || 0);
-                  }, 0) || 0;
+                  event.steps?.reduce(
+                    (total, step) =>
+                      total +
+                      (step.toolCalls?.filter(
+                        (call) => call.toolName === "extreme_search"
+                      ).length || 0),
+                    0
+                  ) || 0;
 
                 // Update lookout with last run info including metrics
                 await updateLookoutLastRun({
                   id: lookoutId,
                   lastRunAt: new Date(),
                   lastRunChatId: chatId,
-                  runStatus: 'success',
+                  runStatus: "success",
                   duration: runDuration,
                   tokensUsed: event.usage?.totalTokens,
                   searchesPerformed,
                 });
 
                 // Calculate next run time for recurring lookouts
-                if (lookout.frequency !== 'once' && lookout.cronSchedule) {
+                if (lookout.frequency !== "once" && lookout.cronSchedule) {
                   try {
                     const options = {
                       currentDate: new Date(),
@@ -440,11 +472,16 @@ $$
                     };
 
                     // Strip CRON_TZ= prefix if present
-                    const cleanCronSchedule = lookout.cronSchedule.startsWith('CRON_TZ=')
-                      ? lookout.cronSchedule.split(' ').slice(1).join(' ')
+                    const cleanCronSchedule = lookout.cronSchedule.startsWith(
+                      "CRON_TZ="
+                    )
+                      ? lookout.cronSchedule.split(" ").slice(1).join(" ")
                       : lookout.cronSchedule;
 
-                    const interval = CronExpressionParser.parse(cleanCronSchedule, options);
+                    const interval = CronExpressionParser.parse(
+                      cleanCronSchedule,
+                      options
+                    );
                     const nextRunAt = interval.next().toDate();
 
                     await updateLookout({
@@ -452,13 +489,13 @@ $$
                       nextRunAt,
                     });
                   } catch (error) {
-                    console.error('Error calculating next run time:', error);
+                    console.error("Error calculating next run time:", error);
                   }
-                } else if (lookout.frequency === 'once') {
+                } else if (lookout.frequency === "once") {
                   // Mark one-time lookouts as paused after running
                   await updateLookoutStatus({
                     id: lookoutId,
-                    status: 'paused',
+                    status: "paused",
                   });
                 }
 
@@ -466,31 +503,42 @@ $$
                 if (userResult.email) {
                   try {
                     // Extract assistant response - use event.text which contains the full response
-                    let assistantResponseText = event.text || '';
+                    let assistantResponseText = event.text || "";
 
                     // If event.text is empty, try extracting from messages
                     if (!assistantResponseText.trim()) {
-                      const assistantMessages = event.response.messages.filter((msg: any) => msg.role === 'assistant');
+                      const assistantMessages = event.response.messages.filter(
+                        (msg: any) => msg.role === "assistant"
+                      );
 
                       for (const msg of assistantMessages) {
-                        if (typeof msg.content === 'string') {
-                          assistantResponseText += msg.content + '\n';
+                        if (typeof msg.content === "string") {
+                          assistantResponseText += msg.content + "\n";
                         } else if (Array.isArray(msg.content)) {
                           const textContent = msg.content
-                            .filter((part: any) => part.type === 'text')
+                            .filter((part: any) => part.type === "text")
                             .map((part: any) => part.text)
-                            .join('\n');
-                          assistantResponseText += textContent + '\n';
+                            .join("\n");
+                          assistantResponseText += textContent + "\n";
                         }
                       }
                     }
 
-                    console.log('📧 Assistant response length:', assistantResponseText.length);
-                    console.log('📧 First 200 chars:', assistantResponseText.substring(0, 200));
+                    console.log(
+                      "📧 Assistant response length:",
+                      assistantResponseText.length
+                    );
+                    console.log(
+                      "📧 First 200 chars:",
+                      assistantResponseText.substring(0, 200)
+                    );
 
-                    const trimmedResponse = assistantResponseText.trim() || 'No response available.';
+                    const trimmedResponse =
+                      assistantResponseText.trim() || "No response available.";
                     const finalResponse =
-                      trimmedResponse.length > 2000 ? trimmedResponse.substring(0, 2000) + '...' : trimmedResponse;
+                      trimmedResponse.length > 2000
+                        ? trimmedResponse.substring(0, 2000) + "..."
+                        : trimmedResponse;
 
                     await sendLookoutCompletionEmail({
                       to: userResult.email,
@@ -499,35 +547,40 @@ $$
                       chatId,
                     });
                   } catch (emailError) {
-                    console.error('Failed to send completion email:', emailError);
+                    console.error(
+                      "Failed to send completion email:",
+                      emailError
+                    );
                   }
                 }
 
                 // Set lookout status back to active after successful completion
                 await updateLookoutStatus({
                   id: lookoutId,
-                  status: 'active',
+                  status: "active",
                 });
 
-                console.log('Scheduled search completed successfully');
+                console.log("Scheduled search completed successfully");
               } catch (error) {
-                console.error('Error in onFinish:', error);
+                console.error("Error in onFinish:", error);
               }
             }
 
             // Calculate and log overall request processing time
             const requestEndTime = Date.now();
             const processingTime = (requestEndTime - requestStartTime) / 1000;
-            console.log('--------------------------------');
-            console.log(`Total request processing time: ${processingTime.toFixed(2)} seconds`);
-            console.log('--------------------------------');
+            console.log("--------------------------------");
+            console.log(
+              `Total request processing time: ${processingTime.toFixed(2)} seconds`
+            );
+            console.log("--------------------------------");
           },
           onError: async (event) => {
-            console.log('Error: ', event.error);
+            console.log("Error: ", event.error);
 
             // Calculate run duration and capture error
             runDuration = Date.now() - requestStartTime;
-            runError = (event.error as string) || 'Unknown error occurred';
+            runError = (event.error as string) || "Unknown error occurred";
 
             // Update lookout with failed run info
             try {
@@ -535,30 +588,38 @@ $$
                 id: lookoutId,
                 lastRunAt: new Date(),
                 lastRunChatId: chatId,
-                runStatus: 'error',
+                runStatus: "error",
                 error: runError,
                 duration: runDuration,
               });
             } catch (updateError) {
-              console.error('Failed to update lookout with error info:', updateError);
+              console.error(
+                "Failed to update lookout with error info:",
+                updateError
+              );
             }
 
             // Set lookout status back to active on error
             try {
               await updateLookoutStatus({
                 id: lookoutId,
-                status: 'active',
+                status: "active",
               });
-              console.log('Reset lookout status to active after error');
+              console.log("Reset lookout status to active after error");
             } catch (statusError) {
-              console.error('Failed to reset lookout status after error:', statusError);
+              console.error(
+                "Failed to reset lookout status after error:",
+                statusError
+              );
             }
 
             const requestEndTime = Date.now();
             const processingTime = (requestEndTime - requestStartTime) / 1000;
-            console.log('--------------------------------');
-            console.log(`Request processing time (with error): ${processingTime.toFixed(2)} seconds`);
-            console.log('--------------------------------');
+            console.log("--------------------------------");
+            console.log(
+              `Request processing time (with error): ${processingTime.toFixed(2)} seconds`
+            );
+            console.log("--------------------------------");
           },
         });
 
@@ -568,11 +629,11 @@ $$
           result.toUIMessageStream({
             sendReasoning: true,
             messageMetadata: ({ part }) => {
-              if (part.type === 'finish') {
-                console.log('Finish part: ', part);
+              if (part.type === "finish") {
+                console.log("Finish part: ", part);
                 const processingTime = (Date.now() - streamStartTime) / 1000;
                 return {
-                  model: 'gpt5-mini',
+                  model: "gpt5-mini",
                   completionTime: processingTime,
                   createdAt: new Date().toISOString(),
                   totalTokens: part.totalUsage?.totalTokens ?? null,
@@ -581,12 +642,12 @@ $$
                 };
               }
             },
-          }),
+          })
         );
       },
       onError(error) {
-        console.log('Error: ', error);
-        return 'Oops, an error occurred in scheduled search!';
+        console.log("Error: ", error);
+        return "Oops, an error occurred in scheduled search!";
       },
       onFinish: async ({ messages }) => {
         if (userId) {
@@ -602,8 +663,8 @@ $$
                 parts: message.parts,
                 createdAt: new Date(),
                 attachments: [],
-                chatId: chatId,
-                model: 'gpt5-mini',
+                chatId,
+                model: "gpt5-mini",
                 completionTime: message.metadata?.completionTime ?? 0,
                 inputTokens: message.metadata?.inputTokens ?? 0,
                 outputTokens: message.metadata?.outputTokens ?? 0,
@@ -611,7 +672,10 @@ $$
               })),
             });
           } else {
-            console.error('User validation failed in onFinish - user not found or not pro:', userId);
+            console.error(
+              "User validation failed in onFinish - user not found or not pro:",
+              userId
+            );
           }
         }
       },
@@ -621,13 +685,14 @@ $$
 
     if (streamContext) {
       return new Response(
-        await streamContext.resumableStream(streamId, () => stream.pipeThrough(new JsonToSseTransformStream())),
+        await streamContext.resumableStream(streamId, () =>
+          stream.pipeThrough(new JsonToSseTransformStream())
+        )
       );
-    } else {
-      return new Response(stream.pipeThrough(new JsonToSseTransformStream()));
     }
+    return new Response(stream.pipeThrough(new JsonToSseTransformStream()));
   } catch (error) {
-    console.error('Error in lookout API:', error);
-    return new Response('Internal server error', { status: 500 });
+    console.error("Error in lookout API:", error);
+    return new Response("Internal server error", { status: 500 });
   }
 }

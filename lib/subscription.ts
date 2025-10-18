@@ -1,17 +1,21 @@
-import { eq } from 'drizzle-orm';
-import { subscription } from './db/schema';
-import { db } from './db';
-import { auth } from './auth';
-import { headers } from 'next/headers';
+import { eq } from "drizzle-orm";
+import { headers } from "next/headers";
+import { auth } from "./auth";
+import { db } from "./db";
+import { subscription } from "./db/schema";
 import {
-  subscriptionCache,
   createSubscriptionKey,
   getProUserStatus,
   setProUserStatus,
-} from './performance-cache';
+  subscriptionCache,
+} from "./performance-cache";
 
 // Re-export client-safe utilities
-export { isInTrial, getSubscriptionType, getDaysLeftInTrial } from './subscription-utils';
+export {
+  getDaysLeftInTrial,
+  getSubscriptionType,
+  isInTrial,
+} from "./subscription-utils";
 
 export type SubscriptionDetails = {
   id: string;
@@ -33,13 +37,13 @@ export type SubscriptionDetailsResult = {
   hasSubscription: boolean;
   subscription?: SubscriptionDetails;
   error?: string;
-  errorType?: 'CANCELED' | 'EXPIRED' | 'GENERAL';
+  errorType?: "CANCELED" | "EXPIRED" | "GENERAL";
 };
 
 // Combined function to check Pro status from Polar subscriptions
 async function getComprehensiveProStatus(
-  userId: string,
-): Promise<{ isProUser: boolean; source: 'polar' | 'none' }> {
+  userId: string
+): Promise<{ isProUser: boolean; source: "polar" | "none" }> {
   try {
     // Check Polar subscriptions
     const userSubscriptions = await db
@@ -48,25 +52,25 @@ async function getComprehensiveProStatus(
       .where(eq(subscription.userId, userId))
       .$withCache();
     const now = new Date();
-const activeSubscription = userSubscriptions.find(
-  (sub) =>
-    (sub.status === 'active' || sub.status === 'trialing') &&
-    new Date(sub.currentPeriodEnd) > now,
-);
+    const activeSubscription = userSubscriptions.find(
+      (sub) =>
+        (sub.status === "active" || sub.status === "trialing") &&
+        new Date(sub.currentPeriodEnd) > now
+    );
 
     if (activeSubscription) {
-      return { isProUser: true, source: 'polar' };
+      return { isProUser: true, source: "polar" };
     }
 
-    return { isProUser: false, source: 'none' };
+    return { isProUser: false, source: "none" };
   } catch (error) {
-    console.error('Error getting comprehensive pro status:', error);
-    return { isProUser: false, source: 'none' };
+    console.error("Error getting comprehensive pro status:", error);
+    return { isProUser: false, source: "none" };
   }
 }
 
 export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResult> {
-  'use server';
+  "use server";
 
   try {
     const session = await auth.api.getSession({
@@ -106,21 +110,25 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
     const activeSubscription = userSubscriptions
       .filter(
         (sub) =>
-          (sub.status === 'active' || sub.status === 'trialing') &&
-          new Date(sub.currentPeriodEnd) > now,
+          (sub.status === "active" || sub.status === "trialing") &&
+          new Date(sub.currentPeriodEnd) > now
       )
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )[0];
 
     if (!activeSubscription) {
       // Check for canceled or expired subscriptions
       const latestSubscription = userSubscriptions.sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       )[0];
 
       if (latestSubscription) {
         const now = new Date();
         const isExpired = new Date(latestSubscription.currentPeriodEnd) < now;
-        const isCanceled = latestSubscription.status === 'canceled';
+        const isCanceled = latestSubscription.status === "canceled";
 
         const result = {
           hasSubscription: true,
@@ -140,14 +148,15 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
             organizationId: null,
           },
           error: isCanceled
-            ? 'Subscription has been canceled'
+            ? "Subscription has been canceled"
             : isExpired
-              ? 'Subscription has expired'
-              : 'Subscription is not active',
-          errorType: (isCanceled ? 'CANCELED' : isExpired ? 'EXPIRED' : 'GENERAL') as
-            | 'CANCELED'
-            | 'EXPIRED'
-            | 'GENERAL',
+              ? "Subscription has expired"
+              : "Subscription is not active",
+          errorType: (isCanceled
+            ? "CANCELED"
+            : isExpired
+              ? "EXPIRED"
+              : "GENERAL") as "CANCELED" | "EXPIRED" | "GENERAL",
         };
         subscriptionCache.set(cacheKey, result);
         const proStatus = await getComprehensiveProStatus(session.user.id);
@@ -186,11 +195,11 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
     setProUserStatus(session.user.id, true);
     return result;
   } catch (error) {
-    console.error('Error fetching subscription details:', error);
+    console.error("Error fetching subscription details:", error);
     return {
       hasSubscription: false,
-      error: 'Failed to load subscription details',
-      errorType: 'GENERAL',
+      error: "Failed to load subscription details",
+      errorType: "GENERAL",
     };
   }
 }
@@ -209,7 +218,7 @@ export async function isUserSubscribed(): Promise<boolean> {
     const proStatus = await getComprehensiveProStatus(session.user.id);
     return proStatus.isProUser;
   } catch (error) {
-    console.error('Error checking user subscription status:', error);
+    console.error("Error checking user subscription status:", error);
     return false;
   }
 }
@@ -243,20 +252,22 @@ export async function hasAccessToProduct(productId: string): Promise<boolean> {
   return (
     result.hasSubscription &&
     sub?.productId === productId &&
-    (sub?.status === 'active' || sub?.status === 'trialing') &&
+    (sub?.status === "active" || sub?.status === "trialing") &&
     new Date(sub.currentPeriodEnd) > now
   );
 }
 
 // Helper to get user's current subscription status
-export async function getUserSubscriptionStatus(): Promise<'active' | 'canceled' | 'expired' | 'none'> {
+export async function getUserSubscriptionStatus(): Promise<
+  "active" | "canceled" | "expired" | "none"
+> {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
     });
 
     if (!session?.user?.id) {
-      return 'none';
+      return "none";
     }
 
     const proStatus = await getComprehensiveProStatus(session.user.id);
@@ -265,37 +276,37 @@ export async function getUserSubscriptionStatus(): Promise<'active' | 'canceled'
     const result = await getSubscriptionDetails();
 
     if (!result.hasSubscription) {
-      return proStatus.isProUser ? 'active' : 'none';
+      return proStatus.isProUser ? "active" : "none";
     }
 
     if (
       result.subscription &&
-      (result.subscription.status === 'active' || result.subscription.status === 'trialing') &&
+      (result.subscription.status === "active" ||
+        result.subscription.status === "trialing") &&
       new Date(result.subscription.currentPeriodEnd) > new Date()
     ) {
-      return 'active';
+      return "active";
     }
 
-    if (result.errorType === 'CANCELED') {
-      return 'canceled';
+    if (result.errorType === "CANCELED") {
+      return "canceled";
     }
 
-    if (result.errorType === 'EXPIRED') {
-      return 'expired';
+    if (result.errorType === "EXPIRED") {
+      return "expired";
     }
 
-    return 'none';
+    return "none";
   } catch (error) {
-    console.error('Error getting user subscription status:', error);
-    return 'none';
+    console.error("Error getting user subscription status:", error);
+    return "none";
   }
 }
-
 
 // Export the comprehensive pro status function for UI components that need to know the source
 export async function getProStatusWithSource(): Promise<{
   isProUser: boolean;
-  source: 'polar' | 'none';
+  source: "polar" | "none";
 }> {
   try {
     const session = await auth.api.getSession({
@@ -303,13 +314,13 @@ export async function getProStatusWithSource(): Promise<{
     });
 
     if (!session?.user?.id) {
-      return { isProUser: false, source: 'none' };
+      return { isProUser: false, source: "none" };
     }
 
     const proStatus = await getComprehensiveProStatus(session.user.id);
     return proStatus;
   } catch (error) {
-    console.error('Error getting pro status with source:', error);
-    return { isProUser: false, source: 'none' };
+    console.error("Error getting pro status with source:", error);
+    return { isProUser: false, source: "none" };
   }
 }

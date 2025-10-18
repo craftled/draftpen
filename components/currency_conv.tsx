@@ -1,16 +1,21 @@
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Loader2, ArrowUpDown } from 'lucide-react';
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowUpDown, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface CurrencyConverterProps {
   toolInvocation: any;
   result: any;
 }
 
-export const CurrencyConverter = ({ toolInvocation, result }: CurrencyConverterProps) => {
-  const [amount, setAmount] = useState<string>(toolInvocation.input.amount || '1');
+export const CurrencyConverter = ({
+  toolInvocation,
+  result,
+}: CurrencyConverterProps) => {
+  const [amount, setAmount] = useState<string>(
+    toolInvocation.input.amount || "1"
+  );
   const [error, setError] = useState<string | null>(null);
   const [isSwapped, setIsSwapped] = useState(false);
 
@@ -20,7 +25,7 @@ export const CurrencyConverter = ({ toolInvocation, result }: CurrencyConverterP
       setAmount(value);
       setError(null);
     } else {
-      setError('Please enter a valid number');
+      setError("Please enter a valid number");
     }
   };
 
@@ -28,36 +33,40 @@ export const CurrencyConverter = ({ toolInvocation, result }: CurrencyConverterP
     setIsSwapped(!isSwapped);
   };
 
-  const fromCurrency = isSwapped ? toolInvocation.input.to : toolInvocation.input.from;
-  const toCurrency = isSwapped ? toolInvocation.input.from : toolInvocation.input.to;
+  const fromCurrency = isSwapped
+    ? toolInvocation.input.to
+    : toolInvocation.input.from;
+  const toCurrency = isSwapped
+    ? toolInvocation.input.from
+    : toolInvocation.input.to;
 
   const convertedAmount = result?.convertedAmount
     ? isSwapped
-      ? parseFloat(amount) / result.forwardRate
-      : (result.convertedAmount / result.amount) * parseFloat(amount)
+      ? Number.parseFloat(amount) / result.forwardRate
+      : (result.convertedAmount / result.amount) * Number.parseFloat(amount)
     : null;
 
   const exchangeRate = isSwapped ? result?.reverseRate : result?.forwardRate;
 
   return (
-    <div className="w-full bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-lg p-3 sm:p-4">
+    <div className="w-full rounded-lg border border-neutral-200 bg-white p-3 sm:p-4 dark:border-neutral-800 dark:bg-neutral-950">
       {/* Currency Converter - Responsive Layout */}
       <div className="flex items-center gap-3 sm:flex-row">
         {/* Mobile: Side Layout, Desktop: Horizontal Layout */}
 
         {/* Currency Inputs Container - Mobile Stacked */}
-        <div className="flex-1 space-y-3 sm:space-y-0 sm:flex sm:items-center sm:gap-3">
+        <div className="flex-1 space-y-3 sm:flex sm:items-center sm:gap-3 sm:space-y-0">
           {/* From Currency Input */}
           <div className="relative sm:flex-1">
             <Input
+              className="h-11 border-neutral-200 bg-neutral-50 pr-3 pl-12 font-medium text-base transition-colors focus:bg-white sm:h-12 sm:pl-14 dark:border-neutral-800 dark:bg-neutral-900 dark:focus:bg-neutral-950"
+              onChange={handleAmountChange}
+              placeholder="0"
               type="text"
               value={amount}
-              onChange={handleAmountChange}
-              className="h-11 sm:h-12 text-base pl-12 sm:pl-14 pr-3 border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 focus:bg-white dark:focus:bg-neutral-950 transition-colors font-medium"
-              placeholder="0"
             />
-            <div className="absolute left-2.5 sm:left-3 top-1/2 -translate-y-1/2">
-              <span className="text-xs sm:text-sm font-semibold text-neutral-600 dark:text-neutral-400">
+            <div className="-translate-y-1/2 absolute top-1/2 left-2.5 sm:left-3">
+              <span className="font-semibold text-neutral-600 text-xs sm:text-sm dark:text-neutral-400">
                 {fromCurrency}
               </span>
             </div>
@@ -66,32 +75,32 @@ export const CurrencyConverter = ({ toolInvocation, result }: CurrencyConverterP
           {/* Swap Button - Desktop Only (Hidden on Mobile) */}
           <div className="hidden sm:flex">
             <Button
-              variant="ghost"
-              size="sm"
+              className="h-8 w-8 rounded-full p-0 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-900"
               onClick={handleSwap}
-              className="h-8 w-8 p-0 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors"
+              size="sm"
+              variant="ghost"
             >
               <ArrowUpDown className="h-3.5 w-3.5 text-neutral-500" />
             </Button>
           </div>
 
           {/* To Currency Output */}
-          <div className="h-11 sm:h-12 px-2.5 sm:px-3 border border-neutral-200 dark:border-neutral-800 rounded-md bg-neutral-50 dark:bg-neutral-900 flex items-center sm:flex-1">
-            <span className="text-xs sm:text-sm font-semibold text-neutral-600 dark:text-neutral-400 mr-2 sm:mr-3 shrink-0">
+          <div className="flex h-11 items-center rounded-md border border-neutral-200 bg-neutral-50 px-2.5 sm:h-12 sm:flex-1 sm:px-3 dark:border-neutral-800 dark:bg-neutral-900">
+            <span className="mr-2 shrink-0 font-semibold text-neutral-600 text-xs sm:mr-3 sm:text-sm dark:text-neutral-400">
               {toCurrency}
             </span>
-            {!result ? (
-              <div className="flex items-center gap-1.5 text-neutral-500 min-w-0">
-                <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0" />
-                <span className="text-sm">...</span>
-              </div>
-            ) : (
-              <span className="text-sm sm:text-base font-medium text-neutral-900 dark:text-neutral-100 truncate">
+            {result ? (
+              <span className="truncate font-medium text-neutral-900 text-sm sm:text-base dark:text-neutral-100">
                 {convertedAmount?.toLocaleString(undefined, {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 4,
                 })}
               </span>
+            ) : (
+              <div className="flex min-w-0 items-center gap-1.5 text-neutral-500">
+                <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+                <span className="text-sm">...</span>
+              </div>
             )}
           </div>
 
@@ -99,10 +108,10 @@ export const CurrencyConverter = ({ toolInvocation, result }: CurrencyConverterP
           <AnimatePresence>
             {error && (
               <motion.p
-                initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
+                className="text-red-500 text-xs sm:absolute sm:mt-1"
                 exit={{ opacity: 0 }}
-                className="text-xs text-red-500 sm:absolute sm:mt-1"
+                initial={{ opacity: 0, y: -5 }}
               >
                 {error}
               </motion.p>
@@ -113,10 +122,10 @@ export const CurrencyConverter = ({ toolInvocation, result }: CurrencyConverterP
         {/* Swap Button - Mobile Only (Hidden on Desktop) */}
         <div className="flex items-center sm:hidden">
           <Button
-            variant="ghost"
-            size="sm"
+            className="h-10 w-10 touch-manipulation rounded-full p-0 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-900"
             onClick={handleSwap}
-            className="h-10 w-10 p-0 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors touch-manipulation"
+            size="sm"
+            variant="ghost"
           >
             <ArrowUpDown className="h-4 w-4 text-neutral-500" />
           </Button>
@@ -126,16 +135,16 @@ export const CurrencyConverter = ({ toolInvocation, result }: CurrencyConverterP
       {/* Exchange Rate - Mobile Friendly */}
       {result && exchangeRate && (
         <motion.div
-          initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="mt-3 text-xs text-neutral-500 dark:text-neutral-400 text-center px-2"
+          className="mt-3 px-2 text-center text-neutral-500 text-xs dark:text-neutral-400"
+          initial={{ opacity: 0 }}
         >
           <span className="inline-block">
-            1 {fromCurrency} ={' '}
+            1 {fromCurrency} ={" "}
             {exchangeRate?.toLocaleString(undefined, {
               minimumFractionDigits: 2,
               maximumFractionDigits: 4,
-            })}{' '}
+            })}{" "}
             {toCurrency}
           </span>
         </motion.div>

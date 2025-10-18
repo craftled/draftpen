@@ -1,12 +1,18 @@
-import { NextResponse } from 'next/server';
-import { sql } from 'drizzle-orm';
-import { maindb } from '@/lib/db';
-import { serverEnv } from '@/env/server';
+import { sql } from "drizzle-orm";
+import { NextResponse } from "next/server";
+import { serverEnv } from "@/env/server";
+import { maindb } from "@/lib/db";
 
 export async function GET() {
   const start = Date.now();
   let connected = false;
-  const tablesToCheck = ['verification', 'user', 'session', 'account', 'subscription'] as const;
+  const tablesToCheck = [
+    "verification",
+    "user",
+    "session",
+    "account",
+    "subscription",
+  ] as const;
   const tables: Record<string, boolean> = {};
   let authEnv = { google: false, secret: false };
 
@@ -40,7 +46,8 @@ export async function GET() {
     // If env parsing throws, keep defaults (false)
   }
 
-  const ok = connected && tables.verification && authEnv.google && authEnv.secret;
+  const ok =
+    connected && tables.verification && authEnv.google && authEnv.secret;
 
   return NextResponse.json(
     {
@@ -52,9 +59,8 @@ export async function GET() {
     {
       status: ok ? 200 : 503,
       headers: {
-        'Cache-Control': 'no-store',
+        "Cache-Control": "no-store",
       },
     }
   );
 }
-

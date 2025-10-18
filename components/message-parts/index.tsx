@@ -1,133 +1,168 @@
-import React, { memo, useCallback, useState, useRef, useEffect } from 'react';
-import isEqual from 'fast-deep-equal';
-import { ReasoningUIPart, DataUIPart, isToolUIPart } from 'ai';
-import { ReasoningPartView } from '@/components/reasoning-part';
-import { MarkdownRenderer } from '@/components/markdown';
-import { ChatTextHighlighter } from '@/components/chat-text-highlighter';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { deleteTrailingMessages, generateSpeech } from '@/app/actions';
-import { toast } from 'sonner';
-import { Wave } from '@foobar404/wave';
-import { cn } from '@/lib/utils';
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-import { ShareButton } from '@/components/share';
-import { HugeiconsIcon } from '@hugeicons/react';
-import { RepeatIcon, Copy01Icon, CpuIcon } from '@hugeicons/core-free-icons';
-import { ChatMessage, CustomUIDataTypes, DataQueryCompletionPart, DataExtremeSearchPart, ChatTools } from '@/lib/types';
-import { UseChatHelpers } from '@ai-sdk/react';
-import { SciraLogoHeader } from '@/components/scira-logo-header';
-import Image from 'next/image';
-import ReactMarkdown from 'react-markdown';
-import { Response } from '@/components/ai-elements/response';
-
-import { Tool, ToolContent, ToolHeader, ToolInput, ToolOutput } from '@/components/ai-elements/tool';
-
-// Tool-specific components (lazy loaded)
-import { lazy, Suspense } from 'react';
-import { motion } from 'framer-motion';
-import { SearchLoadingState } from '@/components/tool-invocation-list-view';
+import type { UseChatHelpers } from "@ai-sdk/react";
+import { Wave } from "@foobar404/wave";
+import { Copy01Icon, CpuIcon, RepeatIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  Film,
-  Tv,
-  Book,
-  Cloud,
-  DollarSign,
-  User2,
-  Server,
-  Loader2,
-  Clock,
-  Globe,
-  YoutubeIcon,
-  ArrowUpRight,
-  TextIcon,
-  Pause,
-  Play as PlayIcon,
-  Info,
-  Code,
-} from 'lucide-react';
-import {
-  RedditLogoIcon,
-  XLogoIcon,
-  ClockIcon as PhosphorClockIcon,
-  MemoryIcon,
   ArrowLeftIcon,
   ArrowRightIcon,
+  MemoryIcon,
+  ClockIcon as PhosphorClockIcon,
+  RedditLogoIcon,
   SigmaIcon,
-} from '@phosphor-icons/react';
-import { getModelConfig } from '@/ai/providers';
-import { ComprehensiveUserData } from '@/lib/user-data-server';
+  XLogoIcon,
+} from "@phosphor-icons/react";
+import {
+  type DataUIPart,
+  isToolUIPart,
+  type ReasoningUIPart,
+  type UIToolInvocation,
+} from "ai";
+import isEqual from "fast-deep-equal";
+import {
+  ArrowUpRight,
+  Book,
+  Clock,
+  Code,
+  Globe,
+  Info,
+  Loader2,
+  Pause,
+  Play as PlayIcon,
+  Server,
+  TextIcon,
+  User2,
+  YoutubeIcon,
+} from "lucide-react";
+import Image from "next/image";
+// Tool-specific components (lazy loaded)
+import type React from "react";
+import { lazy, memo, Suspense, useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import { toast } from "sonner";
+import { getModelConfig } from "@/ai/providers";
+import { deleteTrailingMessages, generateSpeech } from "@/app/actions";
+import { Response } from "@/components/ai-elements/response";
+import {
+  Tool,
+  ToolContent,
+  ToolHeader,
+  ToolInput,
+  ToolOutput,
+} from "@/components/ai-elements/tool";
+import { ChatTextHighlighter } from "@/components/chat-text-highlighter";
+import { ReasoningPartView } from "@/components/reasoning-part";
+import { SciraLogoHeader } from "@/components/scira-logo-header";
+import { ShareButton } from "@/components/share";
+import { SearchLoadingState } from "@/components/tool-invocation-list-view";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import type {
+  ChatMessage,
+  CustomUIDataTypes,
+  DataExtremeSearchPart,
+  DataQueryCompletionPart,
+} from "@/lib/types";
+import type { ComprehensiveUserData } from "@/lib/user-data-server";
+import { cn } from "@/lib/utils";
 
 // Lazy load tool components
-const InteractiveChart = lazy(() => import('@/components/interactive-charts'));
-const MultiSearch = lazy(() => import('@/components/multi-search'));
-const AcademicPapersCard = lazy(() => import('@/components/academic-papers'));
-const RedditSearch = lazy(() => import('@/components/reddit-search'));
-const XSearch = lazy(() => import('@/components/x-search'));
+const InteractiveChart = lazy(() => import("@/components/interactive-charts"));
+const MultiSearch = lazy(() => import("@/components/multi-search"));
+const AcademicPapersCard = lazy(() => import("@/components/academic-papers"));
+const RedditSearch = lazy(() => import("@/components/reddit-search"));
+const XSearch = lazy(() => import("@/components/x-search"));
 const ExtremeSearch = lazy(() =>
-  import('@/components/extreme-search').then((module) => ({ default: module.ExtremeSearch })),
+  import("@/components/extreme-search").then((module) => ({
+    default: module.ExtremeSearch,
+  }))
 );
 const CurrencyConverter = lazy(() =>
-  import('@/components/currency_conv').then((module) => ({ default: module.CurrencyConverter })),
+  import("@/components/currency_conv").then((module) => ({
+    default: module.CurrencyConverter,
+  }))
 );
 
 const SerpResults = lazy(() =>
-  import('@/components/serp-results').then((module) => ({ default: module.default })),
+  import("@/components/serp-results").then((module) => ({
+    default: module.default,
+  }))
 );
-
 
 const YouTubeSearchResults = lazy(() =>
-  import('@/components/youtube-search-results').then((module) => ({ default: module.YouTubeSearchResults })),
+  import("@/components/youtube-search-results").then((module) => ({
+    default: module.YouTubeSearchResults,
+  }))
 );
 const ConnectorsSearchResults = lazy(() =>
-  import('@/components/connectors-search-results').then((module) => ({ default: module.ConnectorsSearchResults })),
+  import("@/components/connectors-search-results").then((module) => ({
+    default: module.ConnectorsSearchResults,
+  }))
 );
 const CodeInterpreterView = lazy(() =>
-  import('@/components/tool-invocation-list-view').then((module) => ({ default: module.CodeInterpreterView })),
+  import("@/components/tool-invocation-list-view").then((module) => ({
+    default: module.CodeInterpreterView,
+  }))
 );
 // Loading component for lazy-loaded components
 const ComponentLoader = () => (
-  <div className="flex space-x-2 mt-2">
+  <div className="mt-2 flex space-x-2">
     <div
-      className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
-      style={{ animationDelay: '0ms' }}
-    ></div>
+      className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground dark:bg-muted-foreground"
+      style={{ animationDelay: "0ms" }}
+    />
     <div
-      className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
-      style={{ animationDelay: '150ms' }}
-    ></div>
+      className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground dark:bg-muted-foreground"
+      style={{ animationDelay: "150ms" }}
+    />
     <div
-      className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
-      style={{ animationDelay: '300ms' }}
-    ></div>
+      className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground dark:bg-muted-foreground"
+      style={{ animationDelay: "300ms" }}
+    />
   </div>
 );
 
-
 interface MessagePartRendererProps {
-  part: ChatMessage['parts'][number];
+  part: ChatMessage["parts"][number];
   messageIndex: number;
   partIndex: number;
-  parts: ChatMessage['parts'][number][];
+  parts: ChatMessage["parts"][number][];
   message: ChatMessage;
   status: string;
   hasActiveToolInvocations: boolean;
   reasoningVisibilityMap: Record<string, boolean>;
   reasoningFullscreenMap: Record<string, boolean>;
-  setReasoningVisibilityMap: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
-  setReasoningFullscreenMap: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  setReasoningVisibilityMap: React.Dispatch<
+    React.SetStateAction<Record<string, boolean>>
+  >;
+  setReasoningFullscreenMap: React.Dispatch<
+    React.SetStateAction<Record<string, boolean>>
+  >;
   messages: ChatMessage[];
   user?: ComprehensiveUserData;
   isOwner?: boolean;
-  selectedVisibilityType?: 'public' | 'private';
+  selectedVisibilityType?: "public" | "private";
   chatId?: string;
-  onVisibilityChange?: (visibility: 'public' | 'private') => void;
-  setMessages: UseChatHelpers<ChatMessage>['setMessages'];
+  onVisibilityChange?: (visibility: "public" | "private") => void;
+  setMessages: UseChatHelpers<ChatMessage>["setMessages"];
   setSuggestedQuestions: (questions: string[]) => void;
-  regenerate: UseChatHelpers<ChatMessage>['regenerate'];
+  regenerate: UseChatHelpers<ChatMessage>["regenerate"];
   onHighlight?: (text: string) => void;
   annotations?: DataUIPart<CustomUIDataTypes>[];
 }
@@ -158,64 +193,75 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
     annotations,
   }) => {
     // Handle text parts
-    if (part.type === 'text') {
+    if (part.type === "text") {
       // Check if there are any reasoning parts in the message
-      const hasReasoningParts = parts.some((p) => p.type === 'reasoning');
+      const hasReasoningParts = parts.some((p) => p.type === "reasoning");
 
       // For empty text parts in a streaming message, show loading animation only if no tool invocations and no reasoning parts are present
-      if ((!part.text || part.text.trim() === '') && status === 'streaming' && !hasActiveToolInvocations && !hasReasoningParts) {
+      if (
+        (!part.text || part.text.trim() === "") &&
+        status === "streaming" &&
+        !hasActiveToolInvocations &&
+        !hasReasoningParts
+      ) {
         return (
           <div
+            className="!m-0 !p-0 flex min-h-[calc(100vh-18rem)] flex-col"
             key={`${messageIndex}-${partIndex}-loading`}
-            className="flex flex-col min-h-[calc(100vh-18rem)] !m-0 !p-0"
           >
-            <div className="flex space-x-2 ml-8 mt-2">
+            <div className="mt-2 ml-8 flex space-x-2">
               <div
-                className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
-                style={{ animationDelay: '0ms' }}
-              ></div>
+                className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground dark:bg-muted-foreground"
+                style={{ animationDelay: "0ms" }}
+              />
               <div
-                className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
-                style={{ animationDelay: '150ms' }}
-              ></div>
+                className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground dark:bg-muted-foreground"
+                style={{ animationDelay: "150ms" }}
+              />
               <div
-                className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
-                style={{ animationDelay: '300ms' }}
-              ></div>
+                className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground dark:bg-muted-foreground"
+                style={{ animationDelay: "300ms" }}
+              />
             </div>
           </div>
         );
       }
 
       // Skip empty text parts entirely for non-streaming states, but allow them during streaming with active tool invocations
-      if (!part.text || part.text.trim() === '') {
+      if (!part.text || part.text.trim() === "") {
         // Only skip if we're not streaming or if there are no active tool invocations
-        if (status !== 'streaming' || !hasActiveToolInvocations) {
+        if (status !== "streaming" || !hasActiveToolInvocations) {
           return null;
         }
         // If we're streaming with active tool invocations, don't render anything for empty text but don't block other parts
-        return <div key={`${messageIndex}-${partIndex}-empty`}></div>;
+        return <div key={`${messageIndex}-${partIndex}-empty`} />;
       }
 
       // Pre-compute metadata presentation values
       const meta = message?.metadata;
       const modelConfig = meta?.model ? getModelConfig(meta.model) : null;
       const modelLabel = modelConfig?.label ?? meta?.model ?? null;
-      const tokenTotal = (meta?.totalTokens ?? (meta?.inputTokens ?? 0) + (meta?.outputTokens ?? 0)) || null;
+      const tokenTotal =
+        (meta?.totalTokens ??
+          (meta?.inputTokens ?? 0) + (meta?.outputTokens ?? 0)) ||
+        null;
       const inputCount = meta?.inputTokens ?? null;
       const outputCount = meta?.outputTokens ?? null;
 
       // Detect text sandwiched between step-start and tool-invocation
       const prevPart = parts[partIndex - 1];
       const nextPart = parts[partIndex + 1];
-      if (prevPart?.type === 'step-start' && nextPart?.type.includes('tool-')) {
+      if (prevPart?.type === "step-start" && nextPart?.type.includes("tool-")) {
         return null;
       }
 
       return (
-        <div key={`${messageIndex}-${partIndex}-text`} className="mt-2">
+        <div className="mt-2" key={`${messageIndex}-${partIndex}-text`}>
           <div>
-            <ChatTextHighlighter onHighlight={onHighlight} removeHighlightOnClick={true}>
+            <ChatTextHighlighter
+              onHighlight={onHighlight}
+              removeHighlightOnClick={true}
+            >
               <Response className="prose dark:prose-invert max-w-none">
                 {part.text}
               </Response>
@@ -223,21 +269,23 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
           </div>
 
           {/* Add compact buttons below the text with tooltips */}
-          {status === 'ready' && (
-            <div className="flex flex-row items-center justify-between gap-2 mt-2.5 mb-5 !-ml-1 flex-wrap">
+          {status === "ready" && (
+            <div className="!-ml-1 mt-2.5 mb-5 flex flex-row flex-wrap items-center justify-between gap-2">
               {/* Left side - Action buttons container */}
               <div className="flex flex-wrap items-center gap-1">
                 {/* Only show reload for owners OR unauthenticated users on private chats */}
-                {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
+                {((user && isOwner) ||
+                  (!user && selectedVisibilityType === "private")) && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
-                          variant="ghost"
-                          size="icon"
+                          className="size-8 rounded-full p-0"
                           onClick={async () => {
                             try {
-                              const lastUserMessage = messages.findLast((m) => m.role === 'user');
+                              const lastUserMessage = messages.findLast(
+                                (m) => m.role === "user"
+                              );
                               if (!lastUserMessage) return;
 
                               // Step 1: Delete trailing messages if user is authenticated
@@ -264,12 +312,18 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                               // Step 4: Reload
                               await regenerate();
                             } catch (error) {
-                              console.error('Error in reload:', error);
+                              console.error("Error in reload:", error);
                             }
                           }}
-                          className="size-8 p-0 rounded-full"
+                          size="icon"
+                          variant="ghost"
                         >
-                          <HugeiconsIcon icon={RepeatIcon} size={32} color="currentColor" strokeWidth={2} />
+                          <HugeiconsIcon
+                            color="currentColor"
+                            icon={RepeatIcon}
+                            size={32}
+                            strokeWidth={2}
+                          />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>Rewrite</TooltipContent>
@@ -280,30 +334,35 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 {onVisibilityChange && (
                   <ShareButton
                     chatId={chatId || null}
-                    selectedVisibilityType={selectedVisibilityType || 'private'}
+                    className="rounded-full"
+                    isOwner={isOwner}
                     onVisibilityChange={async (visibility) => {
                       await Promise.resolve(onVisibilityChange(visibility));
                     }}
-                    isOwner={isOwner}
+                    selectedVisibilityType={selectedVisibilityType || "private"}
+                    size="sm"
                     user={user}
                     variant="icon"
-                    size="sm"
-                    className="rounded-full"
                   />
                 )}
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
-                        variant="ghost"
-                        size="icon"
+                        className="size-8 rounded-full p-0"
                         onClick={() => {
                           navigator.clipboard.writeText(part.text);
-                          toast.success('Copied to clipboard');
+                          toast.success("Copied to clipboard");
                         }}
-                        className="size-8 p-0 rounded-full"
+                        size="icon"
+                        variant="ghost"
                       >
-                        <HugeiconsIcon icon={Copy01Icon} size={32} color="currentColor" strokeWidth={2} />
+                        <HugeiconsIcon
+                          color="currentColor"
+                          icon={Copy01Icon}
+                          size={32}
+                          strokeWidth={2}
+                        />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>Copy</TooltipContent>
@@ -314,45 +373,51 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
               {/* Right side - Message metadata stats popover */}
               {meta && (
                 <div className="flex items-center">
-                  <HoverCard openDelay={100} closeDelay={100}>
+                  <HoverCard closeDelay={100} openDelay={100}>
                     <HoverCardTrigger asChild>
                       <Button
-                        variant="ghost"
+                        className="size-8 touch-manipulation rounded-full p-0"
+                        onTouchStart={() => {}}
                         size="icon"
-                        className="size-8 p-0 rounded-full touch-manipulation"
-                        onTouchStart={() => {}} // Enable touch events
+                        variant="ghost" // Enable touch events
                       >
                         <Info className="h-4 w-4" />
                       </Button>
                     </HoverCardTrigger>
                     <HoverCardContent
-                      className="w-72 max-w-[calc(100vw-2rem)]"
-                      side="top"
                       align="end"
-                      sideOffset={8}
                       alignOffset={-8}
                       avoidCollisions={true}
+                      className="w-72 max-w-[calc(100vw-2rem)]"
                       collisionPadding={16}
+                      side="top"
+                      sideOffset={8}
                     >
                       <div className="space-y-3">
                         <div className="flex items-center gap-2">
                           <Info className="h-4 w-4" />
-                          <h4 className="font-semibold text-sm">Response Info</h4>
+                          <h4 className="font-semibold text-sm">
+                            Response Info
+                          </h4>
                         </div>
 
                         {modelLabel && (
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">Model</span>
-                            <div className="flex items-center gap-1 text-xs bg-primary text-primary-foreground rounded-lg px-2 py-1">
+                            <span className="text-muted-foreground text-sm">
+                              Model
+                            </span>
+                            <div className="flex items-center gap-1 rounded-lg bg-primary px-2 py-1 text-primary-foreground text-xs">
                               <HugeiconsIcon icon={CpuIcon} size={12} />
                               {modelLabel}
                             </div>
                           </div>
                         )}
 
-                        {typeof meta.completionTime === 'number' && (
+                        {typeof meta.completionTime === "number" && (
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">Generation Time</span>
+                            <span className="text-muted-foreground text-sm">
+                              Generation Time
+                            </span>
                             <div className="flex items-center gap-1 text-xs">
                               <Clock className="h-3 w-3" />
                               {meta.completionTime.toFixed(1)}s
@@ -362,34 +427,51 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
 
                         {(inputCount != null || outputCount != null) && (
                           <div className="space-y-2">
-                            <span className="text-sm text-muted-foreground">Token Usage</span>
+                            <span className="text-muted-foreground text-sm">
+                              Token Usage
+                            </span>
                             <div className="grid grid-cols-2 gap-2 text-xs">
                               {inputCount != null && (
-                                <div className="flex items-center justify-between bg-muted rounded-lg px-2 py-1">
+                                <div className="flex items-center justify-between rounded-lg bg-muted px-2 py-1">
                                   <span className="flex items-center gap-1">
-                                    <ArrowLeftIcon weight="regular" className="h-3 w-3" />
+                                    <ArrowLeftIcon
+                                      className="h-3 w-3"
+                                      weight="regular"
+                                    />
                                     Input
                                   </span>
-                                  <span className="font-medium">{inputCount.toLocaleString()}</span>
+                                  <span className="font-medium">
+                                    {inputCount.toLocaleString()}
+                                  </span>
                                 </div>
                               )}
                               {outputCount != null && (
-                                <div className="flex items-center justify-between bg-muted rounded-lg px-2 py-1">
+                                <div className="flex items-center justify-between rounded-lg bg-muted px-2 py-1">
                                   <span className="flex items-center gap-1">
-                                    <ArrowRightIcon weight="regular" className="h-3 w-3" />
+                                    <ArrowRightIcon
+                                      className="h-3 w-3"
+                                      weight="regular"
+                                    />
                                     Output
                                   </span>
-                                  <span className="font-medium">{outputCount.toLocaleString()}</span>
+                                  <span className="font-medium">
+                                    {outputCount.toLocaleString()}
+                                  </span>
                                 </div>
                               )}
                             </div>
                             {tokenTotal != null && (
-                              <div className="flex items-center justify-between bg-accent rounded-lg px-2 py-1 text-xs">
+                              <div className="flex items-center justify-between rounded-lg bg-accent px-2 py-1 text-xs">
                                 <span className="flex items-center gap-1 font-medium">
-                                  <SigmaIcon className="h-3 w-3" weight="regular" />
+                                  <SigmaIcon
+                                    className="h-3 w-3"
+                                    weight="regular"
+                                  />
                                   Total
                                 </span>
-                                <span className="font-semibold">{tokenTotal.toLocaleString()}</span>
+                                <span className="font-semibold">
+                                  {tokenTotal.toLocaleString()}
+                                </span>
                               </div>
                             )}
                           </div>
@@ -406,53 +488,65 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
     }
 
     // Handle reasoning parts
-    if (part.type === 'reasoning') {
+    if (part.type === "reasoning") {
       // If previous part is also reasoning, skip rendering to avoid duplicate sections
       const prevPart = parts[partIndex - 1];
-      if (prevPart && prevPart.type === 'reasoning') {
+      if (prevPart && prevPart.type === "reasoning") {
         return null;
       }
 
       // Merge consecutive reasoning parts into a single block
       let nextIndex = partIndex;
       const mergedTexts: string[] = [];
-      while (nextIndex < parts.length && parts[nextIndex]?.type === 'reasoning') {
+      while (
+        nextIndex < parts.length &&
+        parts[nextIndex]?.type === "reasoning"
+      ) {
         const r = parts[nextIndex] as unknown as ReasoningUIPart;
-        if (typeof r.text === 'string' && r.text.length > 0) {
+        if (typeof r.text === "string" && r.text.length > 0) {
           mergedTexts.push(r.text);
         }
         nextIndex += 1;
       }
 
-      const mergedPart: ReasoningUIPart = { ...(part as ReasoningUIPart), text: mergedTexts.join('\n\n') };
+      const mergedPart: ReasoningUIPart = {
+        ...(part as ReasoningUIPart),
+        text: mergedTexts.join("\n\n"),
+      };
 
       const sectionKey = `${messageIndex}-${partIndex}`;
-      const hasParallelToolInvocation = parts.some((p: ChatMessage['parts'][number]) => p.type.startsWith('tool-'));
+      const hasParallelToolInvocation = parts.some(
+        (p: ChatMessage["parts"][number]) => p.type.startsWith("tool-")
+      );
       const isComplete = parts.some(
-        (p: ChatMessage['parts'][number], i: number) =>
-          i > partIndex && (p.type === 'text' || p.type.startsWith('tool-')),
+        (p: ChatMessage["parts"][number], i: number) =>
+          i > partIndex && (p.type === "text" || p.type.startsWith("tool-"))
       );
       const parallelTool = hasParallelToolInvocation
-        ? (parts.find((p: ChatMessage['parts'][number]) => p.type.includes('tool-'))?.type.split('-')[1] ?? null)
+        ? (parts
+            .find((p: ChatMessage["parts"][number]) => p.type.includes("tool-"))
+            ?.type.split("-")[1] ?? null)
         : null;
 
       const isExpanded = reasoningVisibilityMap[sectionKey] ?? !isComplete;
       const isFullscreen = reasoningFullscreenMap[sectionKey] ?? false;
 
-      const setIsExpanded = (v: boolean) => setReasoningVisibilityMap((prev) => ({ ...prev, [sectionKey]: v }));
-      const setIsFullscreen = (v: boolean) => setReasoningFullscreenMap((prev) => ({ ...prev, [sectionKey]: v }));
+      const setIsExpanded = (v: boolean) =>
+        setReasoningVisibilityMap((prev) => ({ ...prev, [sectionKey]: v }));
+      const setIsFullscreen = (v: boolean) =>
+        setReasoningFullscreenMap((prev) => ({ ...prev, [sectionKey]: v }));
 
       // Back to original ReasoningPartView - Elements had issues
       return (
         <ReasoningPartView
-          key={sectionKey}
-          part={mergedPart}
-          sectionKey={sectionKey}
-          isComplete={isComplete}
           duration={null}
-          parallelTool={parallelTool}
+          isComplete={isComplete}
           isExpanded={isExpanded}
           isFullscreen={isFullscreen}
+          key={sectionKey}
+          parallelTool={parallelTool}
+          part={mergedPart}
+          sectionKey={sectionKey}
           setIsExpanded={setIsExpanded}
           setIsFullscreen={setIsFullscreen}
         />
@@ -460,60 +554,74 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
     }
 
     // Handle step-start parts
-    if (part.type === 'step-start') {
-      const firstStepStartIndex = parts.findIndex((p) => p.type === 'step-start');
+    if (part.type === "step-start") {
+      const firstStepStartIndex = parts.findIndex(
+        (p) => p.type === "step-start"
+      );
       if (partIndex === firstStepStartIndex) {
         return (
-          <div key={`${messageIndex}-${partIndex}-step-start-logo`} className="!m-0 !p-0">
+          <div
+            className="!m-0 !p-0"
+            key={`${messageIndex}-${partIndex}-step-start-logo`}
+          >
             <SciraLogoHeader />
           </div>
         );
       }
-      return <div key={`${messageIndex}-${partIndex}-step-start`}></div>;
+      return <div key={`${messageIndex}-${partIndex}-step-start`} />;
     }
 
     // Handle tool parts with new granular states system
     if (isToolUIPart(part)) {
       // Check if this part has the new state system
-      if ('state' in part && part.state) {
+      if ("state" in part && part.state) {
         switch ((part as any).type) {
-          case 'tool-web_search':
+          case "tool-web_search":
             switch (part.state) {
-              case 'input-streaming':
-              case 'input-available':
-              case 'output-available':
+              case "input-streaming":
+              case "input-available":
+              case "output-available":
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
+                  <Suspense
+                    fallback={<ComponentLoader />}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
                     <MultiSearch
-                      result={part.output || null}
-                      args={(part.input as any) ?? {}}
                       annotations={annotations as DataQueryCompletionPart[]}
+                      args={(part.input as any) ?? {}}
+                      result={part.output || null}
                     />
                   </Suspense>
                 );
             }
             break;
 
-          case 'tool-datetime':
+          case "tool-datetime":
             switch (part.state) {
-              case 'input-streaming':
+              case "input-streaming":
                 return (
-                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                  <div
+                    className="text-neutral-500 text-sm"
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
                     Preparing time request...
                   </div>
                 );
-              case 'input-available':
+              case "input-available":
                 return (
-                  <div key={`${messageIndex}-${partIndex}-tool`} className="flex items-center gap-3 py-4 px-2">
-                    <div className="h-5 w-5 relative">
-                      <div className="absolute inset-0 rounded-full border-2 border-neutral-300 dark:border-neutral-700 border-t-blue-500 dark:border-t-blue-400 animate-spin" />
+                  <div
+                    className="flex items-center gap-3 px-2 py-4"
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
+                    <div className="relative h-5 w-5">
+                      <div className="absolute inset-0 animate-spin rounded-full border-2 border-neutral-300 border-t-blue-500 dark:border-neutral-700 dark:border-t-blue-400" />
                     </div>
-                    <span className="text-neutral-700 dark:text-neutral-300 text-sm font-medium">
+                    <span className="font-medium text-neutral-700 text-sm dark:text-neutral-300">
                       Fetching current time...
                     </span>
                   </div>
                 );
-              case 'output-available':
+              case "output-available": {
                 // Live Clock component that updates every second
                 const LiveClock = memo(() => {
                   const [time, setTime] = useState(() => new Date());
@@ -543,42 +651,52 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   }, []);
 
                   // Format the time according to the specified timezone
-                  const timezone = part.output.timezone || new Intl.DateTimeFormat().resolvedOptions().timeZone;
-                  const formatter = new Intl.DateTimeFormat('en-US', {
-                    hour: 'numeric',
-                    minute: 'numeric',
-                    second: 'numeric',
+                  const timezone =
+                    part.output.timezone ||
+                    new Intl.DateTimeFormat().resolvedOptions().timeZone;
+                  const formatter = new Intl.DateTimeFormat("en-US", {
+                    hour: "numeric",
+                    minute: "numeric",
+                    second: "numeric",
                     hour12: true,
                     timeZone: timezone,
                   });
 
                   const formattedParts = formatter.formatToParts(time);
                   const timeParts = {
-                    hour: formattedParts.find((part) => part.type === 'hour')?.value || '12',
-                    minute: formattedParts.find((part) => part.type === 'minute')?.value || '00',
-                    second: formattedParts.find((part) => part.type === 'second')?.value || '00',
-                    dayPeriod: formattedParts.find((part) => part.type === 'dayPeriod')?.value || 'AM',
+                    hour:
+                      formattedParts.find((part) => part.type === "hour")
+                        ?.value || "12",
+                    minute:
+                      formattedParts.find((part) => part.type === "minute")
+                        ?.value || "00",
+                    second:
+                      formattedParts.find((part) => part.type === "second")
+                        ?.value || "00",
+                    dayPeriod:
+                      formattedParts.find((part) => part.type === "dayPeriod")
+                        ?.value || "AM",
                   };
 
                   return (
                     <div className="mt-3">
                       <div className="flex items-baseline">
-                        <div className="text-4xl sm:text-5xl md:text-6xl font-light tracking-tighter tabular-nums text-neutral-900 dark:text-white">
-                          {timeParts.hour.padStart(2, '0')}
+                        <div className="font-light text-4xl text-neutral-900 tabular-nums tracking-tighter sm:text-5xl md:text-6xl dark:text-white">
+                          {timeParts.hour.padStart(2, "0")}
                         </div>
-                        <div className="mx-1 sm:mx-2 text-4xl sm:text-5xl md:text-6xl font-light text-neutral-400 dark:text-neutral-500">
+                        <div className="mx-1 font-light text-4xl text-neutral-400 sm:mx-2 sm:text-5xl md:text-6xl dark:text-neutral-500">
                           :
                         </div>
-                        <div className="text-4xl sm:text-5xl md:text-6xl font-light tracking-tighter tabular-nums text-neutral-900 dark:text-white">
-                          {timeParts.minute.padStart(2, '0')}
+                        <div className="font-light text-4xl text-neutral-900 tabular-nums tracking-tighter sm:text-5xl md:text-6xl dark:text-white">
+                          {timeParts.minute.padStart(2, "0")}
                         </div>
-                        <div className="mx-1 sm:mx-2 text-4xl sm:text-5xl md:text-6xl font-light text-neutral-400 dark:text-neutral-500">
+                        <div className="mx-1 font-light text-4xl text-neutral-400 sm:mx-2 sm:text-5xl md:text-6xl dark:text-neutral-500">
                           :
                         </div>
-                        <div className="text-4xl sm:text-5xl md:text-6xl font-light tracking-tighter tabular-nums text-neutral-900 dark:text-white">
-                          {timeParts.second.padStart(2, '0')}
+                        <div className="font-light text-4xl text-neutral-900 tabular-nums tracking-tighter sm:text-5xl md:text-6xl dark:text-white">
+                          {timeParts.second.padStart(2, "0")}
                         </div>
-                        <div className="ml-2 sm:ml-4 text-xl sm:text-2xl font-light self-center text-neutral-400 dark:text-neutral-500">
+                        <div className="ml-2 self-center font-light text-neutral-400 text-xl sm:ml-4 sm:text-2xl dark:text-neutral-500">
                           {timeParts.dayPeriod}
                         </div>
                       </div>
@@ -586,25 +704,33 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   );
                 });
 
-                LiveClock.displayName = 'LiveClock';
+                LiveClock.displayName = "LiveClock";
 
                 return (
-                  <div key={`${messageIndex}-${partIndex}-tool`} className="w-full my-6">
-                    <div className="bg-white dark:bg-neutral-950 rounded-xl overflow-hidden border border-neutral-200 dark:border-neutral-800">
+                  <div
+                    className="my-6 w-full"
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
+                    <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950">
                       <div className="p-4 sm:p-6">
                         <div className="flex flex-col gap-4 sm:gap-6">
                           <div>
-                            <div className="flex justify-between items-center mb-2">
-                              <h3 className="text-xs font-medium text-neutral-500 dark:text-neutral-400 tracking-wider uppercase">
+                            <div className="mb-2 flex items-center justify-between">
+                              <h3 className="font-medium text-neutral-500 text-xs uppercase tracking-wider dark:text-neutral-400">
                                 Current Time
                               </h3>
-                              <div className="bg-neutral-100 dark:bg-neutral-800 rounded px-2 py-1 text-xs text-neutral-600 dark:text-neutral-300 font-medium flex items-center gap-1.5">
-                                <PhosphorClockIcon weight="regular" className="h-3 w-3 text-blue-500" />
-                                {part.output.timezone || new Intl.DateTimeFormat().resolvedOptions().timeZone}
+                              <div className="flex items-center gap-1.5 rounded bg-neutral-100 px-2 py-1 font-medium text-neutral-600 text-xs dark:bg-neutral-800 dark:text-neutral-300">
+                                <PhosphorClockIcon
+                                  className="h-3 w-3 text-blue-500"
+                                  weight="regular"
+                                />
+                                {part.output.timezone ||
+                                  new Intl.DateTimeFormat().resolvedOptions()
+                                    .timeZone}
                               </div>
                             </div>
                             <LiveClock />
-                            <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-2">
+                            <p className="mt-2 text-neutral-500 text-sm dark:text-neutral-400">
                               {part.output.formatted?.date}
                             </p>
                           </div>
@@ -612,18 +738,22 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                           {/* Compact Technical Details */}
                           <div className="grid grid-cols-2 gap-3 text-xs">
                             {part.output.formatted?.iso_local && (
-                              <div className="bg-neutral-50 dark:bg-neutral-900 rounded p-3">
-                                <div className="text-neutral-500 dark:text-neutral-400 mb-1">Local</div>
-                                <div className="font-mono text-neutral-700 dark:text-neutral-300 text-[11px]">
+                              <div className="rounded bg-neutral-50 p-3 dark:bg-neutral-900">
+                                <div className="mb-1 text-neutral-500 dark:text-neutral-400">
+                                  Local
+                                </div>
+                                <div className="font-mono text-[11px] text-neutral-700 dark:text-neutral-300">
                                   {part.output.formatted.iso_local}
                                 </div>
                               </div>
                             )}
 
                             {part.output.timestamp && (
-                              <div className="bg-neutral-50 dark:bg-neutral-900 rounded p-3">
-                                <div className="text-neutral-500 dark:text-neutral-400 mb-1">Timestamp</div>
-                                <div className="font-mono text-neutral-700 dark:text-neutral-300 text-[11px]">
+                              <div className="rounded bg-neutral-50 p-3 dark:bg-neutral-900">
+                                <div className="mb-1 text-neutral-500 dark:text-neutral-400">
+                                  Timestamp
+                                </div>
+                                <div className="font-mono text-[11px] text-neutral-700 dark:text-neutral-300">
                                   {part.output.timestamp}
                                 </div>
                               </div>
@@ -634,28 +764,41 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     </div>
                   </div>
                 );
+              }
             }
             break;
 
-          case 'tool-extreme_search':
+          case "tool-extreme_search":
             switch (part.state) {
-              case 'input-streaming':
+              case "input-streaming":
                 return (
-                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                  <div
+                    className="text-neutral-500 text-sm"
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
                     Preparing extreme search...
                   </div>
                 );
-              case 'input-available':
-              case 'output-available':
+              case "input-available":
+              case "output-available":
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
+                  <Suspense
+                    fallback={<ComponentLoader />}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
                     <ExtremeSearch
-                      // @ts-ignore - Complex type intersection resolved to never
-                      toolInvocation={{ toolName: 'extreme_search', input: part.input, result: part.output }}
                       annotations={
                         (annotations?.filter(
-                          (annotation) => annotation.type === 'data-extreme_search',
+                          (annotation) =>
+                            annotation.type === "data-extreme_search"
                         ) as DataExtremeSearchPart[]) || []
+                      }
+                      toolInvocation={
+                        part as unknown as UIToolInvocation<
+                          ReturnType<
+                            typeof import("@/lib/tools")["extremeSearchTool"]
+                          >
+                        >
                       }
                     />
                   </Suspense>
@@ -663,75 +806,94 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
             }
             break;
 
-          case 'tool-text_translate':
+          case "tool-text_translate":
             switch (part.state) {
-              case 'input-streaming':
+              case "input-streaming":
                 return (
-                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                  <div
+                    className="text-neutral-500 text-sm"
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
                     Preparing translation...
                   </div>
                 );
-              case 'input-available':
-              case 'output-available':
+              case "input-available":
+              case "output-available":
                 return (
-                  <TranslationTool key={`${messageIndex}-${partIndex}-tool`} args={part.input} result={part.output} />
+                  <TranslationTool
+                    args={part.input}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    result={part.output}
+                  />
                 );
             }
             break;
 
-          case 'tool-code_context':
+          case "tool-code_context":
             switch (part.state) {
-              case 'input-streaming':
+              case "input-streaming":
                 return (
-                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                  <div
+                    className="text-neutral-500 text-sm"
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
                     Preparing code context...
                   </div>
                 );
-              case 'input-available':
+              case "input-available":
                 return (
                   <SearchLoadingState
-                    key={`${messageIndex}-${partIndex}-tool`}
-                    icon={Code}
-                    text="Getting code context..."
                     color="blue"
+                    icon={Code}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    text="Getting code context..."
                   />
                 );
-              case 'output-available':
+              case "output-available":
                 return (
-                  <CodeContextTool key={`${messageIndex}-${partIndex}-tool`} args={part.input} result={part.output} />
+                  <CodeContextTool
+                    args={part.input}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    result={part.output}
+                  />
                 );
             }
             break;
 
-
-
-
-
-          case 'tool-academic_search':
+          case "tool-academic_search":
             switch (part.state) {
-              case 'input-streaming':
+              case "input-streaming":
                 return (
-                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                  <div
+                    className="text-neutral-500 text-sm"
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
                     Preparing academic search...
                   </div>
                 );
-              case 'input-available':
+              case "input-available":
                 return (
                   <SearchLoadingState
-                    key={`${messageIndex}-${partIndex}-tool`}
-                    icon={Book}
-                    text="Searching academic papers..."
                     color="violet"
+                    icon={Book}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    text="Searching academic papers..."
                   />
                 );
-              case 'output-available':
+              case "output-available":
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
+                  <Suspense
+                    fallback={<ComponentLoader />}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
                     <AcademicPapersCard
                       results={
                         part.output.results?.map((result: any) => ({
                           ...result,
-                          title: result.title || ('name' in result ? String(result.name) : null) || 'Untitled',
+                          title:
+                            result.title ||
+                            ("name" in result ? String(result.name) : null) ||
+                            "Untitled",
                         })) || []
                       }
                     />
@@ -740,81 +902,102 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
             }
             break;
 
-
-
-          case 'tool-reddit_search':
+          case "tool-reddit_search":
             switch (part.state) {
-              case 'input-streaming':
+              case "input-streaming":
                 return (
-                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                  <div
+                    className="text-neutral-500 text-sm"
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
                     Preparing Reddit search...
                   </div>
                 );
-              case 'input-available':
+              case "input-available":
                 return (
                   <SearchLoadingState
-                    key={`${messageIndex}-${partIndex}-tool`}
-                    icon={RedditLogoIcon}
-                    text="Searching Reddit..."
                     color="orange"
+                    icon={RedditLogoIcon}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    text="Searching Reddit..."
                   />
                 );
-              case 'output-available':
+              case "output-available":
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
+                  <Suspense
+                    fallback={<ComponentLoader />}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
                     <RedditSearch
-                      result={part.output}
                       args={{
-                        query: typeof (part.input as any)?.query === 'string' ? (part.input as any).query : '',
+                        query:
+                          typeof (part.input as any)?.query === "string"
+                            ? (part.input as any).query
+                            : "",
                         maxResults: (part.input as any)?.maxResults || 10,
-                        timeRange: (part.input as any)?.timeRange || 'week',
+                        timeRange: (part.input as any)?.timeRange || "week",
                       }}
+                      result={part.output}
                     />
                   </Suspense>
                 );
             }
             break;
 
-          case 'tool-x_search':
+          case "tool-x_search":
             switch (part.state) {
-              case 'input-streaming':
+              case "input-streaming":
                 return (
-                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                  <div
+                    className="text-neutral-500 text-sm"
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
                     Preparing X search...
                   </div>
                 );
-              case 'input-available':
+              case "input-available":
                 return (
                   <SearchLoadingState
-                    key={`${messageIndex}-${partIndex}-tool`}
-                    icon={XLogoIcon}
-                    text="Searching X (Twitter)..."
                     color="gray"
+                    icon={XLogoIcon}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    text="Searching X (Twitter)..."
                   />
                 );
-              case 'output-available':
+              case "output-available":
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
+                  <Suspense
+                    fallback={<ComponentLoader />}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
                     <XSearch
+                      args={{
+                        query: (part.input as any)?.query || "",
+                        startDate: (part.input as any)?.startDate || "",
+                        endDate: (part.input as any)?.endDate || "",
+                        includeXHandles:
+                          (part.input as any)?.includeXHandles || [],
+                        excludeXHandles:
+                          (part.input as any)?.excludeXHandles || [],
+                        postFavoritesCount:
+                          (part.input as any)?.postFavoritesCount || 0,
+                        postViewCount: (part.input as any)?.postViewCount || 0,
+                        maxResults: (part.input as any)?.maxResults || 20,
+                      }}
                       result={{
                         ...part.output,
-                        query: part.output.query || '',
+                        query: part.output.query || "",
                         citations:
                           part.output.citations?.map((citation: any) => ({
                             ...citation,
-                            title: citation.title || ('url' in citation ? citation.url : citation.id) || 'Citation',
-                            url: 'url' in citation ? citation.url : citation.id,
+                            title:
+                              citation.title ||
+                              ("url" in citation
+                                ? citation.url
+                                : citation.id) ||
+                              "Citation",
+                            url: "url" in citation ? citation.url : citation.id,
                           })) || [],
-                      }}
-                      args={{
-                        query: (part.input as any)?.query || '',
-                        startDate: (part.input as any)?.startDate || '',
-                        endDate: (part.input as any)?.endDate || '',
-                        includeXHandles: (part.input as any)?.includeXHandles || [],
-                        excludeXHandles: (part.input as any)?.excludeXHandles || [],
-                        postFavoritesCount: (part.input as any)?.postFavoritesCount || 0,
-                        postViewCount: (part.input as any)?.postViewCount || 0,
-                        maxResults: (part.input as any)?.maxResults || 20,
                       }}
                     />
                   </Suspense>
@@ -822,89 +1005,123 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
             }
             break;
 
-          case 'tool-youtube_search':
+          case "tool-youtube_search":
             switch (part.state) {
-              case 'input-streaming':
+              case "input-streaming":
                 return (
-                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                  <div
+                    className="text-neutral-500 text-sm"
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
                     Preparing YouTube search...
                   </div>
                 );
-              case 'input-available':
+              case "input-available":
                 return (
                   <SearchLoadingState
-                    key={`${messageIndex}-${partIndex}-tool`}
-                    icon={YoutubeIcon}
-                    text="Searching YouTube..."
                     color="red"
+                    icon={YoutubeIcon}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    text="Searching YouTube..."
                   />
                 );
-              case 'output-available':
+              case "output-available":
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
+                  <Suspense
+                    fallback={<ComponentLoader />}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
                     <YouTubeSearchResults results={part.output} />
                   </Suspense>
                 );
             }
             break;
 
-
-          case 'tool-serp_checker':
+          case "tool-serp_checker":
             switch (part.state) {
-              case 'input-streaming':
+              case "input-streaming":
                 return (
-                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                  <div
+                    className="text-neutral-500 text-sm"
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
                     Preparing SERP search...
                   </div>
                 );
-              case 'input-available':
+              case "input-available":
                 return (
                   <SearchLoadingState
-                    key={`${messageIndex}-${partIndex}-tool`}
-                    icon={Globe}
-                    text="Searching Google (Serper.dev)..."
                     color="blue"
+                    icon={Globe}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    text="Searching Google (Serper.dev)..."
                   />
                 );
-              case 'output-available':
+              case "output-available":
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
+                  <Suspense
+                    fallback={<ComponentLoader />}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
                     <SerpResults output={part.output as any} />
                   </Suspense>
                 );
-              case 'output-error':
+              case "output-error":
                 return (
-                  <Tool key={`${messageIndex}-${partIndex}-tool`} defaultOpen={true}>
-                    <ToolHeader type={part.type as any} state={part.state} title="SERP Checker" />
+                  <Tool
+                    defaultOpen={true}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
+                    <ToolHeader
+                      state={part.state}
+                      title="SERP Checker"
+                      type={part.type as any}
+                    />
                     <ToolContent>
                       <ToolInput input={part.input} />
-                      <ToolOutput output={part.output} errorText={part.errorText} />
+                      <ToolOutput
+                        errorText={part.errorText}
+                        output={part.output}
+                      />
                     </ToolContent>
                   </Tool>
                 );
             }
             break;
 
-
-          case 'tool-search_memories':
+          case "tool-search_memories":
             switch (part.state) {
-              case 'input-streaming':
-                return <div className="text-sm text-neutral-500">Preparing memory search...</div>;
-              case 'input-available':
-                return <SearchLoadingState icon={MemoryIcon} text="Searching memories..." color="blue" />;
-              case 'output-available':
+              case "input-streaming":
+                return (
+                  <div className="text-neutral-500 text-sm">
+                    Preparing memory search...
+                  </div>
+                );
+              case "input-available":
+                return (
+                  <SearchLoadingState
+                    color="blue"
+                    icon={MemoryIcon}
+                    text="Searching memories..."
+                  />
+                );
+              case "output-available": {
                 // Handle error responses
                 if (!part.output.success) {
                   return (
-                    <div className="w-full my-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950">
+                    <div className="my-4 w-full rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
                       <div className="p-4">
                         <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900 flex items-center justify-center">
+                          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-red-100 dark:bg-red-900">
                             <MemoryIcon className="h-4 w-4 text-red-600 dark:text-red-400" />
                           </div>
                           <div className="flex-1">
-                            <h3 className="text-sm font-medium text-red-900 dark:text-red-100">Memory search failed</h3>
-                            <p className="text-xs text-red-700 dark:text-red-300 mt-1">{part.output.error}</p>
+                            <h3 className="font-medium text-red-900 text-sm dark:text-red-100">
+                              Memory search failed
+                            </h3>
+                            <p className="mt-1 text-red-700 text-xs dark:text-red-300">
+                              {part.output.error}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -915,18 +1132,19 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 const { results, count } = part.output;
                 if (!results || results.length === 0) {
                   return (
-                    <div className="w-full my-4 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950">
+                    <div className="my-4 w-full rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
                       <div className="p-4">
                         <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
+                          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900">
                             <MemoryIcon className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                           </div>
                           <div className="flex-1">
-                            <h3 className="text-sm font-medium text-amber-900 dark:text-amber-100">
+                            <h3 className="font-medium text-amber-900 text-sm dark:text-amber-100">
                               No memories found
                             </h3>
-                            <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
-                              No memories match your search query. Try different keywords.
+                            <p className="mt-1 text-amber-700 text-xs dark:text-amber-300">
+                              No memories match your search query. Try different
+                              keywords.
                             </p>
                           </div>
                         </div>
@@ -936,25 +1154,25 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 }
 
                 return (
-                  <div className="w-full my-4 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))] shadow-sm overflow-hidden">
+                  <div className="my-4 w-full overflow-hidden rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))] shadow-sm">
                     {/* Header */}
-                    <div className="px-2 py-2 border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]">
-                      <div className="flex items-center justify-between w-full">
+                    <div className="border-[hsl(var(--border))] border-b bg-[hsl(var(--muted))] px-2 py-2">
+                      <div className="flex w-full items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-lg bg-[hsl(var(--primary))]/10 flex items-center justify-center shrink-0">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[hsl(var(--primary))]/10">
                             <MemoryIcon className="h-4 w-4 text-[hsl(var(--primary))]" />
                           </div>
-                          <h3 className="text-sm font-semibold">
-                            {count} Memor{count !== 1 ? 'ies' : 'y'} Found
+                          <h3 className="font-semibold text-sm">
+                            {count} Memor{count !== 1 ? "ies" : "y"} Found
                           </h3>
                         </div>
                         <div className="flex items-center gap-2">
                           <Image
-                            src="/supermemory.svg"
                             alt="Supermemory"
-                            width={100}
+                            className="opacity-60 invert transition-opacity hover:opacity-80 dark:invert-0"
                             height={16}
-                            className="opacity-60 hover:opacity-80 transition-opacity invert dark:invert-0"
+                            src="/supermemory.svg"
+                            width={100}
                           />
                         </div>
                       </div>
@@ -963,37 +1181,52 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     {/* Results list */}
                     <div className="">
                       {results.map((memory: any, index: number) => (
-                        <div key={memory.id || index} className="px-4 py-2">
-                          <p className="text-xs text-[hsl(var(--muted-foreground))] line-clamp-2">
-                            • {memory.chunks[0].content || memory.memory || ''}
+                        <div className="px-4 py-2" key={memory.id || index}>
+                          <p className="line-clamp-2 text-[hsl(var(--muted-foreground))] text-xs">
+                            • {memory.chunks[0].content || memory.memory || ""}
                           </p>
                         </div>
                       ))}
                     </div>
                   </div>
                 );
+              }
             }
             break;
 
-          case 'tool-add_memory':
+          case "tool-add_memory":
             switch (part.state) {
-              case 'input-streaming':
-                return <div className="text-sm text-neutral-500">Preparing to add memory...</div>;
-              case 'input-available':
-                return <SearchLoadingState icon={MemoryIcon} text="Adding memory..." color="green" />;
-              case 'output-available':
+              case "input-streaming":
+                return (
+                  <div className="text-neutral-500 text-sm">
+                    Preparing to add memory...
+                  </div>
+                );
+              case "input-available":
+                return (
+                  <SearchLoadingState
+                    color="green"
+                    icon={MemoryIcon}
+                    text="Adding memory..."
+                  />
+                );
+              case "output-available": {
                 // Handle error responses
                 if (!part.output.success) {
                   return (
-                    <div className="w-full my-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950">
+                    <div className="my-4 w-full rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
                       <div className="p-4">
                         <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900 flex items-center justify-center">
+                          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-red-100 dark:bg-red-900">
                             <MemoryIcon className="h-4 w-4 text-red-600 dark:text-red-400" />
                           </div>
                           <div className="flex-1">
-                            <h3 className="text-sm font-medium text-red-900 dark:text-red-100">Failed to add memory</h3>
-                            <p className="text-xs text-red-700 dark:text-red-300 mt-1">{part.output.error}</p>
+                            <h3 className="font-medium text-red-900 text-sm dark:text-red-100">
+                              Failed to add memory
+                            </h3>
+                            <p className="mt-1 text-red-700 text-xs dark:text-red-300">
+                              {part.output.error}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -1003,44 +1236,48 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
 
                 const { memory: addedMemory } = part.output;
                 return (
-                  <div className="w-full my-4 rounded-2xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950 shadow-sm overflow-hidden">
+                  <div className="my-4 w-full overflow-hidden rounded-2xl border border-green-200 bg-green-50 shadow-sm dark:border-green-800 dark:bg-green-950">
                     <div className="px-4 py-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-lg bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900">
                             <MemoryIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-sm font-semibold text-green-900 dark:text-green-100">
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-semibold text-green-900 text-sm dark:text-green-100">
                               Memory Added Successfully
                             </h3>
-                            <p className="text-xs text-green-700 dark:text-green-300 mt-1">
-                              Your information has been saved to memory for future reference.
+                            <p className="mt-1 text-green-700 text-xs dark:text-green-300">
+                              Your information has been saved to memory for
+                              future reference.
                             </p>
                           </div>
                         </div>
                         <Image
-                          src="/supermemory.svg"
                           alt="Supermemory"
-                          width={100}
+                          className="shrink-0 opacity-60 invert transition-opacity hover:opacity-80 dark:invert-0"
                           height={16}
-                          className="opacity-60 hover:opacity-80 transition-opacity shrink-0 invert dark:invert-0"
+                          src="/supermemory.svg"
+                          width={100}
                         />
                       </div>
 
                       {addedMemory && (
-                        <div className="mt-3 p-3 bg-white dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                        <div className="mt-3 rounded-lg border border-green-200 bg-white p-3 dark:border-green-800 dark:bg-green-900/20">
                           {addedMemory.title && (
-                            <h4 className="text-sm font-medium text-green-900 dark:text-green-100 mb-1">
+                            <h4 className="mb-1 font-medium text-green-900 text-sm dark:text-green-100">
                               {addedMemory.title}
                             </h4>
                           )}
-                          <p className="text-xs text-green-700 dark:text-green-300">
-                            {addedMemory.summary || addedMemory.content || (part.input as any)?.memory || 'Memory stored'}
+                          <p className="text-green-700 text-xs dark:text-green-300">
+                            {addedMemory.summary ||
+                              addedMemory.content ||
+                              (part.input as any)?.memory ||
+                              "Memory stored"}
                           </p>
                           {addedMemory.type && (
-                            <div className="flex items-center gap-2 mt-2">
-                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-300">
+                            <div className="mt-2 flex items-center gap-2">
+                              <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] text-green-700 dark:bg-green-800 dark:text-green-300">
                                 {addedMemory.type}
                               </span>
                             </div>
@@ -1050,34 +1287,44 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     </div>
                   </div>
                 );
+              }
             }
             break;
 
-          case 'tool-connectors_search':
+          case "tool-connectors_search":
             switch (part.state) {
-              case 'input-streaming':
+              case "input-streaming":
                 return (
-                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                  <div
+                    className="text-neutral-500 text-sm"
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
                     Searching your connected documents...
                   </div>
                 );
-              case 'input-available':
+              case "input-available":
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
+                  <Suspense
+                    fallback={<ComponentLoader />}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
                     <ConnectorsSearchResults
-                      results={[]}
-                      query={(part.input as any)?.query || ''}
-                      totalResults={0}
                       isLoading={true}
+                      query={(part.input as any)?.query || ""}
+                      results={[]}
+                      totalResults={0}
                     />
                   </Suspense>
                 );
-              case 'output-available':
+              case "output-available":
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
+                  <Suspense
+                    fallback={<ComponentLoader />}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
                     <ConnectorsSearchResults
+                      query={part.output?.query || ""}
                       results={part.output?.results || []}
-                      query={part.output?.query || ''}
                       totalResults={part.output?.count || 0}
                     />
                   </Suspense>
@@ -1085,60 +1332,79 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
             }
             break;
 
-
-
-          case 'tool-currency_converter':
+          case "tool-currency_converter":
             switch (part.state) {
-              case 'input-streaming':
+              case "input-streaming":
                 return (
-                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                  <div
+                    className="text-neutral-500 text-sm"
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
                     Preparing currency conversion...
                   </div>
                 );
-              case 'input-available':
-              case 'output-available':
+              case "input-available":
+              case "output-available":
                 return (
-                  <Suspense fallback={<ComponentLoader />} key={`${messageIndex}-${partIndex}-tool`}>
+                  <Suspense
+                    fallback={<ComponentLoader />}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
                     <CurrencyConverter
-                      toolInvocation={{ toolName: 'currency_converter', input: part.input, result: part.output }}
                       result={part.output}
+                      toolInvocation={{
+                        input: part.input,
+                        result: part.output,
+                      }}
                     />
                   </Suspense>
                 );
             }
             break;
 
-          case 'tool-code_interpreter':
+          case "tool-code_interpreter":
             switch (part.state) {
-              case 'input-streaming':
+              case "input-streaming":
                 return (
-                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                  <div
+                    className="text-neutral-500 text-sm"
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
                     Preparing code execution...
                   </div>
                 );
-              case 'input-available':
-              case 'output-available':
+              case "input-available":
+              case "output-available":
                 return (
-                  <div key={`${messageIndex}-${partIndex}-tool`} className="space-y-3 w-full overflow-hidden">
+                  <div
+                    className="w-full space-y-3 overflow-hidden"
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
                     <Suspense fallback={<ComponentLoader />}>
                       <CodeInterpreterView
                         code={(part.input as any)?.code}
-                        output={part.output?.message}
-                        error={part.output && 'error' in part.output ? String(part.output.error) : undefined}
-                        language="python"
-                        title={(part.input as any)?.title || 'Code Execution'}
-                        status={
-                          part.output && 'error' in part.output && part.output.error
-                            ? 'error'
-                            : part.output
-                              ? 'completed'
-                              : 'running'
+                        error={
+                          part.output && "error" in part.output
+                            ? String(part.output.error)
+                            : undefined
                         }
+                        language="python"
+                        output={part.output?.message}
+                        status={
+                          part.output &&
+                          "error" in part.output &&
+                          part.output.error
+                            ? "error"
+                            : part.output
+                              ? "completed"
+                              : "running"
+                        }
+                        title={(part.input as any)?.title || "Code Execution"}
                       />
                     </Suspense>
 
                     {part.output?.chart && (
-                      <div className="pt-1 overflow-x-auto">
+                      <div className="overflow-x-auto pt-1">
                         <Suspense fallback={<ComponentLoader />}>
                           <InteractiveChart chart={part.output.chart} />
                         </Suspense>
@@ -1149,85 +1415,94 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
             }
             break;
 
-          case 'tool-retrieve':
+          case "tool-retrieve":
             switch (part.state) {
-              case 'input-streaming':
+              case "input-streaming":
                 return (
-                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                  <div
+                    className="text-neutral-500 text-sm"
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
                     Preparing content retrieval...
                   </div>
                 );
-              case 'input-available':
+              case "input-available":
                 return (
                   <div
+                    className="my-4 overflow-hidden rounded-xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
                     key={`${messageIndex}-${partIndex}-tool`}
-                    className="border border-neutral-200 rounded-xl my-4 overflow-hidden dark:border-neutral-800 bg-white dark:bg-neutral-900"
                   >
-                    <div className="h-36 bg-neutral-50 dark:bg-neutral-800/50 animate-pulse relative overflow-hidden">
+                    <div className="relative h-36 animate-pulse overflow-hidden bg-neutral-50 dark:bg-neutral-800/50">
                       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/10 dark:to-black/10" />
                     </div>
                     <div className="p-4">
                       <div className="flex gap-3">
-                        <div className="relative w-12 h-12 shrink-0 rounded-lg bg-neutral-100 dark:bg-neutral-800 animate-pulse">
-                          <Globe className="h-5 w-5 text-neutral-300 dark:text-neutral-700 absolute inset-0 m-auto" />
+                        <div className="relative h-12 w-12 shrink-0 animate-pulse rounded-lg bg-neutral-100 dark:bg-neutral-800">
+                          <Globe className="absolute inset-0 m-auto h-5 w-5 text-neutral-300 dark:text-neutral-700" />
                         </div>
-                        <div className="flex-1 min-w-0 space-y-3">
+                        <div className="min-w-0 flex-1 space-y-3">
                           <div className="space-y-2">
-                            <div className="h-6 w-full bg-neutral-100 dark:bg-neutral-800 animate-pulse rounded-md" />
+                            <div className="h-6 w-full animate-pulse rounded-md bg-neutral-100 dark:bg-neutral-800" />
                             <div className="flex gap-2">
-                              <div className="h-4 w-24 bg-violet-100 dark:bg-violet-900/30 animate-pulse rounded-md" />
-                              <div className="h-4 w-32 bg-emerald-100 dark:bg-emerald-900/30 animate-pulse rounded-md" />
+                              <div className="h-4 w-24 animate-pulse rounded-md bg-violet-100 dark:bg-violet-900/30" />
+                              <div className="h-4 w-32 animate-pulse rounded-md bg-emerald-100 dark:bg-emerald-900/30" />
                             </div>
                           </div>
                           <div className="space-y-1.5">
-                            <div className="h-3 w-full bg-neutral-100 dark:bg-neutral-800 animate-pulse rounded-md" />
-                            <div className="h-3 w-4/5 bg-neutral-100 dark:bg-neutral-800 animate-pulse rounded-md" />
+                            <div className="h-3 w-full animate-pulse rounded-md bg-neutral-100 dark:bg-neutral-800" />
+                            <div className="h-3 w-4/5 animate-pulse rounded-md bg-neutral-100 dark:bg-neutral-800" />
                           </div>
-                          <div className="flex justify-between items-center pt-2">
-                            <div className="h-4 w-24 bg-blue-100 dark:bg-blue-900/30 animate-pulse rounded-md" />
-                            <div className="h-4 w-32 bg-neutral-100 dark:bg-neutral-800 animate-pulse rounded-md" />
+                          <div className="flex items-center justify-between pt-2">
+                            <div className="h-4 w-24 animate-pulse rounded-md bg-blue-100 dark:bg-blue-900/30" />
+                            <div className="h-4 w-32 animate-pulse rounded-md bg-neutral-100 dark:bg-neutral-800" />
                           </div>
                         </div>
                       </div>
                     </div>
-                    <div className="border-t border-neutral-200 dark:border-neutral-800">
-                      <div className="p-3 flex items-center gap-2">
-                        <div className="h-4 w-4 bg-neutral-100 dark:bg-neutral-800 animate-pulse rounded" />
-                        <div className="h-4 w-28 bg-neutral-100 dark:bg-neutral-800 animate-pulse rounded-md" />
+                    <div className="border-neutral-200 border-t dark:border-neutral-800">
+                      <div className="flex items-center gap-2 p-3">
+                        <div className="h-4 w-4 animate-pulse rounded bg-neutral-100 dark:bg-neutral-800" />
+                        <div className="h-4 w-28 animate-pulse rounded-md bg-neutral-100 dark:bg-neutral-800" />
                       </div>
                     </div>
                   </div>
                 );
-              case 'output-available':
+              case "output-available": {
                 // Handle error responses
                 if (
-                  (part.output && 'error' in part.output && part.output.error) ||
+                  (part.output &&
+                    "error" in part.output &&
+                    part.output.error) ||
                   (part.output.results &&
                     part.output.results[0] &&
-                    'error' in part.output.results[0] &&
+                    "error" in part.output.results[0] &&
                     part.output.results[0].error)
                 ) {
                   const errorMessage = String(
-                    (part.output && 'error' in part.output && part.output.error) ||
+                    (part.output &&
+                      "error" in part.output &&
+                      part.output.error) ||
                       (part.output.results &&
                         part.output.results[0] &&
-                        'error' in part.output.results[0] &&
-                        part.output.results[0].error),
+                        "error" in part.output.results[0] &&
+                        part.output.results[0].error)
                   );
                   return (
                     <div
+                      className="my-4 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-500 dark:bg-red-950/50"
                       key={`${messageIndex}-${partIndex}-tool`}
-                      className="border border-red-200 dark:border-red-500 rounded-xl my-4 p-4 bg-red-50 dark:bg-red-950/50"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center shrink-0">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/50">
                           <Globe className="h-4 w-4 text-red-600 dark:text-red-300" />
                         </div>
                         <div>
-                          <div className="text-red-700 dark:text-red-300 text-sm font-medium">
+                          <div className="font-medium text-red-700 text-sm dark:text-red-300">
                             Error retrieving content
                           </div>
-                          <div className="text-red-600/80 dark:text-red-400/80 text-xs mt-1">{errorMessage}</div>
+                          <div className="mt-1 text-red-600/80 text-xs dark:text-red-400/80">
+                            {errorMessage}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1238,14 +1513,14 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 if (!part.output.results || part.output.results.length === 0) {
                   return (
                     <div
+                      className="my-4 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500 dark:bg-amber-950/50"
                       key={`${messageIndex}-${partIndex}-tool`}
-                      className="border border-amber-200 dark:border-amber-500 rounded-xl my-4 p-4 bg-amber-50 dark:bg-amber-950/50"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center shrink-0">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/50">
                           <Globe className="h-4 w-4 text-amber-600 dark:text-amber-300" />
                         </div>
-                        <div className="text-amber-700 dark:text-amber-300 text-sm font-medium">
+                        <div className="font-medium text-amber-700 text-sm dark:text-amber-300">
                           No content available
                         </div>
                       </div>
@@ -1257,96 +1532,98 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 const result = part.output;
                 return (
                   <div
+                    className="my-4 overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
                     key={`${messageIndex}-${partIndex}-tool`}
-                    className="border border-neutral-200 rounded-xl my-4 overflow-hidden dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm"
                   >
                     {result.results[0].image && (
-                      <div className="h-36 overflow-hidden relative">
+                      <div className="relative h-36 overflow-hidden">
                         <Image
-                          src={result.results[0].image}
-                          alt={result.results[0].title || 'Featured image'}
-                          className="w-full h-full object-cover"
-                          width={128}
+                          alt={result.results[0].title || "Featured image"}
+                          className="h-full w-full object-cover"
                           height={128}
-                          unoptimized
                           onError={(e) => {
-                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.style.display = "none";
                           }}
+                          src={result.results[0].image}
+                          unoptimized
+                          width={128}
                         />
                       </div>
                     )}
 
                     <div className="p-4">
                       <div className="flex gap-3">
-                        <div className="relative w-12 h-12 shrink-0">
+                        <div className="relative h-12 w-12 shrink-0">
                           {result.results[0].favicon ? (
                             <Image
-                              className="w-full h-full object-contain rounded-lg"
-                              src={result.results[0].favicon}
                               alt=""
-                              width={64}
+                              className="h-full w-full rounded-lg object-contain"
                               height={64}
-                              unoptimized
                               onError={(e) => {
                                 e.currentTarget.src = `https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(
-                                  result.results[0].url,
+                                  result.results[0].url
                                 )}`;
                               }}
+                              src={result.results[0].favicon}
+                              unoptimized
+                              width={64}
                             />
                           ) : (
                             <Image
-                              className="w-full h-full object-contain rounded-lg"
-                              src={`https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(
-                                result.results[0].url,
-                              )}`}
                               alt=""
-                              width={64}
+                              className="h-full w-full rounded-lg object-contain"
                               height={64}
-                              unoptimized
                               onError={(e) => {
                                 e.currentTarget.src =
                                   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='none' d='M0 0h24v24H0z'/%3E%3Cpath d='M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-2.29-2.333A17.9 17.9 0 0 1 8.027 13H4.062a8.008 8.008 0 0 0 5.648 6.667zM10.03 13c.151 2.439.848 4.73 1.97 6.752A15.905 15.905 0 0 0 13.97 13h-3.94zm9.908 0h-3.965a17.9 17.9 0 0 1-1.683 6.667A8.008 8.008 0 0 0 19.938 13zM4.062 11h3.965A17.9 17.9 0 0 1 9.71 4.333 8.008 8.008 0 0 0 4.062 11zm5.969 0h3.938A15.905 15.905 0 0 0 12 4.248 15.905 15.905 0 0 0 10.03 11zm4.259-6.667A17.9 17.9 0 0 1 15.938 11h3.965a8.008 8.008 0 0 0-5.648-6.667z' fill='rgba(128,128,128,0.5)'/%3E%3C/svg%3E";
                               }}
+                              src={`https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(
+                                result.results[0].url
+                              )}`}
+                              unoptimized
+                              width={64}
                             />
                           )}
                         </div>
-                        <div className="flex-1 min-w-0">
+                        <div className="min-w-0 flex-1">
                           <div className="group">
-                            <h2 className="font-medium text-base text-neutral-900 dark:text-neutral-100 tracking-tight truncate">
-                              {result.results[0].title || 'Retrieved Content'}
+                            <h2 className="truncate font-medium text-base text-neutral-900 tracking-tight dark:text-neutral-100">
+                              {result.results[0].title || "Retrieved Content"}
                             </h2>
-                            <div className="hidden group-hover:block absolute bg-white dark:bg-neutral-900 shadow-lg rounded-lg p-2 -mt-1 max-w-lg z-10 border border-neutral-200 dark:border-neutral-800">
-                              <p className="text-sm text-neutral-900 dark:text-neutral-100">
-                                {result.results[0].title || 'Retrieved Content'}
+                            <div className="-mt-1 absolute z-10 hidden max-w-lg rounded-lg border border-neutral-200 bg-white p-2 shadow-lg group-hover:block dark:border-neutral-800 dark:bg-neutral-900">
+                              <p className="text-neutral-900 text-sm dark:text-neutral-100">
+                                {result.results[0].title || "Retrieved Content"}
                               </p>
                             </div>
                           </div>
 
-                          <div className="flex flex-wrap items-center gap-2 mt-2">
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
                             {result.results[0].author && (
                               <Badge
+                                className="rounded-md border-0 bg-violet-50 text-violet-600 transition-colors hover:bg-violet-100 dark:bg-violet-900/20 dark:text-violet-400 dark:hover:bg-violet-900/30"
                                 variant="secondary"
-                                className="rounded-md bg-violet-50 hover:bg-violet-100 dark:bg-violet-900/20 dark:hover:bg-violet-900/30 text-violet-600 dark:text-violet-400 border-0 transition-colors"
                               >
-                                <User2 className="h-3 w-3 mr-1" />
+                                <User2 className="mr-1 h-3 w-3" />
                                 {result.results[0].author}
                               </Badge>
                             )}
                             {result.results[0].publishedDate && (
                               <Badge
+                                className="rounded-md border-0 bg-emerald-50 text-emerald-600 transition-colors hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
                                 variant="secondary"
-                                className="rounded-md bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border-0 transition-colors"
                               >
-                                <Clock className="h-3 w-3 mr-1" />
-                                {new Date(result.results[0].publishedDate).toLocaleDateString()}
+                                <Clock className="mr-1 h-3 w-3" />
+                                {new Date(
+                                  result.results[0].publishedDate
+                                ).toLocaleDateString()}
                               </Badge>
                             )}
                             {result.response_time && (
                               <Badge
+                                className="rounded-md border-0 bg-sky-50 text-sky-600 transition-colors hover:bg-sky-100 dark:bg-sky-900/20 dark:text-sky-400 dark:hover:bg-sky-900/30"
                                 variant="secondary"
-                                className="rounded-md bg-sky-50 hover:bg-sky-100 dark:bg-sky-900/20 dark:hover:bg-sky-900/30 text-sky-600 dark:text-sky-400 border-0 transition-colors"
                               >
-                                <Server className="h-3 w-3 mr-1" />
+                                <Server className="mr-1 h-3 w-3" />
                                 {result.response_time.toFixed(1)}s
                               </Badge>
                             )}
@@ -1354,20 +1631,21 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                         </div>
                       </div>
 
-                      <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-3 line-clamp-2">
-                        {result.results[0].description || 'No description available'}
+                      <p className="mt-3 line-clamp-2 text-neutral-600 text-sm dark:text-neutral-400">
+                        {result.results[0].description ||
+                          "No description available"}
                       </p>
 
-                      <div className="mt-3 flex justify-between items-center gap-3">
+                      <div className="mt-3 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2">
                           <Badge
+                            className="cursor-pointer rounded-md border-0 bg-blue-50 text-blue-600 transition-colors hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
                             variant="secondary"
-                            className="rounded-md bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-0 transition-colors cursor-pointer"
                           >
                             <a
+                              className="inline-flex items-center gap-1.5"
                               href={result.results[0].url}
                               target="_blank"
-                              className="inline-flex items-center gap-1.5"
                             >
                               <ArrowUpRight className="h-3 w-3" />
                               View source
@@ -1376,100 +1654,118 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
 
                           {result.results.length > 1 && (
                             <Badge
+                              className="rounded-md border-0 bg-amber-50 text-amber-600 transition-colors hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:hover:bg-amber-900/30"
                               variant="secondary"
-                              className="rounded-md bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 text-amber-600 dark:text-amber-400 border-0 transition-colors"
                             >
-                              <TextIcon className="h-3 w-3 mr-1" />
+                              <TextIcon className="mr-1 h-3 w-3" />
                               {result.results.length} pages
                             </Badge>
                           )}
                         </div>
 
                         <Badge
+                          className="rounded-md border-0 bg-neutral-50 text-neutral-500 transition-colors hover:bg-neutral-100 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700"
                           variant="secondary"
-                          className="rounded-md bg-neutral-50 hover:bg-neutral-100 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-500 dark:text-neutral-400 border-0 transition-colors"
                         >
-                          <Globe className="h-3 w-3 mr-1" />
-                          {new URL(result.results[0].url).hostname.replace('www.', '')}
+                          <Globe className="mr-1 h-3 w-3" />
+                          {new URL(result.results[0].url).hostname.replace(
+                            "www.",
+                            ""
+                          )}
                         </Badge>
                       </div>
                     </div>
 
-                    <div className="border-t border-neutral-200 dark:border-neutral-800">
-                      <Accordion type="single" collapsible>
-                        {result.results.map((resultItem: any, index: number) => (
-                          <AccordionItem value={`content${index}`} key={index} className="border-0">
-                            <AccordionTrigger className="group px-4 py-3 text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors no-underline! rounded-t-none! data-[state=open]:rounded-b-none! data-[state=open]:bg-neutral-50 dark:data-[state=open]:bg-neutral-800/50 [&>svg]:h-4 [&>svg]:w-4 [&>svg]:text-neutral-500 [&>svg]:transition-transform [&>svg]:duration-200">
-                              <div className="flex items-center gap-2">
-                                <TextIcon className="h-3.5 w-3.5 text-neutral-400" />
-                                <span>{index === 0 ? 'View full content' : `Additional content ${index + 1}`}</span>
-                              </div>
-                            </AccordionTrigger>
-                            <AccordionContent className="pb-0">
-                              <div className="max-h-[50vh] overflow-y-auto p-4 bg-neutral-50 dark:bg-neutral-800/50 border-t border-neutral-200 dark:border-neutral-700">
-                                <div className="prose prose-neutral dark:prose-invert prose-sm max-w-none">
-                                  <ReactMarkdown>{resultItem.content || 'No content available'}</ReactMarkdown>
+                    <div className="border-neutral-200 border-t dark:border-neutral-800">
+                      <Accordion collapsible type="single">
+                        {result.results.map(
+                          (resultItem: any, index: number) => (
+                            <AccordionItem
+                              className="border-0"
+                              key={index}
+                              value={`content${index}`}
+                            >
+                              <AccordionTrigger className="group no-underline! rounded-t-none! px-4 py-3 font-medium text-neutral-700 text-xs transition-colors hover:bg-neutral-50 data-[state=open]:rounded-b-none! data-[state=open]:bg-neutral-50 dark:text-neutral-300 dark:data-[state=open]:bg-neutral-800/50 dark:hover:bg-neutral-800/50 [&>svg]:h-4 [&>svg]:w-4 [&>svg]:text-neutral-500 [&>svg]:transition-transform [&>svg]:duration-200">
+                                <div className="flex items-center gap-2">
+                                  <TextIcon className="h-3.5 w-3.5 text-neutral-400" />
+                                  <span>
+                                    {index === 0
+                                      ? "View full content"
+                                      : `Additional content ${index + 1}`}
+                                  </span>
                                 </div>
-                              </div>
-                            </AccordionContent>
-                          </AccordionItem>
-                        ))}
+                              </AccordionTrigger>
+                              <AccordionContent className="pb-0">
+                                <div className="max-h-[50vh] overflow-y-auto border-neutral-200 border-t bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800/50">
+                                  <div className="prose prose-neutral dark:prose-invert prose-sm max-w-none">
+                                    <ReactMarkdown>
+                                      {resultItem.content ||
+                                        "No content available"}
+                                    </ReactMarkdown>
+                                  </div>
+                                </div>
+                              </AccordionContent>
+                            </AccordionItem>
+                          )
+                        )}
                       </Accordion>
                     </div>
                   </div>
                 );
+              }
             }
             break;
 
-
-
-
-
-
-
-          case 'tool-greeting':
+          case "tool-greeting":
             switch (part.state) {
-              case 'input-streaming':
+              case "input-streaming":
                 return (
-                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                  <div
+                    className="text-neutral-500 text-sm"
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
                     Preparing greeting...
                   </div>
                 );
-              case 'input-available':
+              case "input-available":
                 return (
                   <SearchLoadingState
-                    key={`${messageIndex}-${partIndex}-tool`}
-                    icon={User2}
-                    text="Preparing greeting..."
                     color="gray"
+                    icon={User2}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    text="Preparing greeting..."
                   />
                 );
-              case 'output-available':
+              case "output-available":
                 return (
                   <div
+                    className="group my-2 rounded-md border border-neutral-200/60 bg-white/50 backdrop-blur-sm transition-all duration-200 hover:border-neutral-300 dark:border-neutral-700/60 dark:bg-neutral-900/50 dark:hover:border-neutral-600"
                     key={`${messageIndex}-${partIndex}-tool`}
-                    className="group my-2 rounded-md border border-neutral-200/60 dark:border-neutral-700/60 bg-white/50 dark:bg-neutral-900/50 backdrop-blur-sm hover:border-neutral-300 dark:hover:border-neutral-600 transition-all duration-200"
                   >
                     <div className="p-3">
                       <div className="flex items-start gap-3">
                         {part.output.timeEmoji && (
-                          <div className="mt-0.5 w-5 h-5 rounded-md bg-neutral-600 flex items-center justify-center">
-                            <span className="text-xs">{part.output.timeEmoji}</span>
+                          <div className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-md bg-neutral-600">
+                            <span className="text-xs">
+                              {part.output.timeEmoji}
+                            </span>
                           </div>
                         )}
-                        <div className="flex-1 min-w-0 space-y-2">
+                        <div className="min-w-0 flex-1 space-y-2">
                           <div className="flex items-center gap-2 text-xs">
                             <span className="font-medium text-neutral-900 dark:text-neutral-100">
                               {part.output.greeting}
                             </span>
                             <span className="text-neutral-400">•</span>
-                            <span className="text-neutral-500 dark:text-neutral-400">{part.output.dayOfWeek}</span>
+                            <span className="text-neutral-500 dark:text-neutral-400">
+                              {part.output.dayOfWeek}
+                            </span>
                           </div>
-                          <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed">
+                          <div className="text-neutral-700 text-sm leading-relaxed dark:text-neutral-300">
                             {part.output.professionalMessage}
                           </div>
                           {part.output.helpfulTip && (
-                            <div className="text-xs text-neutral-500 dark:text-neutral-400">
+                            <div className="text-neutral-500 text-xs dark:text-neutral-400">
                               {part.output.helpfulTip}
                             </div>
                           )}
@@ -1481,39 +1777,55 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
             }
             break;
 
-          default:
+          default: {
             // Generic fallback for any tool without custom UI (e.g., keyword_research)
-            const toolName = part.type.replace('tool-', '');
-            const shouldAutoOpen = part.state === 'output-available' || part.state === 'output-error';
+            const toolName = part.type.replace("tool-", "");
+            const shouldAutoOpen =
+              part.state === "output-available" ||
+              part.state === "output-error";
 
             return (
-              <Tool key={`${messageIndex}-${partIndex}-tool`} defaultOpen={shouldAutoOpen}>
+              <Tool
+                defaultOpen={shouldAutoOpen}
+                key={`${messageIndex}-${partIndex}-tool`}
+              >
                 <ToolHeader
-                  type={part.type as any}
                   state={part.state}
-                  title={toolName.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
+                  title={toolName
+                    .replace(/_/g, " ")
+                    .replace(/\b\w/g, (l) => l.toUpperCase())}
+                  type={part.type as any}
                 />
                 <ToolContent>
-                  {(part.state === 'input-available' || part.state === 'output-available' || part.state === 'output-error') && (
+                  {(part.state === "input-available" ||
+                    part.state === "output-available" ||
+                    part.state === "output-error") && (
                     <ToolInput input={part.input} />
                   )}
-                  {(part.state === 'output-available' || part.state === 'output-error') && (
-                    <ToolOutput output={part.output} errorText={part.errorText} />
+                  {(part.state === "output-available" ||
+                    part.state === "output-error") && (
+                    <ToolOutput
+                      errorText={part.errorText}
+                      output={part.output}
+                    />
                   )}
                 </ToolContent>
               </Tool>
             );
+          }
         }
       } else {
         // Legacy tool invocation without state - show as loading or fallback
-        console.warn('Legacy tool part without state:', part);
+        console.warn("Legacy tool part without state:", part);
         return (
           <div
+            className="my-4 rounded-lg bg-neutral-50 p-4 dark:bg-neutral-900"
             key={`${messageIndex}-${partIndex}-tool-legacy`}
-            className="my-4 p-4 bg-neutral-50 dark:bg-neutral-900 rounded-lg"
           >
-            <h3 className="font-medium mb-2">Tool: Unknown</h3>
-            <pre className="text-xs overflow-auto">{JSON.stringify(part, null, 2)}</pre>
+            <h3 className="mb-2 font-medium">Tool: Unknown</h3>
+            <pre className="overflow-auto text-xs">
+              {JSON.stringify(part, null, 2)}
+            </pre>
           </div>
         );
       }
@@ -1521,14 +1833,19 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
 
     // Log unhandled part types for debugging
     console.log(
-      'Unhandled part type:',
-      typeof part === 'object' && part !== null && 'type' in part ? part.type : 'unknown',
-      part,
+      "Unhandled part type:",
+      typeof part === "object" && part !== null && "type" in part
+        ? part.type
+        : "unknown",
+      part
     );
 
     return null;
   },
-  (prevProps: MessagePartRendererProps, nextProps: MessagePartRendererProps) => {
+  (
+    prevProps: MessagePartRendererProps,
+    nextProps: MessagePartRendererProps
+  ) => {
     const areEqual =
       isEqual(prevProps.part, nextProps.part) &&
       prevProps.messageIndex === nextProps.messageIndex &&
@@ -1536,9 +1853,16 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
       isEqual(prevProps.parts, nextProps.parts) &&
       isEqual(prevProps.message, nextProps.message) &&
       prevProps.status === nextProps.status &&
-      prevProps.hasActiveToolInvocations === nextProps.hasActiveToolInvocations &&
-      isEqual(prevProps.reasoningVisibilityMap, nextProps.reasoningVisibilityMap) &&
-      isEqual(prevProps.reasoningFullscreenMap, nextProps.reasoningFullscreenMap) &&
+      prevProps.hasActiveToolInvocations ===
+        nextProps.hasActiveToolInvocations &&
+      isEqual(
+        prevProps.reasoningVisibilityMap,
+        nextProps.reasoningVisibilityMap
+      ) &&
+      isEqual(
+        prevProps.reasoningFullscreenMap,
+        nextProps.reasoningFullscreenMap
+      ) &&
       prevProps.user?.id === nextProps.user?.id &&
       prevProps.isOwner === nextProps.isOwner &&
       prevProps.selectedVisibilityType === nextProps.selectedVisibilityType &&
@@ -1547,26 +1871,29 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
 
     // Debug logging
     if (!areEqual) {
-      console.log('MessagePartRenderer re-rendering');
+      console.log("MessagePartRenderer re-rendering");
     }
 
     return areEqual;
-  },
+  }
 );
 
 // Code Context tool component
-const CodeContextTool: React.FC<{ args: any; result: any }> = ({ args, result }) => {
+const CodeContextTool: React.FC<{ args: any; result: any }> = ({
+  args,
+  result,
+}) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (!result) {
     return (
-      <div className="group my-2 p-3 rounded-md border border-neutral-200/60 dark:border-neutral-700/60 bg-neutral-50/30 dark:bg-neutral-900/30">
+      <div className="group my-2 rounded-md border border-neutral-200/60 bg-neutral-50/30 p-3 dark:border-neutral-700/60 dark:bg-neutral-900/30">
         <div className="flex items-center gap-3">
-          <div className="w-5 h-5 rounded-md bg-neutral-600 flex items-center justify-center opacity-80">
-            <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+          <div className="flex h-5 w-5 items-center justify-center rounded-md bg-neutral-600 opacity-80">
+            <div className="h-2 w-2 animate-pulse rounded-full bg-white" />
           </div>
           <div className="flex-1">
-            <div className="h-2.5 w-20 bg-neutral-300 dark:bg-neutral-600 rounded-sm animate-pulse" />
+            <div className="h-2.5 w-20 animate-pulse rounded-sm bg-neutral-300 dark:bg-neutral-600" />
           </div>
         </div>
       </div>
@@ -1575,44 +1902,48 @@ const CodeContextTool: React.FC<{ args: any; result: any }> = ({ args, result })
 
   const responseText = result?.response || result;
   const shouldShowAccordion = responseText && responseText.length > 500;
-  const previewText = shouldShowAccordion ? responseText.slice(0, 400) + '...' : responseText;
+  const previewText = shouldShowAccordion
+    ? responseText.slice(0, 400) + "..."
+    : responseText;
 
   return (
-    <div className="group my-2 rounded-md border border-neutral-200/60 dark:border-neutral-700/60 bg-white/50 dark:bg-neutral-900/50 backdrop-blur-sm hover:border-neutral-300 dark:hover:border-neutral-600 transition-all duration-200">
+    <div className="group my-2 rounded-md border border-neutral-200/60 bg-white/50 backdrop-blur-sm transition-all duration-200 hover:border-neutral-300 dark:border-neutral-700/60 dark:bg-neutral-900/50 dark:hover:border-neutral-600">
       <div className="p-3">
         <div className="flex items-start gap-3">
-          <div className="mt-0.5 w-5 h-5 rounded-md bg-blue-600 flex items-center justify-center">
-            <Code className="w-2.5 h-2.5 text-white" />
+          <div className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-md bg-blue-600">
+            <Code className="h-2.5 w-2.5 text-white" />
           </div>
 
-          <div className="flex-1 min-w-0 space-y-3">
+          <div className="min-w-0 flex-1 space-y-3">
             {/* Header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-xs">
-                <span className="font-medium text-neutral-900 dark:text-neutral-100">Code Context</span>
+                <span className="font-medium text-neutral-900 dark:text-neutral-100">
+                  Code Context
+                </span>
                 <span className="text-neutral-400">•</span>
-                <span className="text-neutral-500 dark:text-neutral-400 truncate max-w-[200px]">
-                  {args ? args.query : ''}
+                <span className="max-w-[200px] truncate text-neutral-500 dark:text-neutral-400">
+                  {args ? args.query : ""}
                 </span>
               </div>
 
               <div className="flex items-center gap-2">
                 {/* Copy button */}
                 <Button
-                  variant="ghost"
-                  size="icon"
+                  className="h-6 w-6 p-0 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                   onClick={() => {
                     navigator.clipboard.writeText(responseText);
-                    toast.success('Code context copied to clipboard');
+                    toast.success("Code context copied to clipboard");
                   }}
-                  className="h-6 w-6 p-0 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                  size="icon"
+                  variant="ghost"
                 >
                   <HugeiconsIcon
+                    className="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
+                    color="currentColor"
                     icon={Copy01Icon}
                     size={12}
-                    color="currentColor"
                     strokeWidth={2}
-                    className="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
                   />
                 </Button>
 
@@ -1620,15 +1951,15 @@ const CodeContextTool: React.FC<{ args: any; result: any }> = ({ args, result })
                 {result?.resultsCount !== undefined && (
                   <div className="flex items-center gap-2">
                     <Badge
+                      className="rounded-md border-0 bg-blue-50 px-2 py-0.5 text-blue-600 text-xs hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
                       variant="secondary"
-                      className="rounded-md bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-0 text-xs px-2 py-0.5"
                     >
                       {result.resultsCount} results
                     </Badge>
                     {result.outputTokens && (
                       <Badge
+                        className="rounded-md border-0 bg-emerald-50 px-2 py-0.5 text-emerald-600 text-xs hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
                         variant="secondary"
-                        className="rounded-md bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border-0 text-xs px-2 py-0.5"
                       >
                         {result.outputTokens} tokens
                       </Badge>
@@ -1642,21 +1973,21 @@ const CodeContextTool: React.FC<{ args: any; result: any }> = ({ args, result })
             <div className="space-y-2">
               {shouldShowAccordion ? (
                 <Accordion
-                  type="single"
                   collapsible
-                  value={isExpanded ? 'context' : ''}
                   onValueChange={(value) => setIsExpanded(!!value)}
+                  type="single"
+                  value={isExpanded ? "context" : ""}
                 >
-                  <AccordionItem value="context" className="border-0">
+                  <AccordionItem className="border-0" value="context">
                     <div className="space-y-2">
-                      <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed break-words">
+                      <div className="break-words text-neutral-700 text-sm leading-relaxed dark:text-neutral-300">
                         {!isExpanded && previewText}
                       </div>
-                      <AccordionTrigger className="py-2 hover:no-underline text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
-                        {isExpanded ? 'Show less' : 'Show full context'}
+                      <AccordionTrigger className="py-2 text-blue-600 text-xs transition-colors hover:text-blue-700 hover:no-underline dark:text-blue-400 dark:hover:text-blue-300">
+                        {isExpanded ? "Show less" : "Show full context"}
                       </AccordionTrigger>
                       <AccordionContent className="pb-0">
-                        <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed break-words whitespace-pre-wrap pt-2 border-t border-neutral-200/60 dark:border-neutral-700/60">
+                        <div className="whitespace-pre-wrap break-words border-neutral-200/60 border-t pt-2 text-neutral-700 text-sm leading-relaxed dark:border-neutral-700/60 dark:text-neutral-300">
                           {responseText}
                         </div>
                       </AccordionContent>
@@ -1664,16 +1995,16 @@ const CodeContextTool: React.FC<{ args: any; result: any }> = ({ args, result })
                   </AccordionItem>
                 </Accordion>
               ) : (
-                <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed break-words whitespace-pre-wrap">
+                <div className="whitespace-pre-wrap break-words text-neutral-700 text-sm leading-relaxed dark:text-neutral-300">
                   {responseText}
                 </div>
               )}
 
               {/* Footer metadata */}
               {result?.searchTime && (
-                <div className="flex items-center gap-2 pt-2 border-t border-neutral-200/30 dark:border-neutral-700/30">
-                  <Clock className="w-3 h-3 text-neutral-400" />
-                  <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                <div className="flex items-center gap-2 border-neutral-200/30 border-t pt-2 dark:border-neutral-700/30">
+                  <Clock className="h-3 w-3 text-neutral-400" />
+                  <span className="text-neutral-500 text-xs dark:text-neutral-400">
                     Search completed in {(result.searchTime / 1000).toFixed(2)}s
                   </span>
                 </div>
@@ -1687,7 +2018,10 @@ const CodeContextTool: React.FC<{ args: any; result: any }> = ({ args, result })
 };
 
 // Translation tool component with audio features
-const TranslationTool: React.FC<{ args: any; result: any }> = ({ args, result }) => {
+const TranslationTool: React.FC<{ args: any; result: any }> = ({
+  args,
+  result,
+}) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
@@ -1700,7 +2034,7 @@ const TranslationTool: React.FC<{ args: any; result: any }> = ({ args, result })
     return () => {
       if (_audioRef) {
         _audioRef.pause();
-        _audioRef.src = '';
+        _audioRef.src = "";
       }
     };
   }, []);
@@ -1711,16 +2045,16 @@ const TranslationTool: React.FC<{ args: any; result: any }> = ({ args, result })
       waveRef.current.addAnimation(
         new waveRef.current.animations.Lines({
           lineWidth: 3,
-          lineColor: 'rgb(82, 82, 91)',
+          lineColor: "rgb(82, 82, 91)",
           count: 80,
           mirroredY: true,
-        }),
+        })
       );
     }
   }, [audioUrl]);
 
   const handlePlayPause = async () => {
-    if (!audioUrl && !isGeneratingAudio) {
+    if (!(audioUrl || isGeneratingAudio)) {
       setIsGeneratingAudio(true);
       try {
         const { audio } = await generateSpeech(result.translatedText);
@@ -1733,7 +2067,7 @@ const TranslationTool: React.FC<{ args: any; result: any }> = ({ args, result })
           }
         }, 100);
       } catch (error) {
-        console.error('Error generating speech:', error);
+        console.error("Error generating speech:", error);
         setIsGeneratingAudio(false);
       }
     } else if (audioRef.current) {
@@ -1748,13 +2082,13 @@ const TranslationTool: React.FC<{ args: any; result: any }> = ({ args, result })
 
   if (!result) {
     return (
-      <div className="group my-2 p-3 rounded-md border border-neutral-200/60 dark:border-neutral-700/60 bg-neutral-50/30 dark:bg-neutral-900/30">
+      <div className="group my-2 rounded-md border border-neutral-200/60 bg-neutral-50/30 p-3 dark:border-neutral-700/60 dark:bg-neutral-900/30">
         <div className="flex items-center gap-3">
-          <div className="w-5 h-5 rounded-md bg-neutral-600 flex items-center justify-center opacity-80">
-            <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+          <div className="flex h-5 w-5 items-center justify-center rounded-md bg-neutral-600 opacity-80">
+            <div className="h-2 w-2 animate-pulse rounded-full bg-white" />
           </div>
           <div className="flex-1">
-            <div className="h-2.5 w-20 bg-neutral-300 dark:bg-neutral-600 rounded-sm animate-pulse" />
+            <div className="h-2.5 w-20 animate-pulse rounded-sm bg-neutral-300 dark:bg-neutral-600" />
           </div>
         </div>
       </div>
@@ -1762,37 +2096,39 @@ const TranslationTool: React.FC<{ args: any; result: any }> = ({ args, result })
   }
 
   return (
-    <div className="group my-2 rounded-md border border-neutral-200/60 dark:border-neutral-700/60 bg-white/50 dark:bg-neutral-900/50 backdrop-blur-sm hover:border-neutral-300 dark:hover:border-neutral-600 transition-all duration-200">
+    <div className="group my-2 rounded-md border border-neutral-200/60 bg-white/50 backdrop-blur-sm transition-all duration-200 hover:border-neutral-300 dark:border-neutral-700/60 dark:bg-neutral-900/50 dark:hover:border-neutral-600">
       <div className="p-3">
         <div className="flex items-start gap-3">
-          <div className="mt-0.5 w-5 h-5 rounded-md bg-neutral-600 flex items-center justify-center">
-            <TextIcon className="w-2.5 h-2.5 text-white" />
+          <div className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-md bg-neutral-600">
+            <TextIcon className="h-2.5 w-2.5 text-white" />
           </div>
 
-          <div className="flex-1 min-w-0 space-y-2">
+          <div className="min-w-0 flex-1 space-y-2">
             <div className="flex items-center gap-2 text-xs">
-              <span className="font-medium text-neutral-900 dark:text-neutral-100">Translation</span>
+              <span className="font-medium text-neutral-900 dark:text-neutral-100">
+                Translation
+              </span>
               <span className="text-neutral-400">•</span>
               <span className="text-neutral-500 dark:text-neutral-400">
-                {result.detectedLanguage} → {args ? args.to : ''}
+                {result.detectedLanguage} → {args ? args.to : ""}
               </span>
             </div>
 
             <div className="grid gap-2 sm:grid-cols-2">
               <div className="group/text">
-                <div className="text-xs text-neutral-500 dark:text-neutral-400 mb-1 opacity-70">
+                <div className="mb-1 text-neutral-500 text-xs opacity-70 dark:text-neutral-400">
                   {result.detectedLanguage}
                 </div>
-                <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed break-words">
-                  {args ? args.text : ''}
+                <div className="break-words text-neutral-700 text-sm leading-relaxed dark:text-neutral-300">
+                  {args ? args.text : ""}
                 </div>
               </div>
 
               <div className="group/text">
-                <div className="text-xs text-neutral-600 dark:text-neutral-400 mb-1 opacity-70">
-                  {args ? args.to : ''}
+                <div className="mb-1 text-neutral-600 text-xs opacity-70 dark:text-neutral-400">
+                  {args ? args.to : ""}
                 </div>
-                <div className="text-sm font-medium text-neutral-900 dark:text-neutral-100 leading-relaxed break-words">
+                <div className="break-words font-medium text-neutral-900 text-sm leading-relaxed dark:text-neutral-100">
                   {result.translatedText}
                 </div>
               </div>
@@ -1800,41 +2136,41 @@ const TranslationTool: React.FC<{ args: any; result: any }> = ({ args, result })
 
             <div className="flex items-center gap-2 pt-1">
               <button
-                onClick={handlePlayPause}
-                disabled={isGeneratingAudio}
                 className={cn(
-                  'w-5 h-5 rounded-sm flex items-center justify-center transition-all duration-150',
+                  "flex h-5 w-5 items-center justify-center rounded-sm transition-all duration-150",
                   isPlaying
-                    ? 'bg-neutral-700 text-white shadow-sm'
-                    : 'bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200',
+                    ? "bg-neutral-700 text-white shadow-sm"
+                    : "bg-neutral-100 text-neutral-500 hover:bg-neutral-200 hover:text-neutral-700 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700 dark:hover:text-neutral-200"
                 )}
+                disabled={isGeneratingAudio}
+                onClick={handlePlayPause}
               >
                 {isGeneratingAudio ? (
-                  <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                  <Loader2 className="h-2.5 w-2.5 animate-spin" />
                 ) : isPlaying ? (
-                  <Pause className="w-2.5 h-2.5" />
+                  <Pause className="h-2.5 w-2.5" />
                 ) : (
-                  <PlayIcon className="w-2.5 h-2.5" />
+                  <PlayIcon className="h-2.5 w-2.5" />
                 )}
               </button>
 
-              <div className="flex-1 h-5 bg-neutral-100/80 dark:bg-neutral-800/80 rounded-sm overflow-hidden">
-                {!audioUrl && !isGeneratingAudio && (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <div className="w-full h-0.5 bg-neutral-200 dark:bg-neutral-700 rounded-full" />
+              <div className="h-5 flex-1 overflow-hidden rounded-sm bg-neutral-100/80 dark:bg-neutral-800/80">
+                {!(audioUrl || isGeneratingAudio) && (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <div className="h-0.5 w-full rounded-full bg-neutral-200 dark:bg-neutral-700" />
                   </div>
                 )}
                 <canvas
-                  ref={canvasRef}
-                  width="800"
+                  className="h-full w-full"
                   height="40"
-                  className="w-full h-full"
-                  style={{ imageRendering: 'crisp-edges' }}
+                  ref={canvasRef}
+                  style={{ imageRendering: "crisp-edges" }}
+                  width="800"
                 />
               </div>
 
-              <span className="text-xs text-neutral-400 dark:text-neutral-500 font-mono opacity-0 group-hover:opacity-100 transition-opacity">
-                {isGeneratingAudio ? '...' : audioUrl ? '●' : '○'}
+              <span className="font-mono text-neutral-400 text-xs opacity-0 transition-opacity group-hover:opacity-100 dark:text-neutral-500">
+                {isGeneratingAudio ? "..." : audioUrl ? "●" : "○"}
               </span>
             </div>
           </div>
@@ -1843,15 +2179,15 @@ const TranslationTool: React.FC<{ args: any; result: any }> = ({ args, result })
 
       {audioUrl && (
         <audio
+          onEnded={() => setIsPlaying(false)}
+          onPause={() => setIsPlaying(false)}
+          onPlay={() => setIsPlaying(true)}
           ref={audioRef}
           src={audioUrl}
-          onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
-          onEnded={() => setIsPlaying(false)}
         />
       )}
     </div>
   );
 };
 
-MessagePartRenderer.displayName = 'MessagePartRenderer';
+MessagePartRenderer.displayName = "MessagePartRenderer";

@@ -1,15 +1,18 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface LoadingSkeletonProps {
   count?: number;
   showActions?: boolean;
 }
 
-export function LookoutSkeleton({ showActions = true }: { showActions?: boolean }) {
+export function LookoutSkeleton({
+  showActions = true,
+}: {
+  showActions?: boolean;
+}) {
   return (
     <Card className="shadow-none">
       <CardHeader className="pb-3">
@@ -37,7 +40,10 @@ export function LookoutSkeleton({ showActions = true }: { showActions?: boolean 
   );
 }
 
-export function LoadingSkeletons({ count = 3, showActions = true }: LoadingSkeletonProps) {
+export function LoadingSkeletons({
+  count = 3,
+  showActions = true,
+}: LoadingSkeletonProps) {
   // Ensure count is a positive number to prevent rendering issues
   const validCount = Math.max(0, count || 3);
 

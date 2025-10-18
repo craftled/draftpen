@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 
 interface GitHubRepo {
   stargazers_count: number;
@@ -8,17 +8,19 @@ interface GitHubRepo {
 
 export function useGitHubStars() {
   return useQuery({
-    queryKey: ['github-stars'],
+    queryKey: ["github-stars"],
     queryFn: async (): Promise<number> => {
       try {
-        const response = await fetch('https://api.github.com/repos/zaidmukaddam/scira');
+        const response = await fetch(
+          "https://api.github.com/repos/zaidmukaddam/scira"
+        );
         if (!response.ok) {
-          throw new Error('Failed to fetch GitHub stars');
+          throw new Error("Failed to fetch GitHub stars");
         }
         const data: GitHubRepo = await response.json();
         return data.stargazers_count;
       } catch (error) {
-        console.error('Error fetching GitHub stars:', error);
+        console.error("Error fetching GitHub stars:", error);
         return 9000;
       }
     },

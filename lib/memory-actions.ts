@@ -1,12 +1,12 @@
-'use server';
+"use server";
 
-import { getUser } from '@/lib/auth-utils';
-import { serverEnv } from '@/env/server';
-import { Supermemory } from 'supermemory';
+import { Supermemory } from "supermemory";
+import { serverEnv } from "@/env/server";
+import { getUser } from "@/lib/auth-utils";
 
 // Initialize the memory client with API key
 const supermemoryClient = new Supermemory({
-  apiKey: serverEnv.SUPERMEMORY_API_KEY
+  apiKey: serverEnv.SUPERMEMORY_API_KEY,
 });
 
 // Define the types based on actual API responses
@@ -42,11 +42,15 @@ export interface MemoryResponse {
  * Search memories for the authenticated user
  * Returns a consistent MemoryResponse format with memories array and total count
  */
-export async function searchMemories(query: string, page = 1, pageSize = 20): Promise<MemoryResponse> {
+export async function searchMemories(
+  query: string,
+  page = 1,
+  pageSize = 20
+): Promise<MemoryResponse> {
   const user = await getUser();
 
   if (!user) {
-    throw new Error('Authentication required');
+    throw new Error("Authentication required");
   }
 
   if (!query.trim()) {
@@ -59,11 +63,10 @@ export async function searchMemories(query: string, page = 1, pageSize = 20): Pr
       containerTag: user.id,
       limit: pageSize,
     });
-    
-    
+
     return { memories: [], total: result.total || 0 };
   } catch (error) {
-    console.error('Error searching memories:', error);
+    console.error("Error searching memories:", error);
     throw error;
   }
 }
@@ -72,17 +75,20 @@ export async function searchMemories(query: string, page = 1, pageSize = 20): Pr
  * Get all memories for the authenticated user
  * Returns a consistent MemoryResponse format with memories array and total count
  */
-export async function getAllMemories(page = 1, pageSize = 20): Promise<MemoryResponse> {
+export async function getAllMemories(
+  page = 1,
+  pageSize = 20
+): Promise<MemoryResponse> {
   const user = await getUser();
 
   if (!user) {
-    throw new Error('Authentication required');
+    throw new Error("Authentication required");
   }
 
   try {
     const result = await supermemoryClient.memories.list({
       containerTags: [user.id],
-      page: page,
+      page,
       limit: pageSize,
       includeContent: true,
     });
@@ -92,7 +98,7 @@ export async function getAllMemories(page = 1, pageSize = 20): Promise<MemoryRes
       total: result.pagination.totalItems || 0,
     };
   } catch (error) {
-    console.error('Error fetching memories:', error);
+    console.error("Error fetching memories:", error);
     throw error;
   }
 }
@@ -104,14 +110,14 @@ export async function deleteMemory(memoryId: string) {
   const user = await getUser();
 
   if (!user) {
-    throw new Error('Authentication required');
+    throw new Error("Authentication required");
   }
 
   try {
     const data = await supermemoryClient.memories.delete(memoryId);
     return data;
   } catch (error) {
-    console.error('Error deleting memory:', error);
+    console.error("Error deleting memory:", error);
     throw error;
   }
 }

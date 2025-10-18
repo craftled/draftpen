@@ -1,7 +1,13 @@
-'use client';
+"use client";
 
-import AuthCard from '@/components/auth-card';
+import AuthCard from "@/components/auth-card";
 
 export default function SignUpPage() {
-  return <AuthCard title="Create an account" description="Get started with Draftpen today" mode="sign-up" />;
+  return (
+    <AuthCard
+      description="Get started with Draftpen today"
+      mode="sign-up"
+      title="Create an account"
+    />
+  );
 }

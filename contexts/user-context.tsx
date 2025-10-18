@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, ReactNode } from 'react';
-import { useCachedUserData } from '@/hooks/use-cached-user-data';
-import { type ComprehensiveUserData } from '@/lib/user-data';
+import { createContext, type ReactNode, useContext } from "react";
+import { useCachedUserData } from "@/hooks/use-cached-user-data";
+import type { ComprehensiveUserData } from "@/lib/user-data";
 
 interface UserContextType {
   // Core user data
@@ -23,7 +23,7 @@ interface UserContextType {
 
   // Trial status (new)
   isInTrial: boolean;
-  subscriptionType: 'trial' | 'paid' | 'none';
+  subscriptionType: "trial" | "paid" | "none";
   trialEndsAt?: Date | string | null;
   daysLeftInTrial: number;
 
@@ -57,14 +57,16 @@ interface UserProviderProps {
 export function UserProvider({ children }: UserProviderProps) {
   const userData = useCachedUserData();
 
-  return <UserContext.Provider value={userData}>{children}</UserContext.Provider>;
+  return (
+    <UserContext.Provider value={userData}>{children}</UserContext.Provider>
+  );
 }
 
 export function useUser(): UserContextType {
   const context = useContext(UserContext);
 
   if (context === undefined) {
-    throw new Error('useUser must be used within a UserProvider');
+    throw new Error("useUser must be used within a UserProvider");
   }
 
   return context;

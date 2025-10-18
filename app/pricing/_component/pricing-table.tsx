@@ -1,21 +1,16 @@
-'use client';
+"use client";
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { authClient } from '@/lib/auth-client';
-import { ArrowRight, ArrowLeft } from 'lucide-react';
-import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { PRICING } from '@/lib/constants';
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { authClient } from "@/lib/auth-client";
+import { PRICING } from "@/lib/constants";
 
-
-
-import { ComprehensiveUserData } from '@/lib/user-data-server';
-
-
+import type { ComprehensiveUserData } from "@/lib/user-data-server";
 
 type SubscriptionDetails = {
   id: string;
@@ -35,7 +30,7 @@ type SubscriptionDetailsResult = {
   hasSubscription: boolean;
   subscription?: SubscriptionDetails;
   error?: string;
-  errorType?: 'CANCELED' | 'EXPIRED' | 'GENERAL';
+  errorType?: "CANCELED" | "EXPIRED" | "GENERAL";
 };
 
 interface PricingTableProps {
@@ -44,10 +39,14 @@ interface PricingTableProps {
   priceUSD?: number; // from server (Polar), optional fallback to PRICING
 }
 
-export default function PricingTable({ subscriptionDetails, user, priceUSD }: PricingTableProps) {
+export default function PricingTable({
+  subscriptionDetails,
+  user,
+  priceUSD,
+}: PricingTableProps) {
   const router = useRouter();
   // Debug logging (can be removed in production)
-  console.log('PricingTable Debug:', {
+  console.log("PricingTable Debug:", {
     subscriptionDetails,
     userProStatus: user
       ? {
@@ -61,29 +60,27 @@ export default function PricingTable({ subscriptionDetails, user, priceUSD }: Pr
       : null,
   });
 
-
-
   const handleCheckout = async (productId: string, slug: string) => {
-    console.log('🛒 Checkout initiated:', { productId, slug, hasUser: !!user });
-    
+    console.log("🛒 Checkout initiated:", { productId, slug, hasUser: !!user });
+
     if (!user) {
-      console.log('❌ No user, redirecting to sign-up');
-      toast.info('Please sign in to start your free trial');
-      router.push('/sign-up');
+      console.log("❌ No user, redirecting to sign-up");
+      toast.info("Please sign in to start your free trial");
+      router.push("/sign-up");
       return;
     }
 
     try {
-      console.log('📦 Opening checkout with authClient.checkout()...');
+      console.log("📦 Opening checkout with authClient.checkout()...");
       await authClient.checkout({
         products: [productId],
         slug,
         allowDiscountCodes: true,
       });
-      console.log('✅ Checkout opened successfully');
+      console.log("✅ Checkout opened successfully");
     } catch (error) {
-      console.error('❌ Checkout failed:', error);
-      toast.error('Something went wrong. Please try again.');
+      console.error("❌ Checkout failed:", error);
+      toast.error("Something went wrong. Please try again.");
     }
   };
 
@@ -91,87 +88,85 @@ export default function PricingTable({ subscriptionDetails, user, priceUSD }: Pr
     try {
       await authClient.customer.portal();
     } catch (error) {
-      console.error('Failed to open customer portal:', error);
-      toast.error('Failed to open subscription management');
+      console.error("Failed to open customer portal:", error);
+      toast.error("Failed to open subscription management");
     }
   };
 
   const STARTER_TIER = process.env.NEXT_PUBLIC_STARTER_TIER;
   const STARTER_SLUG = process.env.NEXT_PUBLIC_STARTER_SLUG;
 
-  if (!STARTER_TIER || !STARTER_SLUG) {
-    console.error('Missing required environment variables');
-    throw new Error('Missing required environment variables for Starter tier');
+  if (!(STARTER_TIER && STARTER_SLUG)) {
+    console.error("Missing required environment variables");
+    throw new Error("Missing required environment variables for Starter tier");
   }
 
   // Check if user has active Polar subscription (includes trialing)
   const hasPolarSubscription = () => {
     const sub = subscriptionDetails.subscription;
-    if (!subscriptionDetails.hasSubscription || !sub) return false;
+    if (!(subscriptionDetails.hasSubscription && sub)) return false;
     const now = new Date();
     return (
       sub.productId === STARTER_TIER &&
-      (sub.status === 'active' || sub.status === 'trialing') &&
+      (sub.status === "active" || sub.status === "trialing") &&
       new Date(sub.currentPeriodEnd) > now
     );
   };
 
-  
-
   // Check if user has any Pro status (Polar only)
-  const hasProAccess = () => {
-    return hasPolarSubscription();
-  };
+  const hasProAccess = () => hasPolarSubscription();
 
   // Get the source of Pro access for display
   const getProAccessSource = () => {
-    if (hasPolarSubscription()) return 'polar';
+    if (hasPolarSubscription()) return "polar";
     return null;
   };
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+  const formatDate = (date: Date) =>
+    new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
-  };
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="max-w-4xl mx-auto px-6 pt-12">
+      <div className="mx-auto max-w-4xl px-6 pt-12">
         <Link
+          className="mb-8 inline-flex items-center text-muted-foreground text-sm transition-colors hover:text-foreground"
           href="/"
-          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-8"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Home
         </Link>
 
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-medium text-foreground mb-4 font-be-vietnam-pro">Pricing</h1>
-          <p className="text-xl text-muted-foreground">Choose the plan that works for you</p>
+        <div className="mb-16 text-center">
+          <h1 className="mb-4 font-be-vietnam-pro font-medium text-4xl text-foreground">
+            Pricing
+          </h1>
+          <p className="text-muted-foreground text-xl">
+            Choose the plan that works for you
+          </p>
         </div>
       </div>
 
-
       {/* Pricing Cards */}
-      <div className="max-w-4xl mx-auto px-6 pb-24">
-        <div className="grid grid-cols-1 place-items-center max-w-3xl mx-auto">
-
-
+      <div className="mx-auto max-w-4xl px-6 pb-24">
+        <div className="mx-auto grid max-w-3xl grid-cols-1 place-items-center">
           {/* Pro Plan */}
-          <Card className="relative border-2 border-primary w-full max-w-md">
+          <Card className="relative w-full max-w-md border-2 border-primary">
             {hasProAccess() && (
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
-                <Badge className="bg-primary text-primary-foreground">Current plan</Badge>
+              <div className="-top-3 -translate-x-1/2 absolute left-1/2 z-10 transform">
+                <Badge className="bg-primary text-primary-foreground">
+                  Current plan
+                </Badge>
               </div>
             )}
 
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-xl font-medium">Draftpen Pro</h3>
+                <h3 className="font-medium text-xl">Draftpen Pro</h3>
                 <Badge variant="secondary">7-day free trial</Badge>
               </div>
 
@@ -180,8 +175,8 @@ export default function PricingTable({ subscriptionDetails, user, priceUSD }: Pr
                 const usd = priceUSD ?? PRICING.PRO_MONTHLY;
                 return (
                   <div className="flex items-baseline">
-                    <span className="text-4xl font-light">${usd}</span>
-                    <span className="text-muted-foreground ml-2">/month</span>
+                    <span className="font-light text-4xl">${usd}</span>
+                    <span className="ml-2 text-muted-foreground">/month</span>
                   </div>
                 );
               })()}
@@ -190,23 +185,23 @@ export default function PricingTable({ subscriptionDetails, user, priceUSD }: Pr
             <CardContent className="space-y-6">
               <ul className="space-y-3">
                 <li className="flex items-center">
-                  <div className="w-1.5 h-1.5 bg-primary rounded-full mr-3 flex-shrink-0"></div>
+                  <div className="mr-3 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
                   Unlimited searches
                 </li>
                 <li className="flex items-center">
-                  <div className="w-1.5 h-1.5 bg-primary rounded-full mr-3 flex-shrink-0"></div>
+                  <div className="mr-3 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
                   All AI models
                 </li>
                 <li className="flex items-center">
-                  <div className="w-1.5 h-1.5 bg-primary rounded-full mr-3 flex-shrink-0"></div>
+                  <div className="mr-3 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
                   PDF analysis
                 </li>
                 <li className="flex items-center">
-                  <div className="w-1.5 h-1.5 bg-primary rounded-full mr-3 flex-shrink-0"></div>
+                  <div className="mr-3 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
                   Priority support
                 </li>
                 <li className="flex items-center">
-                  <div className="w-1.5 h-1.5 bg-primary rounded-full mr-3 flex-shrink-0"></div>
+                  <div className="mr-3 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
                   Scira Lookout
                 </li>
               </ul>
@@ -216,41 +211,49 @@ export default function PricingTable({ subscriptionDetails, user, priceUSD }: Pr
                   <Button className="w-full" onClick={handleManageSubscription}>
                     Manage subscription
                   </Button>
-                  {getProAccessSource() === 'polar' && subscriptionDetails.subscription && (
-                    <p className="text-sm text-muted-foreground text-center">
-                      {subscriptionDetails.subscription.cancelAtPeriodEnd
-                        ? `Subscription expires ${formatDate(subscriptionDetails.subscription.currentPeriodEnd)}`
-                        : `Renews ${formatDate(subscriptionDetails.subscription.currentPeriodEnd)}`}
-                    </p>
-                  )}
-
+                  {getProAccessSource() === "polar" &&
+                    subscriptionDetails.subscription && (
+                      <p className="text-center text-muted-foreground text-sm">
+                        {subscriptionDetails.subscription.cancelAtPeriodEnd
+                          ? `Subscription expires ${formatDate(subscriptionDetails.subscription.currentPeriodEnd)}`
+                          : `Renews ${formatDate(subscriptionDetails.subscription.currentPeriodEnd)}`}
+                      </p>
+                    )}
                 </div>
               ) : (
-                <Button className="w-full group" onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG)}>
+                <Button
+                  className="group w-full"
+                  onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG)}
+                >
                   Start 7-day free trial
-                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Button>
               )}
             </CardContent>
           </Card>
         </div>
 
-
         {/* Footer */}
-        <div className="text-center mt-16 space-y-4">
-          <p className="text-sm text-muted-foreground">
-            By subscribing, you agree to our{' '}
-            <Link href="/terms" className="text-foreground hover:underline">
+        <div className="mt-16 space-y-4 text-center">
+          <p className="text-muted-foreground text-sm">
+            By subscribing, you agree to our{" "}
+            <Link className="text-foreground hover:underline" href="/terms">
               Terms of Service
-            </Link>{' '}
-            and{' '}
-            <Link href="/privacy-policy" className="text-foreground hover:underline">
+            </Link>{" "}
+            and{" "}
+            <Link
+              className="text-foreground hover:underline"
+              href="/privacy-policy"
+            >
               Privacy Policy
             </Link>
           </p>
-          <p className="text-sm text-muted-foreground">
-            Questions?{' '}
-            <a href="mailto:zaid@scira.ai" className="text-foreground hover:underline">
+          <p className="text-muted-foreground text-sm">
+            Questions?{" "}
+            <a
+              className="text-foreground hover:underline"
+              href="mailto:zaid@scira.ai"
+            >
               Get in touch
             </a>
           </p>

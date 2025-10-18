@@ -1,46 +1,44 @@
-import './globals.css';
-import 'katex/dist/katex.min.css';
+import "./globals.css";
+import "katex/dist/katex.min.css";
 
-import { Metadata, Viewport } from 'next';
-import { Be_Vietnam_Pro, Inter, Baumans } from 'next/font/google';
-import { NuqsAdapter } from 'nuqs/adapters/next/app';
-import { Toaster } from '@/components/ui/sonner';
-import { ClientAnalytics } from '@/components/client-analytics';
+import type { Metadata, Viewport } from "next";
+import { Baumans, Be_Vietnam_Pro, Inter } from "next/font/google";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { ClientAnalytics } from "@/components/client-analytics";
+import { Toaster } from "@/components/ui/sonner";
 // import { Databuddy } from '@databuddy/sdk';
 
-import { Providers } from './providers';
+import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://draftpen.com'),
+  metadataBase: new URL("https://draftpen.com"),
   title: {
-    default: 'Draftpen - AI-first content writing software',
-    template: '%s | Draftpen',
+    default: "Draftpen - AI-first content writing software",
+    template: "%s | Draftpen",
   },
   description:
-    'Draftpen is an AI-first content writing software that helps you write better content faster.',
+    "Draftpen is an AI-first content writing software that helps you write better content faster.",
   openGraph: {
-    title: 'Draftpen - AI-first content writing software',
-    url: 'https://draftpen.com',
-    siteName: 'Draftpen',
+    title: "Draftpen - AI-first content writing software",
+    url: "https://draftpen.com",
+    siteName: "Draftpen",
   },
   keywords: [
-    'draftpen',
-    'perplexity alternative',
-    'ai content writing',
-    'ai content production',
-    'Draftpen',
-    'DRAFTPEN',
-    'open source ai writing software',
-    'AI',
+    "draftpen",
+    "perplexity alternative",
+    "ai content writing",
+    "ai content production",
+    "Draftpen",
+    "DRAFTPEN",
+    "open source ai writing software",
+    "AI",
   ],
   // Explicit icon links for wide browser support
   icons: {
-    icon: '/icon.png',
-    apple: '/apple-icon.png',
-    shortcut: '/favicon.ico',
-    other: [
-      { rel: 'mask-icon', url: '/favicon.svg', color: '#111111' },
-    ],
+    icon: "/icon.png",
+    apple: "/apple-icon.png",
+    shortcut: "/favicon.ico",
+    other: [{ rel: "mask-icon", url: "/favicon.svg", color: "#111111" }],
   },
   robots: {
     index: true,
@@ -53,40 +51,40 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  width: 'device-width',
+  width: "device-width",
   initialScale: 1,
   minimumScale: 1,
   maximumScale: 1,
   userScalable: false,
-  viewportFit: 'cover',
+  viewportFit: "cover",
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#F9F9F9' },
-    { media: '(prefers-color-scheme: dark)', color: '#111111' },
+    { media: "(prefers-color-scheme: light)", color: "#F9F9F9" },
+    { media: "(prefers-color-scheme: dark)", color: "#111111" },
   ],
 };
 
 const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-sans',
+  subsets: ["latin"],
+  variable: "--font-sans",
   preload: true,
-  weight: 'variable',
-  display: 'swap',
+  weight: "variable",
+  display: "swap",
 });
 
 const beVietnamPro = Be_Vietnam_Pro({
-  subsets: ['latin'],
-  variable: '--font-be-vietnam-pro',
+  subsets: ["latin"],
+  variable: "--font-be-vietnam-pro",
   preload: true,
-  display: 'swap',
-  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
+  display: "swap",
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
 });
 
 const baumans = Baumans({
-  subsets: ['latin'],
-  variable: '--font-baumans',
+  subsets: ["latin"],
+  variable: "--font-baumans",
   preload: true,
-  display: 'swap',
-  weight: ['400'],
+  display: "swap",
+  weight: ["400"],
 });
 
 export default function RootLayout({

@@ -1,24 +1,29 @@
-import { put } from '@vercel/blob';
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
+import { put } from "@vercel/blob";
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
-import { auth } from '@/lib/auth';
+import { auth } from "@/lib/auth";
 
 // File validation schema
 const FileSchema = z.object({
   file: z
     .instanceof(Blob)
     .refine((file) => file.size <= 5 * 1024 * 1024, {
-      message: 'File size should be less than 5MB',
+      message: "File size should be less than 5MB",
     })
     .refine(
       (file) => {
-        const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
+        const validTypes = [
+          "image/jpeg",
+          "image/png",
+          "image/gif",
+          "application/pdf",
+        ];
         return validTypes.includes(file.type);
       },
       {
-        message: 'File type should be JPEG, PNG, GIF or PDF',
-      },
+        message: "File type should be JPEG, PNG, GIF or PDF",
+      }
     ),
 });
 
@@ -31,15 +36,15 @@ export async function POST(request: NextRequest) {
     });
     isAuthenticated = !!session;
   } catch (error) {
-    console.warn('Error checking authentication:', error);
+    console.warn("Error checking authentication:", error);
     // Continue as unauthenticated
   }
 
   const formData = await request.formData();
-  const file = formData.get('file') as File;
+  const file = formData.get("file") as File;
 
   if (!file) {
-    return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
+    return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
   }
 
   // Validate file
@@ -52,12 +57,16 @@ export async function POST(request: NextRequest) {
 
   try {
     // Use a different prefix for authenticated vs unauthenticated uploads
-    const prefix = isAuthenticated ? 'auth' : 'public';
+    const prefix = isAuthenticated ? "auth" : "public";
 
-    const blob = await put(`mplx/${prefix}.${file.name.split('.').pop()}`, file, {
-      access: 'public',
-      addRandomSuffix: true,
-    });
+    const blob = await put(
+      `mplx/${prefix}.${file.name.split(".").pop()}`,
+      file,
+      {
+        access: "public",
+        addRandomSuffix: true,
+      }
+    );
 
     return NextResponse.json({
       name: file.name,
@@ -67,7 +76,10 @@ export async function POST(request: NextRequest) {
       authenticated: isAuthenticated,
     });
   } catch (error) {
-    console.error('Error uploading file:', error);
-    return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 });
+    console.error("Error uploading file:", error);
+    return NextResponse.json(
+      { error: "Failed to upload file" },
+      { status: 500 }
+    );
   }
 }

@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
-import React, { useCallback, useState, useRef, useEffect } from 'react';
-import { cn } from '@/lib/utils';
+import type React from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface ChatTextHighlighterProps {
   children: React.ReactNode;
@@ -28,23 +29,23 @@ export const ChatTextHighlighter: React.FC<ChatTextHighlighterProps> = ({
   const handleCopy = useCallback(async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      console.log('Text copied:', text);
+      console.log("Text copied:", text);
     } catch (err) {
-      console.error('Copy failed:', err);
+      console.error("Copy failed:", err);
       // Fallback method
-      const textArea = document.createElement('textarea');
+      const textArea = document.createElement("textarea");
       textArea.value = text;
-      textArea.style.position = 'fixed';
-      textArea.style.left = '-999999px';
-      textArea.style.top = '-999999px';
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      textArea.style.top = "-999999px";
       document.body.appendChild(textArea);
       textArea.focus();
       textArea.select();
       try {
-        document.execCommand('copy');
-        console.log('Fallback copy succeeded');
+        document.execCommand("copy");
+        console.log("Fallback copy succeeded");
       } catch (fallbackErr) {
-        console.error('Fallback copy failed:', fallbackErr);
+        console.error("Fallback copy failed:", fallbackErr);
       }
       document.body.removeChild(textArea);
     }
@@ -56,7 +57,7 @@ export const ChatTextHighlighter: React.FC<ChatTextHighlighterProps> = ({
         onHighlight(text);
       }
     },
-    [onHighlight],
+    [onHighlight]
   );
 
   const handlePointerUp = useCallback(() => {
@@ -74,7 +75,10 @@ export const ChatTextHighlighter: React.FC<ChatTextHighlighterProps> = ({
       return;
     }
 
-    if (containerRef.current && !containerRef.current.contains(range.commonAncestorContainer)) {
+    if (
+      containerRef.current &&
+      !containerRef.current.contains(range.commonAncestorContainer)
+    ) {
       setPopup(null);
       return;
     }
@@ -91,13 +95,16 @@ export const ChatTextHighlighter: React.FC<ChatTextHighlighterProps> = ({
     }
   }, []);
 
-  const handlePointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    const target = event.target as Node;
-    if (popupRef.current && popupRef.current.contains(target)) {
-      return;
-    }
-    setPopup(null);
-  }, []);
+  const handlePointerDown = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      const target = event.target as Node;
+      if (popupRef.current && popupRef.current.contains(target)) {
+        return;
+      }
+      setPopup(null);
+    },
+    []
+  );
 
   const closePopup = useCallback(() => {
     setPopup(null);
@@ -107,63 +114,63 @@ export const ChatTextHighlighter: React.FC<ChatTextHighlighterProps> = ({
   useEffect(() => {
     const handleScrollOrResize = () => setPopup(null);
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setPopup(null);
+      if (e.key === "Escape") setPopup(null);
     };
-    window.addEventListener('scroll', handleScrollOrResize, true);
-    window.addEventListener('resize', handleScrollOrResize);
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener("scroll", handleScrollOrResize, true);
+    window.addEventListener("resize", handleScrollOrResize);
+    window.addEventListener("keydown", handleKeyDown);
     return () => {
-      window.removeEventListener('scroll', handleScrollOrResize, true);
-      window.removeEventListener('resize', handleScrollOrResize);
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener("scroll", handleScrollOrResize, true);
+      window.removeEventListener("resize", handleScrollOrResize);
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 
   return (
-    <div 
-      ref={containerRef}
-      className={cn('relative', className)} 
-      onPointerUp={handlePointerUp}
+    <div
+      className={cn("relative", className)}
       onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      ref={containerRef}
     >
       {children}
-      
+
       {popup && (
-        <div 
+        <div
+          className="selection-popup pointer-events-auto absolute z-50 rounded-md border border-border bg-background p-1.5 shadow-lg"
+          onMouseDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
           ref={popupRef}
-          className="selection-popup absolute z-50 bg-background border border-border rounded-md shadow-lg p-1.5 pointer-events-auto"
           style={{
             left: popup.x,
             top: popup.y,
-            transform: 'translateX(-50%) translateY(-100%)'
+            transform: "translateX(-50%) translateY(-100%)",
           }}
-          onPointerDown={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
         >
           <div className="flex gap-1">
             <button
+              className="rounded bg-primary px-2 py-1 font-medium text-primary-foreground text-xs transition-colors hover:bg-primary/90"
               onClick={async () => {
                 await handleCopy(popup.text);
                 closePopup();
               }}
-              className="px-2 py-1 text-xs font-medium bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
             >
               Copy
             </button>
-            
+
             <button
+              className="rounded bg-secondary px-2 py-1 font-medium text-secondary-foreground text-xs transition-colors hover:bg-secondary/90"
               onClick={() => {
                 handleQuote(popup.text);
                 closePopup();
               }}
-              className="px-2 py-1 text-xs font-medium bg-secondary text-secondary-foreground rounded hover:bg-secondary/90 transition-colors"
             >
               Quote
             </button>
-            
+
             <button
+              className="px-1.5 py-1 font-medium text-muted-foreground text-xs transition-colors hover:text-foreground"
               onClick={closePopup}
-              className="px-1.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               ✕
             </button>

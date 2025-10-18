@@ -1,79 +1,61 @@
-import { z } from 'zod';
-import type {
-  academicSearchTool,
-  redditSearchTool,
-  retrieveTool,
-  textTranslateTool,
-  xSearchTool,
-  webSearchTool,
-  youtubeSearchTool,
-  datetimeTool,
-  // mcpSearchTool,
-  extremeSearchTool,
-  greetingTool,
-  createConnectorsSearchTool,
-  createMemoryTools,
-  SearchMemoryTool,
-  AddMemoryTool,
-  keywordResearchTool,
-} from '@/lib/tools';
+import type { InferUITool, UIMessage } from "ai";
+import { z } from "zod";
+import type { AddMemoryTool, SearchMemoryTool } from "@/lib/tools";
 
-import type { InferUITool, UIMessage } from 'ai';
-
-export type DataPart = { type: 'append-message'; message: string };
+export type DataPart = { type: "append-message"; message: string };
 export type DataQueryCompletionPart = {
-  type: 'data-query_completion';
+  type: "data-query_completion";
   data: {
     query: string;
     index: number;
     total: number;
-    status: 'started' | 'completed' | 'error';
+    status: "started" | "completed" | "error";
     resultsCount: number;
     imagesCount: number;
   };
 };
 
 export type DataExtremeSearchPart = {
-  type: 'data-extreme_search';
+  type: "data-extreme_search";
   data:
     | {
-        kind: 'plan';
+        kind: "plan";
         status: { title: string };
         plan?: Array<{ title: string; todos: string[] }>;
       }
     | {
-        kind: 'query';
+        kind: "query";
         queryId: string;
         query: string;
-        status: 'started' | 'reading_content' | 'completed' | 'error';
+        status: "started" | "reading_content" | "completed" | "error";
       }
     | {
-        kind: 'source';
+        kind: "source";
         queryId: string;
         source: { title: string; url: string; favicon?: string };
       }
     | {
-        kind: 'content';
+        kind: "content";
         queryId: string;
         content: { title: string; url: string; text: string; favicon?: string };
       }
     | {
-        kind: 'code';
+        kind: "code";
         codeId: string;
         title: string;
         code: string;
-        status: 'running' | 'completed' | 'error';
+        status: "running" | "completed" | "error";
         result?: string;
         charts?: any[];
       }
     | {
-        kind: 'x_search';
+        kind: "x_search";
         xSearchId: string;
         query: string;
         startDate: string;
         endDate: string;
         handles?: string[];
-        status: 'started' | 'completed' | 'error';
+        status: "started" | "completed" | "error";
         result?: {
           content: string;
           citations: any[];
@@ -94,24 +76,42 @@ export const messageMetadataSchema = z.object({
 });
 
 export type MessageMetadata = z.infer<typeof messageMetadataSchema>;
-type academicSearchTool = InferUITool<typeof academicSearchTool>;
-type redditSearchTool = InferUITool<typeof redditSearchTool>;
-type retrieveTool = InferUITool<typeof retrieveTool>;
-type textTranslateTool = InferUITool<typeof textTranslateTool>;
-type xSearchTool = InferUITool<typeof xSearchTool>;
-type greetingTool = InferUITool<ReturnType<typeof greetingTool>>;
-type webSearch = InferUITool<ReturnType<typeof webSearchTool>>;
-type extremeSearch = InferUITool<ReturnType<typeof extremeSearchTool>>;
-type youtubeSearchTool = InferUITool<typeof youtubeSearchTool>;
-type datetimeTool = InferUITool<typeof datetimeTool>;
-type createConnectorsSearchTool = InferUITool<ReturnType<typeof createConnectorsSearchTool>>;
+type academicSearch = InferUITool<
+  typeof import("@/lib/tools")["academicSearchTool"]
+>;
+type redditSearch = InferUITool<
+  typeof import("@/lib/tools")["redditSearchTool"]
+>;
+type retrieve = InferUITool<typeof import("@/lib/tools")["retrieveTool"]>;
+type textTranslate = InferUITool<
+  typeof import("@/lib/tools")["textTranslateTool"]
+>;
+type xSearch = InferUITool<typeof import("@/lib/tools")["xSearchTool"]>;
+type greeting = InferUITool<
+  ReturnType<typeof import("@/lib/tools")["greetingTool"]>
+>;
+type webSearch = InferUITool<
+  ReturnType<typeof import("@/lib/tools")["webSearchTool"]>
+>;
+type extremeSearch = InferUITool<
+  ReturnType<typeof import("@/lib/tools")["extremeSearchTool"]>
+>;
+type youtubeSearch = InferUITool<
+  typeof import("@/lib/tools")["youtubeSearchTool"]
+>;
+type datetime = InferUITool<typeof import("@/lib/tools")["datetimeTool"]>;
+type connectorsSearch = InferUITool<
+  ReturnType<typeof import("@/lib/tools")["createConnectorsSearchTool"]>
+>;
 type createMemoryTools = InferUITool<SearchMemoryTool>;
 type addMemoryTools = InferUITool<AddMemoryTool>;
 // Kept for backward-compatibility of old messages referencing code_context
 // No runtime tool implementation remains; this is a loose UI-only placeholder type
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type codeContextTool = any;
-type keywordResearchTool = InferUITool<typeof keywordResearchTool>;
+type keywordResearch = InferUITool<
+  typeof import("@/lib/tools")["keywordResearchTool"]
+>;
 
 // type mcpSearchTool = InferUITool<typeof mcpSearchTool>;
 
@@ -119,47 +119,51 @@ export type ChatTools = {
   // Crypto/finance removed
 
   // Search & Content Tools
-  x_search: xSearchTool;
+  x_search: xSearch;
   web_search: webSearch;
-  academic_search: academicSearchTool;
-  youtube_search: youtubeSearchTool;
-  reddit_search: redditSearchTool;
-  retrieve: retrieveTool;
+  academic_search: academicSearch;
+  youtube_search: youtubeSearch;
+  reddit_search: redditSearch;
+  retrieve: retrieve;
 
   // Location & Maps (removed)
 
   // Utility Tools
-  text_translate: textTranslateTool;
+  text_translate: textTranslate;
   // Flight tracker removed
-  datetime: datetimeTool;
+  datetime: datetime;
   // mcp_search: mcpSearchTool;
   extreme_search: extremeSearch;
-  greeting: greetingTool;
+  greeting: greeting;
 
-  connectors_search: createConnectorsSearchTool;
+  connectors_search: connectorsSearch;
   search_memories: createMemoryTools;
   add_memory: addMemoryTools;
 
   code_context: codeContextTool;
-  keyword_research: keywordResearchTool;
+  keyword_research: keywordResearch;
 };
 
 export type CustomUIDataTypes = {
   appendMessage: string;
   id: string;
-  'message-annotations': any;
+  "message-annotations": any;
   query_completion: {
     query: string;
     index: number;
     total: number;
-    status: 'started' | 'completed' | 'error';
+    status: "started" | "completed" | "error";
     resultsCount: number;
     imagesCount: number;
   };
-  extreme_search: DataExtremeSearchPart['data'];
+  extreme_search: DataExtremeSearchPart["data"];
 };
 
-export type ChatMessage = UIMessage<MessageMetadata, CustomUIDataTypes, ChatTools>;
+export type ChatMessage = UIMessage<
+  MessageMetadata,
+  CustomUIDataTypes,
+  ChatTools
+>;
 
 export interface Attachment {
   name: string;

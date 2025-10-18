@@ -1,6 +1,6 @@
-import { Resend } from 'resend';
-import { serverEnv } from '@/env/server';
-import SearchCompletedEmail from '@/components/emails/lookout-completed';
+import { Resend } from "resend";
+import SearchCompletedEmail from "@/components/emails/lookout-completed";
+import { serverEnv } from "@/env/server";
 
 const resend = new Resend(serverEnv.RESEND_API_KEY);
 
@@ -19,7 +19,7 @@ export async function sendLookoutCompletionEmail({
 }: SendLookoutCompletionEmailParams) {
   try {
     const data = await resend.emails.send({
-      from: 'Scira AI <noreply@scira.ai>',
+      from: "Scira AI <noreply@scira.ai>",
       to: [to],
       subject: `Lookout Complete: ${chatTitle}`,
       react: SearchCompletedEmail({
@@ -29,13 +29,16 @@ export async function sendLookoutCompletionEmail({
       }),
     });
 
-    console.log('✅ Lookout completion email sent successfully:', data.data?.id);
+    console.log(
+      "✅ Lookout completion email sent successfully:",
+      data.data?.id
+    );
     return { success: true, id: data.data?.id };
   } catch (error) {
-    console.error('❌ Failed to send lookout completion email:', error);
+    console.error("❌ Failed to send lookout completion email:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: error instanceof Error ? error.message : "Unknown error",
     };
   }
 }

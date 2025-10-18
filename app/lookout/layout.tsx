@@ -1,22 +1,23 @@
-import React from 'react';
-import type { Metadata } from 'next';
+import type { Metadata } from "next";
+import type React from "react";
 
 export const metadata: Metadata = {
-  title: 'Scira Lookout - Automated Search Monitoring',
+  title: "Scira Lookout - Automated Search Monitoring",
   description:
-    'Schedule automated searches and get notified when they complete. Monitor trends, track developments, and stay informed with intelligent lookouts.',
-  keywords: 'automated search, monitoring, scheduled queries, AI lookouts, search automation, trend tracking',
+    "Schedule automated searches and get notified when they complete. Monitor trends, track developments, and stay informed with intelligent lookouts.",
+  keywords:
+    "automated search, monitoring, scheduled queries, AI lookouts, search automation, trend tracking",
   openGraph: {
-    title: 'Scira Lookout - Automated Search Monitoring',
+    title: "Scira Lookout - Automated Search Monitoring",
     description:
-      'Schedule automated searches and get notified when they complete. Monitor trends, track developments, and stay informed with intelligent lookouts.',
-    type: 'website',
+      "Schedule automated searches and get notified when they complete. Monitor trends, track developments, and stay informed with intelligent lookouts.",
+    type: "website",
   },
   twitter: {
-    card: 'summary_large_image',
-    title: 'Scira Lookout - Automated Search Monitoring',
+    card: "summary_large_image",
+    title: "Scira Lookout - Automated Search Monitoring",
     description:
-      'Schedule automated searches and get notified when they complete. Monitor trends, track developments, and stay informed with intelligent lookouts.',
+      "Schedule automated searches and get notified when they complete. Monitor trends, track developments, and stay informed with intelligent lookouts.",
   },
 };
 
@@ -27,8 +28,8 @@ interface LookoutLayoutProps {
 export default function LookoutLayout({ children }: LookoutLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
-      <div className="flex flex-col min-h-screen">
-        <main className="flex-1" role="main" aria-label="Lookout management">
+      <div className="flex min-h-screen flex-col">
+        <main aria-label="Lookout management" className="flex-1" role="main">
           {children}
         </main>
       </div>

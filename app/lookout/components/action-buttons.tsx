@@ -1,17 +1,29 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
-import { PauseIcon, PlayIcon, Archive01Icon, Delete02Icon, TestTubeIcon } from '@hugeicons/core-free-icons';
-import { Button } from '@/components/ui/button';
-import { BorderTrail } from '@/components/core/border-trail';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Archive01Icon,
+  Delete02Icon,
+  PauseIcon,
+  PlayIcon,
+  TestTubeIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { BorderTrail } from "@/components/core/border-trail";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface ActionButtonsProps {
   lookoutId: string;
-  status: 'active' | 'paused' | 'running' | 'archived';
+  status: "active" | "paused" | "running" | "archived";
   isMutating?: boolean;
-  onStatusChange: (id: string, status: 'active' | 'paused' | 'archived' | 'running') => void;
+  onStatusChange: (
+    id: string,
+    status: "active" | "paused" | "archived" | "running"
+  ) => void;
   onDelete: (id: string) => void;
   onTest: (id: string) => void;
 }
@@ -24,7 +36,9 @@ export function ActionButtons({
   onDelete,
   onTest,
 }: ActionButtonsProps) {
-  const handleStatusChange = (newStatus: 'active' | 'paused' | 'archived' | 'running') => {
+  const handleStatusChange = (
+    newStatus: "active" | "paused" | "archived" | "running"
+  ) => {
     onStatusChange(lookoutId, newStatus);
   };
 
@@ -37,12 +51,23 @@ export function ActionButtons({
   };
 
   // Don't show actions for archived lookouts in main view - they only get delete
-  if (status === 'archived') {
+  if (status === "archived") {
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleDelete} disabled={isMutating}>
-            <HugeiconsIcon icon={Delete02Icon} size={16} color="currentColor" strokeWidth={1.5} />
+          <Button
+            className="h-8 w-8"
+            disabled={isMutating}
+            onClick={handleDelete}
+            size="icon"
+            variant="ghost"
+          >
+            <HugeiconsIcon
+              color="currentColor"
+              icon={Delete02Icon}
+              size={16}
+              strokeWidth={1.5}
+            />
           </Button>
         </TooltipTrigger>
         <TooltipContent>
@@ -55,17 +80,22 @@ export function ActionButtons({
   return (
     <div className="flex items-center gap-1">
       {/* Primary action button - pause/resume/running indicator */}
-      {status === 'active' && (
+      {status === "active" && (
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant="ghost"
-              size="icon"
               className="h-8 w-8"
-              onClick={() => handleStatusChange('paused')}
               disabled={isMutating}
+              onClick={() => handleStatusChange("paused")}
+              size="icon"
+              variant="ghost"
             >
-              <HugeiconsIcon icon={PauseIcon} size={16} color="currentColor" strokeWidth={1.5} />
+              <HugeiconsIcon
+                color="currentColor"
+                icon={PauseIcon}
+                size={16}
+                strokeWidth={1.5}
+              />
             </Button>
           </TooltipTrigger>
           <TooltipContent>
@@ -74,17 +104,22 @@ export function ActionButtons({
         </Tooltip>
       )}
 
-      {status === 'paused' && (
+      {status === "paused" && (
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant="ghost"
-              size="icon"
               className="h-8 w-8"
-              onClick={() => handleStatusChange('active')}
               disabled={isMutating}
+              onClick={() => handleStatusChange("active")}
+              size="icon"
+              variant="ghost"
             >
-              <HugeiconsIcon icon={PlayIcon} size={16} color="currentColor" strokeWidth={1.5} />
+              <HugeiconsIcon
+                color="currentColor"
+                icon={PlayIcon}
+                size={16}
+                strokeWidth={1.5}
+              />
             </Button>
           </TooltipTrigger>
           <TooltipContent>
@@ -93,25 +128,30 @@ export function ActionButtons({
         </Tooltip>
       )}
 
-      {status === 'running' && (
+      {status === "running" && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 relative overflow-hidden" disabled={true}>
+            <Button
+              className="relative h-8 w-8 overflow-hidden"
+              disabled={true}
+              size="icon"
+              variant="ghost"
+            >
               <BorderTrail
                 className="bg-primary/60"
                 size={24}
                 transition={{
                   duration: 2,
-                  repeat: Infinity,
-                  ease: 'linear',
+                  repeat: Number.POSITIVE_INFINITY,
+                  ease: "linear",
                 }}
               />
               <HugeiconsIcon
+                className="text-primary"
+                color="currentColor"
                 icon={PlayIcon}
                 size={16}
-                color="currentColor"
                 strokeWidth={1.5}
-                className="text-primary"
               />
             </Button>
           </TooltipTrigger>
@@ -125,17 +165,26 @@ export function ActionButtons({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            variant="ghost"
-            size="icon"
             className="h-8 w-8"
+            disabled={isMutating || status === "running"}
             onClick={handleTest}
-            disabled={isMutating || status === 'running'}
+            size="icon"
+            variant="ghost"
           >
-            <HugeiconsIcon icon={TestTubeIcon} size={16} color="currentColor" strokeWidth={1.5} />
+            <HugeiconsIcon
+              color="currentColor"
+              icon={TestTubeIcon}
+              size={16}
+              strokeWidth={1.5}
+            />
           </Button>
         </TooltipTrigger>
         <TooltipContent>
-          <p>{status === 'running' ? 'Cannot test while running' : 'Test lookout now'}</p>
+          <p>
+            {status === "running"
+              ? "Cannot test while running"
+              : "Test lookout now"}
+          </p>
         </TooltipContent>
       </Tooltip>
 
@@ -143,17 +192,26 @@ export function ActionButtons({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            variant="ghost"
-            size="icon"
             className="h-8 w-8"
-            onClick={() => handleStatusChange('archived')}
-            disabled={isMutating || status === 'running'}
+            disabled={isMutating || status === "running"}
+            onClick={() => handleStatusChange("archived")}
+            size="icon"
+            variant="ghost"
           >
-            <HugeiconsIcon icon={Archive01Icon} size={16} color="currentColor" strokeWidth={1.5} />
+            <HugeiconsIcon
+              color="currentColor"
+              icon={Archive01Icon}
+              size={16}
+              strokeWidth={1.5}
+            />
           </Button>
         </TooltipTrigger>
         <TooltipContent>
-          <p>{status === 'running' ? 'Cannot archive while running' : 'Archive lookout'}</p>
+          <p>
+            {status === "running"
+              ? "Cannot archive while running"
+              : "Archive lookout"}
+          </p>
         </TooltipContent>
       </Tooltip>
 
@@ -161,17 +219,26 @@ export function ActionButtons({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            variant="ghost"
-            size="icon"
             className="h-8 w-8"
+            disabled={isMutating || status === "running"}
             onClick={handleDelete}
-            disabled={isMutating || status === 'running'}
+            size="icon"
+            variant="ghost"
           >
-            <HugeiconsIcon icon={Delete02Icon} size={16} color="currentColor" strokeWidth={1.5} />
+            <HugeiconsIcon
+              color="currentColor"
+              icon={Delete02Icon}
+              size={16}
+              strokeWidth={1.5}
+            />
           </Button>
         </TooltipTrigger>
         <TooltipContent>
-          <p>{status === 'running' ? 'Cannot delete while running' : 'Delete lookout'}</p>
+          <p>
+            {status === "running"
+              ? "Cannot delete while running"
+              : "Delete lookout"}
+          </p>
         </TooltipContent>
       </Tooltip>
     </div>

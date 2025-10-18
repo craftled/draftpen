@@ -1,15 +1,27 @@
 /* eslint-disable @next/next/no-img-element */
-'use client';
+"use client";
 
-import React, { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { XLogoIcon } from '@phosphor-icons/react';
-import { Tweet } from 'react-tweet';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { ExternalLink, Users, MessageCircle } from 'lucide-react';
+import { XLogoIcon } from "@phosphor-icons/react";
+import { motion } from "framer-motion";
+import { ExternalLink, MessageCircle, Users } from "lucide-react";
+import type React from "react";
+import { useMemo, useState } from "react";
+import { Tweet } from "react-tweet";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 interface Citation {
   url: string;
@@ -51,39 +63,40 @@ interface XSearchProps {
   args: XSearchArgs;
 }
 
-const XSearchLoadingState = () => {
-  return (
-    <Card className="w-full my-4 border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
-      <CardHeader className="pb-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-neutral-50 dark:bg-neutral-800 animate-pulse">
-            <XLogoIcon className="h-4 w-4 text-neutral-400" />
-          </div>
-          <div className="space-y-2 flex-1">
-            <div className="h-4 w-32 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse" />
-            <div className="h-3 w-48 bg-neutral-100 dark:bg-neutral-800 rounded animate-pulse" />
-          </div>
+const XSearchLoadingState = () => (
+  <Card className="my-4 w-full border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+    <CardHeader className="pb-3">
+      <div className="flex items-center gap-3">
+        <div className="animate-pulse rounded-lg bg-neutral-50 p-2 dark:bg-neutral-800">
+          <XLogoIcon className="h-4 w-4 text-neutral-400" />
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="p-4 border border-neutral-200 dark:border-neutral-800 rounded-lg animate-pulse">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 bg-neutral-200 dark:bg-neutral-700 rounded-full" />
-                <div className="h-4 w-24 bg-neutral-200 dark:bg-neutral-700 rounded" />
-              </div>
-              <div className="space-y-2">
-                <div className="h-3 w-full bg-neutral-100 dark:bg-neutral-800 rounded" />
-                <div className="h-3 w-3/4 bg-neutral-100 dark:bg-neutral-800 rounded" />
-              </div>
+        <div className="flex-1 space-y-2">
+          <div className="h-4 w-32 animate-pulse rounded bg-neutral-200 dark:bg-neutral-700" />
+          <div className="h-3 w-48 animate-pulse rounded bg-neutral-100 dark:bg-neutral-800" />
+        </div>
+      </div>
+    </CardHeader>
+    <CardContent className="space-y-4">
+      {[...Array(3)].map((_, i) => (
+        <div
+          className="animate-pulse rounded-lg border border-neutral-200 p-4 dark:border-neutral-800"
+          key={i}
+        >
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-full bg-neutral-200 dark:bg-neutral-700" />
+              <div className="h-4 w-24 rounded bg-neutral-200 dark:bg-neutral-700" />
+            </div>
+            <div className="space-y-2">
+              <div className="h-3 w-full rounded bg-neutral-100 dark:bg-neutral-800" />
+              <div className="h-3 w-3/4 rounded bg-neutral-100 dark:bg-neutral-800" />
             </div>
           </div>
-        ))}
-      </CardContent>
-    </Card>
-  );
-};
+        </div>
+      ))}
+    </CardContent>
+  </Card>
+);
 
 const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -93,55 +106,59 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
     return result.citations
       .filter((citation) => {
         // Handle both string URLs and objects with url property
-        const url = typeof citation === 'string' ? citation : citation.url;
-        return url && url.includes('x.com');
+        const url = typeof citation === "string" ? citation : citation.url;
+        return url && url.includes("x.com");
       })
       .map((citation) => {
         // Handle both string URLs and objects with url property
-        const url = typeof citation === 'string' ? citation : citation.url;
+        const url = typeof citation === "string" ? citation : citation.url;
         const match = url.match(/\/status\/(\d+)/);
-        let title = typeof citation === 'object' ? citation.title : '';
+        let title = typeof citation === "object" ? citation.title : "";
 
         // If no title from citation, try to get it from sources with generated titles
         if (!title && result.sources) {
-          const matchingSource = result.sources.find((source) => source.link === url);
-          title = matchingSource?.title || '';
+          const matchingSource = result.sources.find(
+            (source) => source.link === url
+          );
+          title = matchingSource?.title || "";
         }
 
         return {
           url,
           title,
-          description: typeof citation === 'object' ? citation.description : '',
+          description: typeof citation === "object" ? citation.description : "",
           tweet_id: match ? match[1] : null,
         };
       })
       .filter((citation) => citation.tweet_id);
   }, [result.citations, result.sources]);
 
-  const displayedTweets = useMemo(() => {
-    return tweetCitations.slice(0, 3);
-  }, [tweetCitations]);
+  const displayedTweets = useMemo(
+    () => tweetCitations.slice(0, 3),
+    [tweetCitations]
+  );
 
-  const remainingTweets = useMemo(() => {
-    return tweetCitations.slice(3);
-  }, [tweetCitations]);
+  const remainingTweets = useMemo(
+    () => tweetCitations.slice(3),
+    [tweetCitations]
+  );
 
   if (!result) {
     return <XSearchLoadingState />;
   }
 
   const formatDateRange = (dateRange: string) => {
-    const [start, end] = dateRange.split(' to ');
+    const [start, end] = dateRange.split(" to ");
     return {
-      start: new Date(start).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
+      start: new Date(start).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
       }),
-      end: new Date(end).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
+      end: new Date(end).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
       }),
     };
   };
@@ -149,55 +166,65 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
   const { start, end } = formatDateRange(result.dateRange);
 
   return (
-    <div className="w-full my-3">
+    <div className="my-3 w-full">
       <Accordion
-        type="single"
+        className="w-full rounded-xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900"
         collapsible
         defaultValue="x_search"
-        className="w-full border border-neutral-200 dark:border-neutral-800 rounded-xl bg-white dark:bg-neutral-900"
+        type="single"
       >
         <AccordionItem value="x_search">
-          <AccordionTrigger className="px-3 py-2.75 hover:no-underline [&[data-state=open]]:border-b [&[data-state=open]]:border-neutral-200 [&[data-state=open]]:dark:border-neutral-800 w-full [&>svg]:flex [&>svg]:items-center [&>svg]:justify-center [&>svg]:self-center">
-            <div className="flex items-center justify-between flex-1 min-w-0">
-              <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                <div className="p-1.5 rounded-md bg-black dark:bg-white flex-shrink-0">
+          <AccordionTrigger className="w-full px-3 py-2.75 hover:no-underline [&>svg]:flex [&>svg]:items-center [&>svg]:justify-center [&>svg]:self-center [&[data-state=open]]:border-neutral-200 [&[data-state=open]]:border-b [&[data-state=open]]:dark:border-neutral-800">
+            <div className="flex min-w-0 flex-1 items-center justify-between">
+              <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                <div className="flex-shrink-0 rounded-md bg-black p-1.5 dark:bg-white">
                   <XLogoIcon className="h-3.5 w-3.5 text-white dark:text-black" />
                 </div>
-                <div className="text-left min-w-0 flex-1">
+                <div className="min-w-0 flex-1 text-left">
                   <h3 className="font-medium text-sm">X Search Results</h3>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">
+                  <p className="truncate text-neutral-500 text-xs dark:text-neutral-400">
                     {result.query} • {start} - {end}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
-                {(args.includeXHandles || args.excludeXHandles || result.handles.length > 0) && (
-                  <Badge variant="secondary" className="rounded-full px-2 py-0.5 text-xs hidden sm:flex">
-                    <Users className="h-2.5 w-2.5 mr-1" />
-                    {args.includeXHandles?.length || args.excludeXHandles?.length || result.handles.length}
+              <div className="ml-2 flex flex-shrink-0 items-center gap-1.5">
+                {(args.includeXHandles ||
+                  args.excludeXHandles ||
+                  result.handles.length > 0) && (
+                  <Badge
+                    className="hidden rounded-full px-2 py-0.5 text-xs sm:flex"
+                    variant="secondary"
+                  >
+                    <Users className="mr-1 h-2.5 w-2.5" />
+                    {args.includeXHandles?.length ||
+                      args.excludeXHandles?.length ||
+                      result.handles.length}
                   </Badge>
                 )}
-                <Badge variant="secondary" className="rounded-full px-2 py-0.5 text-xs">
-                  <MessageCircle className="h-2.5 w-2.5 mr-1" />
+                <Badge
+                  className="rounded-full px-2 py-0.5 text-xs"
+                  variant="secondary"
+                >
+                  <MessageCircle className="mr-1 h-2.5 w-2.5" />
                   {tweetCitations.length}
                 </Badge>
               </div>
             </div>
           </AccordionTrigger>
 
-          <AccordionContent className="pt-3 mb-0 pb-0">
+          <AccordionContent className="mb-0 pt-3 pb-0">
             <div className="space-y-3">
               {/* Horizontal Tweets Row */}
               {tweetCitations.length > 0 && (
                 <div className="space-y-3 px-3">
-                  <div className="flex gap-3 sm:gap-4 overflow-x-auto scrollbar-none rounded-[8px]">
+                  <div className="scrollbar-none flex gap-3 overflow-x-auto rounded-[8px] sm:gap-4">
                     {displayedTweets.map((citation, index) => (
                       <motion.div
-                        key={citation.tweet_id}
-                        initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
+                        className="w-[280px] flex-shrink-0 sm:w-[320px] md:w-[350px]"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        key={citation.tweet_id}
                         transition={{ delay: index * 0.05 }}
-                        className="flex-shrink-0 w-[280px] sm:w-[320px] md:w-[350px]"
                       >
                         {citation.tweet_id && (
                           <div className="tweet-wrapper">
@@ -209,42 +236,44 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
 
                     {/* Show More in Sheet */}
                     {remainingTweets.length > 0 && (
-                      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+                      <Sheet onOpenChange={setIsSheetOpen} open={isSheetOpen}>
                         <SheetTrigger asChild>
-                          <div className="flex-shrink-0 w-[280px] sm:w-[320px] md:w-[350px] min-h-[180px] border-2 border-dashed border-neutral-200 dark:border-neutral-700 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-neutral-300 dark:hover:border-neutral-600 hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-all duration-200 group">
-                            <div className="text-center px-4">
+                          <div className="group flex min-h-[180px] w-[280px] flex-shrink-0 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-neutral-200 border-dashed transition-all duration-200 hover:border-neutral-300 hover:bg-neutral-50 sm:w-[320px] md:w-[350px] dark:border-neutral-700 dark:hover:border-neutral-600 dark:hover:bg-neutral-800/30">
+                            <div className="px-4 text-center">
                               <div className="mb-2">
-                                <div className="w-8 h-8 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mx-auto mb-2 group-hover:scale-105 transition-transform">
+                                <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 transition-transform group-hover:scale-105 dark:bg-neutral-800">
                                   <MessageCircle className="h-4 w-4 text-neutral-500" />
                                 </div>
                               </div>
-                              <p className="font-medium text-sm text-neutral-700 dark:text-neutral-300 mb-1">
+                              <p className="mb-1 font-medium text-neutral-700 text-sm dark:text-neutral-300">
                                 +{remainingTweets.length} more posts
                               </p>
-                              <p className="text-xs text-neutral-500 dark:text-neutral-500">Click to view all</p>
+                              <p className="text-neutral-500 text-xs dark:text-neutral-500">
+                                Click to view all
+                              </p>
                             </div>
                           </div>
                         </SheetTrigger>
                         <SheetContent
+                          className="w-full p-0 sm:w-[500px] sm:max-w-[90vw] md:w-[600px] lg:w-[650px]"
                           side="right"
-                          className="w-full sm:w-[500px] md:w-[600px] lg:w-[650px] sm:max-w-[90vw] p-0"
                         >
-                          <div className="flex flex-col h-full">
-                            <SheetHeader className="px-4 sm:px-6 py-4 border-b border-neutral-200 dark:border-neutral-800">
+                          <div className="flex h-full flex-col">
+                            <SheetHeader className="border-neutral-200 border-b px-4 py-4 sm:px-6 dark:border-neutral-800">
                               <SheetTitle className="flex items-center gap-2.5">
-                                <div className="p-1.5 rounded-md bg-black dark:bg-white">
+                                <div className="rounded-md bg-black p-1.5 dark:bg-white">
                                   <XLogoIcon className="h-3.5 w-3.5 text-white dark:text-black" />
                                 </div>
                                 <span>All Posts ({tweetCitations.length})</span>
                               </SheetTitle>
                             </SheetHeader>
                             <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-                              <div className="space-y-6 max-w-full sm:max-w-[550px] mx-auto">
+                              <div className="mx-auto max-w-full space-y-6 sm:max-w-[550px]">
                                 {tweetCitations.map((citation, index) => (
                                   <motion.div
-                                    key={citation.tweet_id}
-                                    initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    key={citation.tweet_id}
                                     transition={{ delay: index * 0.02 }}
                                   >
                                     {citation.tweet_id && (
@@ -266,14 +295,16 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
 
               {/* Compact No Tweets Found */}
               {tweetCitations.length === 0 && (
-                <div className="text-center py-6">
+                <div className="py-6 text-center">
                   <div className="flex flex-col items-center gap-2">
-                    <div className="p-2 rounded-full bg-neutral-100 dark:bg-neutral-800">
+                    <div className="rounded-full bg-neutral-100 p-2 dark:bg-neutral-800">
                       <MessageCircle className="h-4 w-4 text-neutral-500" />
                     </div>
                     <div>
-                      <h4 className="font-medium text-neutral-900 dark:text-neutral-100 text-sm">No posts found</h4>
-                      <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                      <h4 className="font-medium text-neutral-900 text-sm dark:text-neutral-100">
+                        No posts found
+                      </h4>
+                      <p className="mt-0.5 text-neutral-500 text-xs dark:text-neutral-400">
                         Try adjusting your search parameters
                       </p>
                     </div>
@@ -283,33 +314,40 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
 
               {/* Compact External Links */}
               {result.citations.length > tweetCitations.length && (
-                <div className="border-t border-neutral-200 dark:border-neutral-800 pt-3 mt-3">
-                  <h4 className="font-medium text-xs text-neutral-700 dark:text-neutral-300 mb-2 uppercase tracking-wide">
+                <div className="mt-3 border-neutral-200 border-t pt-3 dark:border-neutral-800">
+                  <h4 className="mb-2 font-medium text-neutral-700 text-xs uppercase tracking-wide dark:text-neutral-300">
                     Related Sources
                   </h4>
                   <div className="space-y-1">
                     {result.citations
                       .filter((citation) => {
-                        const url = typeof citation === 'string' ? citation : citation.url;
-                        return url && !url.includes('x.com');
+                        const url =
+                          typeof citation === "string"
+                            ? citation
+                            : citation.url;
+                        return url && !url.includes("x.com");
                       })
                       .slice(0, 3)
                       .map((citation, index) => {
-                        const url = typeof citation === 'string' ? citation : citation.url;
-                        const title = typeof citation === 'object' ? citation.title : url;
+                        const url =
+                          typeof citation === "string"
+                            ? citation
+                            : citation.url;
+                        const title =
+                          typeof citation === "object" ? citation.title : url;
                         return (
                           <a
-                            key={index}
+                            className="group flex items-center gap-2 rounded-md p-1.5 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
                             href={url}
+                            key={index}
                             target="_blank"
-                            className="flex items-center gap-2 p-1.5 rounded-md hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors group"
                           >
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-xs text-neutral-900 dark:text-neutral-100 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate font-medium text-neutral-900 text-xs group-hover:text-blue-600 dark:text-neutral-100 dark:group-hover:text-blue-400">
                                 {title}
                               </p>
                             </div>
-                            <ExternalLink className="h-3 w-3 text-neutral-400 group-hover:text-blue-500 flex-shrink-0" />
+                            <ExternalLink className="h-3 w-3 flex-shrink-0 text-neutral-400 group-hover:text-blue-500" />
                           </a>
                         );
                       })}

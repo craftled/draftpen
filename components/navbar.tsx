@@ -1,23 +1,24 @@
-'use client';
+"use client";
 
+import { GlobeHemisphereWestIcon, PlusIcon } from "@phosphor-icons/react";
+import { Clock } from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 /* eslint-disable @next/next/no-img-element */
-import React, { memo, useMemo, useState, useEffect } from 'react';
-import Link from 'next/link';
-import { PlusIcon, GlobeHemisphereWestIcon } from '@phosphor-icons/react';
+import { memo, useEffect, useMemo, useState } from "react";
+import { ChatHistoryButton } from "@/components/chat-history-dialog";
+import { ShareButton } from "@/components/share";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { NavigationMenu, UserProfile } from "@/components/user-profile";
+import type { ComprehensiveUserData } from "@/lib/user-data-server";
+import { cn } from "@/lib/utils";
 
-import { Button, buttonVariants } from '@/components/ui/button';
-import { UserProfile, NavigationMenu } from '@/components/user-profile';
-import { ChatHistoryButton } from '@/components/chat-history-dialog';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Clock } from 'lucide-react';
-
-import { ShareButton } from '@/components/share';
-import { cn } from '@/lib/utils';
-
-import { useRouter, usePathname } from 'next/navigation';
-import { ComprehensiveUserData } from '@/lib/user-data-server';
-
-type VisibilityType = 'public' | 'private';
+type VisibilityType = "public" | "private";
 
 interface NavbarProps {
   isDialogOpen: boolean;
@@ -34,7 +35,9 @@ interface NavbarProps {
   isInTrial?: boolean;
   daysLeftInTrial?: number;
   isCustomInstructionsEnabled?: boolean;
-  setIsCustomInstructionsEnabled?: (value: boolean | ((val: boolean) => boolean)) => void;
+  setIsCustomInstructionsEnabled?: (
+    value: boolean | ((val: boolean) => boolean)
+  ) => void;
   settingsOpen?: boolean;
   setSettingsOpen?: (open: boolean) => void;
   settingsInitialTab?: string;
@@ -63,7 +66,10 @@ const Navbar = memo(
   }: NavbarProps) => {
     const router = useRouter();
     const pathname = usePathname();
-    const isSearchWithId = useMemo(() => Boolean(pathname && /^\/search\/[^/]+/.test(pathname)), [pathname]);
+    const isSearchWithId = useMemo(
+      () => Boolean(pathname && /^\/search\/[^/]+/.test(pathname)),
+      [pathname]
+    );
 
     // Prevent hydration mismatch by only showing upgrade buttons after client mount
     const [isMounted, setIsMounted] = useState(false);
@@ -75,51 +81,62 @@ const Navbar = memo(
     // Use passed Pro status directly
     const hasActiveSubscription = isProUser;
     const showProLoading = isProStatusLoading;
-    
+
     // Debug logging
-    if (typeof window !== 'undefined' && user) {
-      console.log('🔍 Navbar Debug:', {
+    if (typeof window !== "undefined" && user) {
+      console.log("🔍 Navbar Debug:", {
         isProUser,
         isInTrial,
         daysLeftInTrial,
         hasActiveSubscription,
       });
     }
-    
+
     // Only show upgrade UI after hydration
-    const shouldShowUpgrade = isMounted && user && !hasActiveSubscription && !showProLoading;
+    const shouldShowUpgrade =
+      isMounted && user && !hasActiveSubscription && !showProLoading;
 
     return (
       <>
         <div
           className={cn(
-            'fixed left-0 right-0 z-30 top-0 flex justify-between items-center p-3 transition-colors duration-200',
+            "fixed top-0 right-0 left-0 z-30 flex items-center justify-between p-3 transition-colors duration-200",
             isDialogOpen
-              ? 'bg-transparent pointer-events-none'
-              : status === 'streaming' || status === 'ready'
-                ? 'bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60'
-                : 'bg-background',
+              ? "pointer-events-none bg-transparent"
+              : status === "streaming" || status === "ready"
+                ? "bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60"
+                : "bg-background"
           )}
         >
-          <div className={cn('flex items-center gap-3', isDialogOpen ? 'pointer-events-auto' : '')}>
+          <div
+            className={cn(
+              "flex items-center gap-3",
+              isDialogOpen ? "pointer-events-auto" : ""
+            )}
+          >
             <Link
-              href="/new"
               className={cn(
-                buttonVariants({ variant: 'secondary', size: 'sm' }),
-                'rounded-lg bg-accent hover:bg-accent/80 group transition-all hover:scale-105 pointer-events-auto',
+                buttonVariants({ variant: "secondary", size: "sm" }),
+                "group pointer-events-auto rounded-lg bg-accent transition-all hover:scale-105 hover:bg-accent/80"
               )}
+              href="/new"
             >
-              <PlusIcon size={16} className="group-hover:rotate-90 transition-all" />
-              <span className="text-sm ml-1.5 group-hover:block hidden animate-in fade-in duration-300">New</span>
+              <PlusIcon
+                className="transition-all group-hover:rotate-90"
+                size={16}
+              />
+              <span className="fade-in ml-1.5 hidden animate-in text-sm duration-300 group-hover:block">
+                New
+              </span>
             </Link>
 
             {/* Mobile-only Upgrade (avoids overlap with share on small screens) */}
             {shouldShowUpgrade && (
               <Button
-                variant="default"
+                className="h-7 rounded-md px-2 text-xs sm:hidden"
+                onClick={() => router.push("/pricing")}
                 size="sm"
-                className="rounded-md h-7 px-2 text-xs sm:hidden"
-                onClick={() => router.push('/pricing')}
+                variant="default"
               >
                 Upgrade
               </Button>
@@ -130,21 +147,26 @@ const Navbar = memo(
           {shouldShowUpgrade && (
             <div
               className={cn(
-                'hidden sm:flex items-center justify-center absolute left-1/2 transform -translate-x-1/2',
-                isDialogOpen ? 'pointer-events-auto' : '',
+                "-translate-x-1/2 absolute left-1/2 hidden transform items-center justify-center sm:flex",
+                isDialogOpen ? "pointer-events-auto" : ""
               )}
             >
               <Button
-                variant="default"
+                className="h-7 rounded-md shadow-sm"
+                onClick={() => router.push("/pricing")}
                 size="sm"
-                className="rounded-md h-7 shadow-sm"
-                onClick={() => router.push('/pricing')}
+                variant="default"
               >
                 Start 7-Day Free Trial
               </Button>
             </div>
           )}
-          <div className={cn('flex items-center gap-1', isDialogOpen ? 'pointer-events-auto' : '')}>
+          <div
+            className={cn(
+              "flex items-center gap-1",
+              isDialogOpen ? "pointer-events-auto" : ""
+            )}
+          >
             {/* Share functionality using unified component */}
             {chatId && (
               <>
@@ -152,36 +174,43 @@ const Navbar = memo(
                   /* Authenticated chat owners get share functionality */
                   <ShareButton
                     chatId={chatId}
-                    selectedVisibilityType={selectedVisibilityType}
+                    className="mr-1"
+                    disabled={false}
+                    isOwner={isOwner}
                     onVisibilityChange={async (visibility) => {
                       await Promise.resolve(onVisibilityChange(visibility));
                     }}
-                    isOwner={isOwner}
+                    selectedVisibilityType={selectedVisibilityType}
                     user={user}
                     variant="navbar"
-                    className="mr-1"
-                    disabled={false}
                   />
                 ) : (
                   /* Non-owners (authenticated or not) just see indicator */
-                  selectedVisibilityType === 'public' && (
+                  selectedVisibilityType === "public" && (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span className="inline-flex">
                           <Button
-                            variant="secondary"
-                            size="sm"
-                            className="pointer-events-none bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 opacity-80 cursor-not-allowed"
                             aria-disabled="true"
+                            className="pointer-events-none cursor-not-allowed border border-blue-200 bg-blue-50 opacity-80 dark:border-blue-800 dark:bg-blue-950/50"
+                            size="sm"
                             tabIndex={-1}
+                            variant="secondary"
                           >
-                            <GlobeHemisphereWestIcon size={16} className="text-blue-600 dark:text-blue-400" />
-                            <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Shared</span>
+                            <GlobeHemisphereWestIcon
+                              className="text-blue-600 dark:text-blue-400"
+                              size={16}
+                            />
+                            <span className="font-medium text-blue-700 text-sm dark:text-blue-300">
+                              Shared
+                            </span>
                           </Button>
                         </span>
                       </TooltipTrigger>
                       <TooltipContent side="bottom" sideOffset={4}>
-                        {user ? "This is someone else's shared page" : 'This is a shared page'}
+                        {user
+                          ? "This is someone else's shared page"
+                          : "This is a shared page"}
                       </TooltipContent>
                     </Tooltip>
                   )
@@ -195,9 +224,9 @@ const Navbar = memo(
                 {showProLoading ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="rounded-md pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 border border-border">
-                        <div className="size-4 rounded-full bg-muted animate-pulse" />
-                        <div className="w-8 h-3 bg-muted rounded animate-pulse hidden sm:block" />
+                      <div className="pointer-events-auto flex items-center gap-1.5 rounded-md border border-border bg-muted/50 px-3 py-1.5">
+                        <div className="size-4 animate-pulse rounded-full bg-muted" />
+                        <div className="hidden h-3 w-8 animate-pulse rounded bg-muted sm:block" />
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" sideOffset={4}>
@@ -208,13 +237,19 @@ const Navbar = memo(
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div className="pointer-events-auto mr-1">
-                        <span className="font-baumans! px-2.5 pt-0.5 pb-1.75 sm:pt-1 leading-4 inline-flex items-center gap-1 rounded-lg shadow-sm border-transparent ring-1 ring-ring/35 ring-offset-1 ring-offset-background bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground  dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">
+                        <span className="inline-flex items-center gap-1 rounded-lg border-transparent bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 px-2.5 pt-0.5 pb-1.75 font-baumans! text-foreground leading-4 shadow-sm ring-1 ring-ring/35 ring-offset-1 ring-offset-background sm:pt-1 dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">
                           {(() => {
-                            console.log('Badge render check:', { isInTrial, daysLeftInTrial, check: isInTrial && daysLeftInTrial > 0 });
+                            console.log("Badge render check:", {
+                              isInTrial,
+                              daysLeftInTrial,
+                              check: isInTrial && daysLeftInTrial > 0,
+                            });
                             return isInTrial && daysLeftInTrial > 0 ? (
                               <>
                                 <Clock className="h-3 w-3" />
-                                <span className="hidden sm:inline">{daysLeftInTrial}d trial</span>
+                                <span className="hidden sm:inline">
+                                  {daysLeftInTrial}d trial
+                                </span>
                                 <span className="sm:hidden">trial</span>
                               </>
                             ) : (
@@ -225,7 +260,9 @@ const Navbar = memo(
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" sideOffset={4}>
-                      {isInTrial ? `Trial - ${daysLeftInTrial} days remaining` : 'Pro Subscribed - Unlimited access'}
+                      {isInTrial
+                        ? `Trial - ${daysLeftInTrial} days remaining`
+                        : "Pro Subscribed - Unlimited access"}
                     </TooltipContent>
                   </Tooltip>
                 ) : null}
@@ -238,23 +275,23 @@ const Navbar = memo(
             <NavigationMenu />
             {/* User Profile - focused on authentication and account management */}
             <UserProfile
-              user={user}
-              subscriptionData={subscriptionData}
-              isProUser={isProUser}
-              isProStatusLoading={isProStatusLoading}
               isCustomInstructionsEnabled={isCustomInstructionsEnabled}
+              isProStatusLoading={isProStatusLoading}
+              isProUser={isProUser}
               setIsCustomInstructionsEnabled={setIsCustomInstructionsEnabled}
-              settingsOpen={settingsOpen}
               setSettingsOpen={setSettingsOpen}
               settingsInitialTab={settingsInitialTab}
+              settingsOpen={settingsOpen}
+              subscriptionData={subscriptionData}
+              user={user}
             />
           </div>
         </div>
       </>
     );
-  },
+  }
 );
 
-Navbar.displayName = 'Navbar';
+Navbar.displayName = "Navbar";
 
 export { Navbar };

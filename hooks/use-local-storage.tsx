@@ -1,16 +1,16 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from "react";
 
 // Get the initial value synchronously during initialization
 function getStoredValue<T>(key: string, defaultValue: T): T {
   // Always return defaultValue on server-side
-  if (typeof window === 'undefined') return defaultValue;
+  if (typeof window === "undefined") return defaultValue;
 
   try {
     const item = localStorage.getItem(key);
     if (!item) return defaultValue;
 
     // Handle special case for undefined
-    if (item === 'undefined') return defaultValue;
+    if (item === "undefined") return defaultValue;
 
     return JSON.parse(item);
   } catch {
@@ -19,13 +19,18 @@ function getStoredValue<T>(key: string, defaultValue: T): T {
   }
 }
 
-export function useLocalStorage<T>(key: string, defaultValue: T): [T, (value: T | ((val: T) => T)) => void] {
+export function useLocalStorage<T>(
+  key: string,
+  defaultValue: T
+): [T, (value: T | ((val: T) => T)) => void] {
   // Initialize with the stored value immediately
-  const [storedValue, setStoredValue] = useState<T>(() => getStoredValue(key, defaultValue));
+  const [storedValue, setStoredValue] = useState<T>(() =>
+    getStoredValue(key, defaultValue)
+  );
 
   // Listen for storage changes from other components/tabs
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === key && e.newValue !== null) {
@@ -47,23 +52,30 @@ export function useLocalStorage<T>(key: string, defaultValue: T): [T, (value: T 
     };
 
     // Add event listeners
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('localStorage-change', handleCustomStorageChange as EventListener);
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener(
+      "localStorage-change",
+      handleCustomStorageChange as EventListener
+    );
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('localStorage-change', handleCustomStorageChange as EventListener);
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener(
+        "localStorage-change",
+        handleCustomStorageChange as EventListener
+      );
     };
   }, [key]);
 
   const setValue = useCallback(
     (value: T | ((val: T) => T)) => {
       try {
-        const nextValue = value instanceof Function ? value(storedValue) : value;
+        const nextValue =
+          value instanceof Function ? value(storedValue) : value;
         // Update React state
         setStoredValue(nextValue);
         // Update localStorage
-        if (typeof window !== 'undefined') {
+        if (typeof window !== "undefined") {
           if (nextValue === undefined) {
             localStorage.removeItem(key);
           } else {
@@ -71,7 +83,7 @@ export function useLocalStorage<T>(key: string, defaultValue: T): [T, (value: T 
           }
 
           // Dispatch custom event for same-tab synchronization
-          const customEvent = new CustomEvent('localStorage-change', {
+          const customEvent = new CustomEvent("localStorage-change", {
             detail: { key, value: nextValue },
           });
           window.dispatchEvent(customEvent);
@@ -80,7 +92,7 @@ export function useLocalStorage<T>(key: string, defaultValue: T): [T, (value: T 
         console.warn(`Error saving to localStorage key "${key}":`, error);
       }
     },
-    [key, storedValue],
+    [key, storedValue]
   );
 
   return [storedValue, setValue];

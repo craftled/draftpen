@@ -4,16 +4,16 @@ export function ElevenLabsLogo() {
       {/* Dark logo for light backgrounds */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="https://eleven-public-cdn.elevenlabs.io/payloadcms/pwsc4vchsqt-ElevenLabsGrants.webp"
         alt="ElevenLabs"
-        className="h-12 w-auto block dark:hidden"
+        className="block h-12 w-auto dark:hidden"
+        src="https://eleven-public-cdn.elevenlabs.io/payloadcms/pwsc4vchsqt-ElevenLabsGrants.webp"
       />
       {/* White logo for dark backgrounds */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="https://eleven-public-cdn.elevenlabs.io/payloadcms/cy7rxce8uki-IIElevenLabsGrants%201.webp"
         alt="ElevenLabs"
-        className="h-12 w-auto hidden dark:block"
+        className="hidden h-12 w-auto dark:block"
+        src="https://eleven-public-cdn.elevenlabs.io/payloadcms/cy7rxce8uki-IIElevenLabsGrants%201.webp"
       />
     </div>
   );

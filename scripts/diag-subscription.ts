@@ -1,14 +1,19 @@
-import { maindb } from '@/lib/db';
-import { user, subscription } from '@/lib/db/schema';
-import { and, desc, eq } from 'drizzle-orm';
+import { desc, eq } from "drizzle-orm";
+import { maindb } from "@/lib/db";
+import { subscription, user } from "@/lib/db/schema";
 
 async function main() {
   try {
-    const emailArgIndex = process.argv.indexOf('--email');
-    const email = emailArgIndex !== -1 ? process.argv[emailArgIndex + 1] : process.env.EMAIL;
+    const emailArgIndex = process.argv.indexOf("--email");
+    const email =
+      emailArgIndex !== -1
+        ? process.argv[emailArgIndex + 1]
+        : process.env.EMAIL;
 
     if (!email) {
-      console.error('Usage: bun run scripts/diag-subscription.ts --email <user@example.com>');
+      console.error(
+        "Usage: bun run scripts/diag-subscription.ts --email <user@example.com>"
+      );
       process.exit(1);
     }
 
@@ -20,7 +25,7 @@ async function main() {
     });
 
     if (!u) {
-      console.log('❌ No user found for that email');
+      console.log("❌ No user found for that email");
       process.exit(0);
     }
 
@@ -43,26 +48,37 @@ async function main() {
       .orderBy(desc(subscription.createdAt));
 
     if (subs.length === 0) {
-      console.log('❌ No subscription rows linked to this user (subscription.userId is not set for this user)');
+      console.log(
+        "❌ No subscription rows linked to this user (subscription.userId is not set for this user)"
+      );
       process.exit(0);
     }
 
-    console.log(`\n📦 Found ${subs.length} subscription(s) linked to this user:`);
+    console.log(
+      `\n📦 Found ${subs.length} subscription(s) linked to this user:`
+    );
     for (const s of subs) {
-      console.log(`- id=${s.id} status=${s.status} currentPeriodEnd=${s.currentPeriodEnd?.toISOString?.() ?? s.currentPeriodEnd}`);
+      console.log(
+        `- id=${s.id} status=${s.status} currentPeriodEnd=${s.currentPeriodEnd?.toISOString?.() ?? s.currentPeriodEnd}`
+      );
     }
 
     // 3) Determine pro status similar to lightweight check
     const now = new Date();
-    const activeLike = subs.find((s) => (s.status === 'active' || s.status === 'trialing'));
-    const isCurrent = activeLike && sDate(activeLike.currentPeriodEnd) && sDate(activeLike.currentPeriodEnd)!.getTime() > now.getTime();
+    const activeLike = subs.find(
+      (s) => s.status === "active" || s.status === "trialing"
+    );
+    const isCurrent =
+      activeLike &&
+      sDate(activeLike.currentPeriodEnd) &&
+      sDate(activeLike.currentPeriodEnd)!.getTime() > now.getTime();
     const isPro = Boolean(activeLike) && Boolean(isCurrent);
 
-    console.log(`\n🔐 Computed isProUser: ${isPro ? 'YES' : 'NO'}`);
+    console.log(`\n🔐 Computed isProUser: ${isPro ? "YES" : "NO"}`);
 
     process.exit(0);
   } catch (err) {
-    console.error('Error during diagnosis:', err);
+    console.error("Error during diagnosis:", err);
     process.exit(1);
   }
 }
@@ -75,4 +91,3 @@ function sDate(d: any): Date | null {
 }
 
 main();
-

@@ -8,9 +8,15 @@ export function isInTrial(subscription: any): boolean {
 }
 
 // Helper to get subscription type
-export function getSubscriptionType(subscription: any): 'trial' | 'paid' | 'none' {
-  if (!subscription || (subscription.status !== 'active' && subscription.status !== 'trialing')) return 'none';
-  return isInTrial(subscription) ? 'trial' : 'paid';
+export function getSubscriptionType(
+  subscription: any
+): "trial" | "paid" | "none" {
+  if (
+    !subscription ||
+    (subscription.status !== "active" && subscription.status !== "trialing")
+  )
+    return "none";
+  return isInTrial(subscription) ? "trial" : "paid";
 }
 
 // Helper to get days remaining in trial
@@ -19,5 +25,7 @@ export function getDaysLeftInTrial(subscription: any): number {
   const now = new Date();
   const trialEnd = new Date(subscription.trialEnd);
   if (now >= trialEnd) return 0;
-  return Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  return Math.ceil(
+    (trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+  );
 }

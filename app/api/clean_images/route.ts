@@ -1,20 +1,23 @@
-import { serverEnv } from '@/env/server';
-import { del, list, ListBlobResult } from '@vercel/blob';
-import { NextRequest, NextResponse } from 'next/server';
+import { del, type ListBlobResult, list } from "@vercel/blob";
+import { type NextRequest, NextResponse } from "next/server";
+import { serverEnv } from "@/env/server";
 
 export async function GET(req: NextRequest) {
-  if (req.headers.get('Authorization') !== `Bearer ${serverEnv.CRON_SECRET}`) {
-    return new NextResponse('Unauthorized', { status: 401 });
+  if (req.headers.get("Authorization") !== `Bearer ${serverEnv.CRON_SECRET}`) {
+    return new NextResponse("Unauthorized", { status: 401 });
   }
 
   try {
-    await deleteAllBlobsWithPrefix('mplx/public');
-    return new NextResponse('All public files with mplx/public prefix were deleted', {
-      status: 200,
-    });
+    await deleteAllBlobsWithPrefix("mplx/public");
+    return new NextResponse(
+      "All public files with mplx/public prefix were deleted",
+      {
+        status: 200,
+      }
+    );
   } catch (error) {
-    console.error('An error occurred:', error);
-    return new NextResponse('An error occurred while deleting files', {
+    console.error("An error occurred:", error);
+    return new NextResponse("An error occurred while deleting files", {
       status: 500,
     });
   }
@@ -38,5 +41,5 @@ async function deleteAllBlobsWithPrefix(filePrefix: string) {
     cursor = listResult.cursor;
   } while (cursor);
 
-  console.log('All blobs in the specified folder were deleted');
+  console.log("All blobs in the specified folder were deleted");
 }

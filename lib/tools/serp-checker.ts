@@ -1,6 +1,6 @@
-import { tool } from 'ai';
-import { z } from 'zod';
-import { serverEnv } from '@/env/server';
+import { tool } from "ai";
+import { z } from "zod";
+import { serverEnv } from "@/env/server";
 
 interface SerpResult {
   title: string;
@@ -24,35 +24,37 @@ interface RelatedSearch {
 
 export const serpCheckerTool = tool({
   description:
-    'Get top SERP results for a keyword using Serper.dev API. Returns organic search results (up to 20), People Also Ask questions, and related searches. Perfect for content research and competitive analysis.',
+    "Get top SERP results for a keyword using Serper.dev API. Returns organic search results (up to 20), People Also Ask questions, and related searches. Perfect for content research and competitive analysis.",
   inputSchema: z.object({
     query: z
       .string()
       .min(1)
-      .describe('The search keyword/query to get SERP results for'),
+      .describe("The search keyword/query to get SERP results for"),
     num: z
       .number()
       .min(1)
       .max(100)
       .default(20)
       .optional()
-      .describe('Number of organic results to return (default 20, max 100)'),
+      .describe("Number of organic results to return (default 20, max 100)"),
     country: z
       .string()
-      .default('us')
+      .default("us")
       .optional()
-      .describe('Country code (e.g., "us", "uk", "de", "fr"). Defaults to "us".'),
+      .describe(
+        'Country code (e.g., "us", "uk", "de", "fr"). Defaults to "us".'
+      ),
     language: z
       .string()
-      .default('en')
+      .default("en")
       .optional()
       .describe('Language code (e.g., "en", "es", "fr"). Defaults to "en".'),
   }),
   execute: async ({
     query,
     num = 20,
-    country = 'us',
-    language = 'en',
+    country = "us",
+    language = "en",
   }: {
     query: string;
     num?: number;
@@ -63,11 +65,11 @@ export const serpCheckerTool = tool({
 
     if (!apiKey) {
       throw new Error(
-        'Serper API key is not configured. Please set SERPER_API_KEY in the environment.'
+        "Serper API key is not configured. Please set SERPER_API_KEY in the environment."
       );
     }
 
-    const url = 'https://google.serper.dev/search';
+    const url = "https://google.serper.dev/search";
 
     const desired = Math.max(1, Math.min(num, 100));
     const resultsPerPage = 10; // Serper returns 10 organic results per page
@@ -83,17 +85,19 @@ export const serpCheckerTool = tool({
 
     // First page (also contains PAA and Related Searches)
     const firstRes = await fetch(url, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'X-API-KEY': apiKey,
-        'Content-Type': 'application/json',
+        "X-API-KEY": apiKey,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(makePayload(1)),
     });
 
     if (!firstRes.ok) {
-      const text = await firstRes.text().catch(() => '');
-      throw new Error(`Serper API error: ${firstRes.status} ${firstRes.statusText} ${text}`);
+      const text = await firstRes.text().catch(() => "");
+      throw new Error(
+        `Serper API error: ${firstRes.status} ${firstRes.statusText} ${text}`
+      );
     }
 
     const firstJson = await firstRes.json();
@@ -119,16 +123,18 @@ export const serpCheckerTool = tool({
       for (let p = 2; p <= totalPages; p++) {
         fetches.push(
           fetch(url, {
-            method: 'POST',
+            method: "POST",
             headers: {
-              'X-API-KEY': apiKey,
-              'Content-Type': 'application/json',
+              "X-API-KEY": apiKey,
+              "Content-Type": "application/json",
             },
             body: JSON.stringify(makePayload(p)),
           }).then(async (res) => {
             if (!res.ok) {
-              const text = await res.text().catch(() => '');
-              throw new Error(`Serper API error (page ${p}): ${res.status} ${res.statusText} ${text}`);
+              const text = await res.text().catch(() => "");
+              throw new Error(
+                `Serper API error (page ${p}): ${res.status} ${res.statusText} ${text}`
+              );
             }
             return { page: p, json: await res.json() };
           })
@@ -155,13 +161,15 @@ export const serpCheckerTool = tool({
       link: paa.link,
     })) as PeopleAlsoAsk[];
 
-    const relatedSearches = (firstJson.relatedSearches || []).map((rs: any) => ({
-      query: rs.query,
-    })) as RelatedSearch[];
+    const relatedSearches = (firstJson.relatedSearches || []).map(
+      (rs: any) => ({
+        query: rs.query,
+      })
+    ) as RelatedSearch[];
 
     return {
-      provider: 'serper',
-      endpoint: 'google.serper.dev/search',
+      provider: "serper",
+      endpoint: "google.serper.dev/search",
       input: { query, num: desired, country, language },
       organic: {
         count: combinedOrganic.length,
@@ -179,4 +187,3 @@ export const serpCheckerTool = tool({
     };
   },
 });
-

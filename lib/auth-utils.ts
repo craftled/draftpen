@@ -1,11 +1,15 @@
-import { auth } from '@/lib/auth';
-import { config } from 'dotenv';
-import { headers } from 'next/headers';
-import { User } from './db/schema';
-import { sessionCache, extractSessionToken, createSessionKey } from './performance-cache';
+import { config } from "dotenv";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
+import type { User } from "./db/schema";
+import {
+  createSessionKey,
+  extractSessionToken,
+  sessionCache,
+} from "./performance-cache";
 
 config({
-  path: '.env.local',
+  path: ".env.local",
 });
 
 export const getSession = async () => {

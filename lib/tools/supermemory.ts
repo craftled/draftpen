@@ -1,6 +1,6 @@
-import { supermemoryTools } from '@supermemory/tools/ai-sdk';
-import { Tool } from 'ai';
-import { serverEnv } from '@/env/server';
+import { supermemoryTools } from "@supermemory/tools/ai-sdk";
+import type { Tool } from "ai";
+import { serverEnv } from "@/env/server";
 
 export function createMemoryTools(userId: string) {
   return supermemoryTools(serverEnv.SUPERMEMORY_API_KEY, {

@@ -1,15 +1,28 @@
-import { tool } from 'ai';
-import { z } from 'zod';
+import { tool } from "ai";
+import { z } from "zod";
 
 export const greetingTool = (timezone?: string) =>
   tool({
-    description: 'Generate a professional greeting for the user',
+    description: "Generate a professional greeting for the user",
     inputSchema: z.object({
-      name: z.string().optional().describe('User name to personalize the greeting'),
-      style: z.enum(['professional', 'casual', 'formal']).optional().describe('Greeting style'),
-      includeTimeOfDay: z.boolean().optional().describe('Whether to include time-specific greeting'),
+      name: z
+        .string()
+        .optional()
+        .describe("User name to personalize the greeting"),
+      style: z
+        .enum(["professional", "casual", "formal"])
+        .optional()
+        .describe("Greeting style"),
+      includeTimeOfDay: z
+        .boolean()
+        .optional()
+        .describe("Whether to include time-specific greeting"),
     }),
-    execute: async ({ name, style = 'professional', includeTimeOfDay = true }) => {
+    execute: async ({
+      name,
+      style = "professional",
+      includeTimeOfDay = true,
+    }) => {
       const now = new Date();
 
       // Determine hour based on provided timezone (falls back to server time if not provided or invalid)
@@ -17,11 +30,11 @@ export const greetingTool = (timezone?: string) =>
       if (timezone) {
         try {
           hour = Number(
-            new Intl.DateTimeFormat('en-US', {
-              hour: 'numeric',
+            new Intl.DateTimeFormat("en-US", {
+              hour: "numeric",
               hour12: false,
               timeZone: timezone,
-            }).format(now),
+            }).format(now)
           );
         } catch {
           // Invalid timezone; keep server hour fallback
@@ -29,76 +42,80 @@ export const greetingTool = (timezone?: string) =>
       }
 
       // Professional time-based greetings
-      let timeGreeting = '';
-      let timeEmoji = '';
+      let timeGreeting = "";
+      let timeEmoji = "";
 
       if (includeTimeOfDay) {
         if (hour < 12) {
-          timeGreeting = 'Good morning';
-          timeEmoji = '🌅';
+          timeGreeting = "Good morning";
+          timeEmoji = "🌅";
         } else if (hour < 17) {
-          timeGreeting = 'Good afternoon';
-          timeEmoji = '☀️';
+          timeGreeting = "Good afternoon";
+          timeEmoji = "☀️";
         } else {
-          timeGreeting = 'Good evening';
-          timeEmoji = '🌆';
+          timeGreeting = "Good evening";
+          timeEmoji = "🌆";
         }
       }
 
       // Classy style-based greetings
       const styleGreetings = {
-        professional: ['Hello', 'Good day', 'Welcome', 'Greetings'],
-        casual: ['Hi', 'Hello', 'Hey there', 'Hi there'],
-        formal: ['Good day', 'Greetings', 'Salutations', 'Welcome'],
+        professional: ["Hello", "Good day", "Welcome", "Greetings"],
+        casual: ["Hi", "Hello", "Hey there", "Hi there"],
+        formal: ["Good day", "Greetings", "Salutations", "Welcome"],
       } as const;
 
       // Professional messages
       const professionalMessages = [
-        'How may I assist you today?',
-        'What can I help you with?',
-        'Ready to help with your tasks.',
-        'At your service.',
-        'How can I be of assistance?',
+        "How may I assist you today?",
+        "What can I help you with?",
+        "Ready to help with your tasks.",
+        "At your service.",
+        "How can I be of assistance?",
       ];
 
       // Helpful tips instead of cringe facts
       const helpfulTips = [
-        'Pro tip: Use specific keywords for better search results',
-        'Tip: I can help with research, analysis, and creative tasks',
-        'Note: Feel free to ask follow-up questions for clarity',
-        'Hint: I work best with clear, detailed requests',
-        'Tip: I can assist with both technical and creative projects',
+        "Pro tip: Use specific keywords for better search results",
+        "Tip: I can help with research, analysis, and creative tasks",
+        "Note: Feel free to ask follow-up questions for clarity",
+        "Hint: I work best with clear, detailed requests",
+        "Tip: I can assist with both technical and creative projects",
       ];
 
       // Random selection
-      const randomFrom = <T,>(array: readonly T[]) => array[Math.floor(Math.random() * array.length)];
+      const randomFrom = <T>(array: readonly T[]) =>
+        array[Math.floor(Math.random() * array.length)];
 
-      const selectedStyle = (style || 'professional') as keyof typeof styleGreetings;
+      const selectedStyle = (style ||
+        "professional") as keyof typeof styleGreetings;
       const mainGreeting = randomFrom(styleGreetings[selectedStyle]);
       const professionalMessage = randomFrom(professionalMessages);
       const helpfulTip = randomFrom(helpfulTips);
 
       // Construct professional greeting
-      let greeting = '';
+      let greeting = "";
 
       if (includeTimeOfDay) {
-        greeting = `${timeGreeting}${name ? `, ${name}` : ''}`;
+        greeting = `${timeGreeting}${name ? `, ${name}` : ""}`;
       } else {
-        greeting = `${mainGreeting}${name ? `, ${name}` : ''}`;
+        greeting = `${mainGreeting}${name ? `, ${name}` : ""}`;
       }
 
       // Day of week and localized current time string
-      let dayOfWeek = new Intl.DateTimeFormat('en-US', {
-        weekday: 'long',
+      let dayOfWeek = new Intl.DateTimeFormat("en-US", {
+        weekday: "long",
       }).format(now);
-      let localizedCurrentTime = now.toLocaleString('en-US');
+      let localizedCurrentTime = now.toLocaleString("en-US");
       if (timezone) {
         try {
-          dayOfWeek = new Intl.DateTimeFormat('en-US', {
-            weekday: 'long',
+          dayOfWeek = new Intl.DateTimeFormat("en-US", {
+            weekday: "long",
             timeZone: timezone,
           }).format(now);
-          localizedCurrentTime = now.toLocaleString('en-US', { timeZone: timezone });
+          localizedCurrentTime = now.toLocaleString("en-US", {
+            timeZone: timezone,
+          });
         } catch {
           // Invalid timezone; keep server-localized values
         }

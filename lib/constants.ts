@@ -9,7 +9,7 @@ export const PRICING = {
 } as const;
 
 export const CURRENCIES = {
-  USD: 'USD',
+  USD: "USD",
 } as const;
 
-export const SNAPSHOT_NAME = 'scira-analysis:1752127473';
+export const SNAPSHOT_NAME = "scira-analysis:1752127473";

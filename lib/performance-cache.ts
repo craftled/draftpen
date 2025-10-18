@@ -1,7 +1,7 @@
 // Performance cache with memory limits and automatic cleanup
 
-import { db } from '@/lib/db';
-import { subscription, user } from './db/schema';
+import { db } from "@/lib/db";
+import { subscription, user } from "./db/schema";
 
 interface CacheEntry<T> {
   data: T;
@@ -16,7 +16,7 @@ class PerformanceCache<T> {
   private readonly ttl: number;
   private readonly name: string;
 
-  constructor(name: string, maxSize: number = 1000, ttlMs: number = 2 * 60 * 1000) {
+  constructor(name: string, maxSize = 1000, ttlMs: number = 2 * 60 * 1000) {
     this.name = name;
     this.maxSize = maxSize;
     this.ttl = ttlMs;
@@ -65,7 +65,7 @@ class PerformanceCache<T> {
   }
 
   private evictLeastRecentlyUsed(): void {
-    let lruKey = '';
+    let lruKey = "";
     let lruTime = Date.now();
 
     for (const [key, entry] of this.cache.entries()) {
@@ -96,24 +96,40 @@ class PerformanceCache<T> {
 }
 
 // Create cache instances with appropriate limits
-export const sessionCache = new PerformanceCache<any>('sessions', 500, 15 * 60 * 1000); // 15 min, 500 sessions
-export const subscriptionCache = new PerformanceCache<any>('subscriptions', 1000, 1 * 60 * 1000); // 1 min, 1000 users
-export const usageCountCache = new PerformanceCache<number>('usage-counts', 2000, 5 * 60 * 1000); // 5 min, 2000 users
-export const proUserStatusCache = new PerformanceCache<boolean>('pro-user-status', 1000, 30 * 60 * 1000); // 30 min, 1000 users
-
+export const sessionCache = new PerformanceCache<any>(
+  "sessions",
+  500,
+  15 * 60 * 1000
+); // 15 min, 500 sessions
+export const subscriptionCache = new PerformanceCache<any>(
+  "subscriptions",
+  1000,
+  1 * 60 * 1000
+); // 1 min, 1000 users
+export const usageCountCache = new PerformanceCache<number>(
+  "usage-counts",
+  2000,
+  5 * 60 * 1000
+); // 5 min, 2000 users
+export const proUserStatusCache = new PerformanceCache<boolean>(
+  "pro-user-status",
+  1000,
+  30 * 60 * 1000
+); // 30 min, 1000 users
 
 // Cache key generators
 export const createSessionKey = (token: string) => `session:${token}`;
 export const createUserKey = (token: string) => `user:${token}`;
-export const createSubscriptionKey = (userId: string) => `subscription:${userId}`;
+export const createSubscriptionKey = (userId: string) =>
+  `subscription:${userId}`;
 export const createMessageCountKey = (userId: string) => `msg-count:${userId}`;
-export const createExtremeCountKey = (userId: string) => `extreme-count:${userId}`;
+export const createExtremeCountKey = (userId: string) =>
+  `extreme-count:${userId}`;
 export const createProUserKey = (userId: string) => `pro-user:${userId}`;
-
 
 // Extract session token from headers
 export function extractSessionToken(headers: Headers): string | null {
-  const cookies = headers.get('cookie');
+  const cookies = headers.get("cookie");
   if (!cookies) return null;
 
   const match = cookies.match(/better-auth\.session_token=([^;]+)/);
@@ -131,20 +147,22 @@ export function setProUserStatus(userId: string, isProUser: boolean): void {
   proUserStatusCache.set(cacheKey, isProUser);
 }
 
-export function computeAndCacheProUserStatus(userId: string, subscriptionData: any): boolean {
+export function computeAndCacheProUserStatus(
+  userId: string,
+  subscriptionData: any
+): boolean {
   const sub = subscriptionData?.subscription;
   const now = new Date();
   const isProUser = Boolean(
     subscriptionData?.hasSubscription &&
-    sub &&
-    (sub.status === 'active' || sub.status === 'trialing') &&
-    new Date(sub.currentPeriodEnd) > now
+      sub &&
+      (sub.status === "active" || sub.status === "trialing") &&
+      new Date(sub.currentPeriodEnd) > now
   );
 
   setProUserStatus(userId, isProUser);
   return isProUser;
 }
-
 
 // Cache invalidation helpers
 export function invalidateUserCaches(userId: string) {
@@ -161,5 +179,4 @@ export function invalidateAllCaches() {
   subscriptionCache.clear();
   usageCountCache.clear();
   proUserStatusCache.clear();
-
 }

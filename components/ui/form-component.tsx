@@ -1,59 +1,115 @@
 /* eslint-disable @next/next/no-img-element */
 // /components/ui/form-component.tsx
-import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { toast } from 'sonner';
-import { Button } from '../ui/button';
-import { Textarea } from '../ui/textarea';
+
+import type { UseChatHelpers } from "@ai-sdk/react";
 import {
+  AtomicPowerIcon,
+  ConnectIcon,
+  CpuIcon,
+  Crown02Icon,
+  DocumentAttachmentIcon,
+  GlobalSearchIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Brain, Eye, FilePdf, LockIcon } from "@phosphor-icons/react";
+import { useQuery } from "@tanstack/react-query";
+import { track } from "@vercel/analytics";
+import {
+  ArrowUpRight,
+  Check,
+  CheckIcon,
+  ChevronsUpDown,
+  Sparkles,
+  Upload,
+  Wand2,
+  X,
+  Zap,
+} from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { toast } from "sonner";
+import {
+  getAcceptedFileTypes,
+  hasPdfSupport,
+  hasVisionSupport,
   models,
   requiresAuthentication,
   requiresProSubscription,
-  hasVisionSupport,
-  hasPdfSupport,
-  getAcceptedFileTypes,
   shouldBypassRateLimits,
-} from '@/ai/providers';
-import { X, Check, ChevronsUpDown, Wand2, Upload, CheckIcon, Zap, Sparkles, ArrowUpRight } from 'lucide-react';
-import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogDescription } from '@/components/ui/dialog';
-import { cn, SearchGroup, SearchGroupId, getSearchGroups, SearchProvider } from '@/lib/utils';
-
-import { track } from '@vercel/analytics';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Kbd, KbdGroup } from '@/components/ui/kbd';
-import { ComprehensiveUserData } from '@/hooks/use-user-data';
-import { useSession } from '@/lib/auth-client';
-import { checkImageModeration, enhancePrompt } from '@/app/actions';
-
-import { PRICING } from '@/lib/constants';
-import { LockIcon, Eye, Brain, FilePdf } from '@phosphor-icons/react';
-import { HugeiconsIcon } from '@hugeicons/react';
+} from "@/ai/providers";
 import {
-  CpuIcon,
-  GlobalSearchIcon,
-  AtomicPowerIcon,
-  Crown02Icon,
-  DocumentAttachmentIcon,
-  ConnectIcon,
-} from '@hugeicons/core-free-icons';
-import { AudioLinesIcon } from '@/components/ui/audio-lines';
-import { GripIcon } from '@/components/ui/grip';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
-import { Switch } from '@/components/ui/switch';
-import { UseChatHelpers } from '@ai-sdk/react';
-import { ChatMessage } from '@/lib/types';
-import { useLocalStorage } from '@/hooks/use-local-storage';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { CONNECTOR_CONFIGS, CONNECTOR_ICONS, type ConnectorProvider } from '@/lib/connectors';
-import { useQuery } from '@tanstack/react-query';
-import { listUserConnectorsAction } from '@/app/actions';
+  checkImageModeration,
+  enhancePrompt,
+  listUserConnectorsAction,
+} from "@/app/actions";
+import { AudioLinesIcon } from "@/components/ui/audio-lines";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import { GripIcon } from "@/components/ui/grip";
+import { Kbd, KbdGroup } from "@/components/ui/kbd";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useIsMobile } from "@/hooks/use-mobile";
+import type { ComprehensiveUserData } from "@/hooks/use-user-data";
+import { useSession } from "@/lib/auth-client";
+import {
+  CONNECTOR_CONFIGS,
+  CONNECTOR_ICONS,
+  type ConnectorProvider,
+} from "@/lib/connectors";
+import { PRICING } from "@/lib/constants";
+import type { ChatMessage } from "@/lib/types";
+import {
+  cn,
+  getSearchGroups,
+  type SearchGroup,
+  type SearchGroupId,
+  type SearchProvider,
+} from "@/lib/utils";
+import { Button } from "../ui/button";
+import { Textarea } from "../ui/textarea";
 
 // Pro Badge Component
-const ProBadge = ({ className = '' }: { className?: string }) => (
+const ProBadge = ({ className = "" }: { className?: string }) => (
   <span
-    className={`font-baumans inline-flex items-center gap-1 rounded-lg shadow-sm !border-none !outline-0 ring-offset-1 !ring-offset-background/50 bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground px-2.5 pt-0.5 !pb-2 sm:pt-1 leading-3 dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground ${className}`}
+    className={`!border-none !outline-0 !ring-offset-background/50 !pb-2 inline-flex items-center gap-1 rounded-lg bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 px-2.5 pt-0.5 font-baumans text-foreground leading-3 shadow-sm ring-offset-1 sm:pt-1 dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground ${className}`}
   >
     <span>pro</span>
   </span>
@@ -65,7 +121,7 @@ interface ModelSwitcherProps {
   className?: string;
   attachments: Array<Attachment>;
   messages: Array<ChatMessage>;
-  status: UseChatHelpers<ChatMessage>['status'];
+  status: UseChatHelpers<ChatMessage>["status"];
   onModelSelect?: (model: (typeof models)[0]) => void;
   subscriptionData?: any;
   user?: ComprehensiveUserData | null;
@@ -85,32 +141,47 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
   }) => {
     const isProUser = useMemo(
       () =>
-        user?.isProUser || (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active'),
-      [user?.isProUser, subscriptionData?.hasSubscription, subscriptionData?.subscription?.status],
+        user?.isProUser ||
+        (subscriptionData?.hasSubscription &&
+          subscriptionData?.subscription?.status === "active"),
+      [
+        user?.isProUser,
+        subscriptionData?.hasSubscription,
+        subscriptionData?.subscription?.status,
+      ]
     );
 
-    const isSubscriptionLoading = useMemo(() => user && !subscriptionData, [user, subscriptionData]);
+    const isSubscriptionLoading = useMemo(
+      () => user && !subscriptionData,
+      [user, subscriptionData]
+    );
 
     const availableModels = useMemo(() => models, []);
 
     const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
     const [showSignInDialog, setShowSignInDialog] = useState(false);
-    const [selectedProModel, setSelectedProModel] = useState<(typeof models)[0] | null>(null);
-    const [selectedAuthModel, setSelectedAuthModel] = useState<(typeof models)[0] | null>(null);
+    const [selectedProModel, setSelectedProModel] = useState<
+      (typeof models)[0] | null
+    >(null);
+    const [selectedAuthModel, setSelectedAuthModel] = useState<
+      (typeof models)[0] | null
+    >(null);
     const [open, setOpen] = useState(false);
 
     const isMobile = useIsMobile();
 
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchQuery, setSearchQuery] = useState("");
 
-    const normalizeText = useCallback((input: string): string => {
-      return input
-        .normalize('NFD')
-        .replace(/\p{Diacritic}/gu, '')
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, ' ')
-        .trim();
-    }, []);
+    const normalizeText = useCallback(
+      (input: string): string =>
+        input
+          .normalize("NFD")
+          .replace(/\p{Diacritic}/gu, "")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, " ")
+          .trim(),
+      []
+    );
 
     const tokenize = useCallback(
       (input: string): string[] => {
@@ -119,7 +190,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
         const tokens = normalized.split(/\s+/).filter(Boolean);
         return Array.from(new Set(tokens));
       },
-      [normalizeText],
+      [normalizeText]
     );
 
     type SearchIndexEntry = {
@@ -136,20 +207,20 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
           m.label,
           m.description,
           m.category,
-          m.vision ? 'vision' : '',
-          m.reasoning ? 'reasoning' : '',
-          m.pdf ? 'pdf' : '',
-          m.experimental ? 'experimental' : '',
-          m.pro ? 'pro' : '',
-          m.requiresAuth ? 'auth' : '',
-        ].join(' ');
+          m.vision ? "vision" : "",
+          m.reasoning ? "reasoning" : "",
+          m.pdf ? "pdf" : "",
+          m.experimental ? "experimental" : "",
+          m.pro ? "pro" : "",
+          m.requiresAuth ? "auth" : "",
+        ].join(" ");
         const normalized = normalizeText(aggregate);
         const labelNorm = normalizeText(m.label);
         index[m.value] = {
           normalized,
           labelNorm,
-          normalizedNoSpace: normalized.replace(/\s+/g, ''),
-          labelNoSpace: labelNorm.replace(/\s+/g, ''),
+          normalizedNoSpace: normalized.replace(/\s+/g, ""),
+          labelNoSpace: labelNorm.replace(/\s+/g, ""),
         };
       }
       return index;
@@ -161,7 +232,9 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
         if (!entry) return 0;
         const tokens = tokenize(query);
         if (tokens.length === 0) return 1;
-        const filteredTokens = tokens.filter((t) => t.length >= 2 || /^\d$/.test(t));
+        const filteredTokens = tokens.filter(
+          (t) => t.length >= 2 || /^\d$/.test(t)
+        );
         let matchedCount = 0;
         let score = 0;
 
@@ -176,11 +249,12 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
             score += inLabel ? 3 : 1;
 
             if (new RegExp(`\\b${token}`).test(entry.labelNorm)) score += 2;
-            else if (new RegExp(`\\b${token}`).test(entry.normalized)) score += 1;
+            else if (new RegExp(`\\b${token}`).test(entry.normalized))
+              score += 1;
           }
         }
 
-        const phraseNoSpace = normalizeText(query).replace(/\s+/g, '');
+        const phraseNoSpace = normalizeText(query).replace(/\s+/g, "");
         if (phraseNoSpace.length >= 2) {
           if (entry.normalizedNoSpace.includes(phraseNoSpace)) score += 2;
           if (entry.labelNoSpace.includes(phraseNoSpace)) score += 3;
@@ -188,76 +262,87 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
         }
 
         if (matchedCount === 0 && phraseNoSpace.length < 2) return 0;
-        if (matchedCount === filteredTokens.length && filteredTokens.length > 0) score += 2;
+        if (matchedCount === filteredTokens.length && filteredTokens.length > 0)
+          score += 2;
 
         return score;
       },
-      [searchIndex, tokenize, normalizeText],
+      [searchIndex, tokenize, normalizeText]
     );
 
-    const escapeHtml = useCallback((input: string): string => {
-      return input
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-    }, []);
+    const escapeHtml = useCallback(
+      (input: string): string =>
+        input
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;"),
+      []
+    );
 
-    const escapeRegExp = useCallback((input: string): string => {
-      return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    }, []);
+    const escapeRegExp = useCallback(
+      (input: string): string => input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+      []
+    );
 
     const buildHighlightHtml = useCallback(
       (text: string): string => {
         const q = searchQuery.trim();
         if (!q) return escapeHtml(text);
         const safeText = escapeHtml(text);
-        const pattern = new RegExp(`(${escapeRegExp(q)})`, 'gi');
-        return safeText.replace(pattern, '<mark class="bg-primary/80 text-primary-foreground rounded px-px">$1</mark>');
+        const pattern = new RegExp(`(${escapeRegExp(q)})`, "gi");
+        return safeText.replace(
+          pattern,
+          '<mark class="bg-primary/80 text-primary-foreground rounded px-px">$1</mark>'
+        );
       },
-      [searchQuery, escapeHtml, escapeRegExp],
+      [searchQuery, escapeHtml, escapeRegExp]
     );
 
-
-
-    const isFilePart = useCallback((p: unknown): p is { type: 'file'; mediaType?: string } => {
-      return (
-        typeof p === 'object' &&
+    const isFilePart = useCallback(
+      (p: unknown): p is { type: "file"; mediaType?: string } =>
+        typeof p === "object" &&
         p !== null &&
-        'type' in (p as Record<string, unknown>) &&
-        (p as { type: unknown }).type === 'file'
-      );
-    }, []);
+        "type" in (p as Record<string, unknown>) &&
+        (p as { type: unknown }).type === "file",
+      []
+    );
 
     const hasImageAttachments = useMemo(() => {
       const attachmentHasImage = attachments.some((att) => {
-        const ct = att.contentType || att.mediaType || '';
-        return ct.startsWith('image/');
+        const ct = att.contentType || att.mediaType || "";
+        return ct.startsWith("image/");
       });
       const messagesHaveImage = messages.some((msg) =>
         (msg.parts || []).some(
-          (part) => isFilePart(part) && typeof part.mediaType === 'string' && part.mediaType.startsWith('image/'),
-        ),
+          (part) =>
+            isFilePart(part) &&
+            typeof part.mediaType === "string" &&
+            part.mediaType.startsWith("image/")
+        )
       );
       return attachmentHasImage || messagesHaveImage;
     }, [attachments, messages, isFilePart]);
 
     const hasPdfAttachments = useMemo(() => {
       const attachmentHasPdf = attachments.some((att) => {
-        const ct = att.contentType || att.mediaType || '';
-        return ct === 'application/pdf';
+        const ct = att.contentType || att.mediaType || "";
+        return ct === "application/pdf";
       });
       const messagesHavePdf = messages.some((msg) =>
         (msg.parts || []).some(
-          (part) => isFilePart(part) && typeof part.mediaType === 'string' && part.mediaType === 'application/pdf',
-        ),
+          (part) =>
+            isFilePart(part) &&
+            typeof part.mediaType === "string" &&
+            part.mediaType === "application/pdf"
+        )
       );
       return attachmentHasPdf || messagesHavePdf;
     }, [attachments, messages, isFilePart]);
 
     const filteredModels = useMemo(() => {
-      if (!hasImageAttachments && !hasPdfAttachments) {
+      if (!(hasImageAttachments || hasPdfAttachments)) {
         return availableModels;
       }
       if (hasImageAttachments && hasPdfAttachments) {
@@ -307,21 +392,26 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
             acc[category].push(model);
             return acc;
           },
-          {} as Record<string, typeof availableModels>,
+          {} as Record<string, typeof availableModels>
         ),
-      [sortedModels],
+      [sortedModels]
     );
 
     const orderedGroupEntries = useMemo(() => {
-      const groupOrder = isProUser ? ['Pro', 'Experimental', 'Free'] : ['Free', 'Experimental', 'Pro'];
+      const groupOrder = isProUser
+        ? ["Pro", "Experimental", "Free"]
+        : ["Free", "Experimental", "Pro"];
       return groupOrder
-        .filter((category) => groupedModels[category] && groupedModels[category].length > 0)
+        .filter(
+          (category) =>
+            groupedModels[category] && groupedModels[category].length > 0
+        )
         .map((category) => [category, groupedModels[category]] as const);
     }, [groupedModels, isProUser]);
 
     const currentModel = useMemo(
       () => availableModels.find((m) => m.value === selectedModel),
-      [availableModels, selectedModel],
+      [availableModels, selectedModel]
     );
 
     // Auto-switch away from pro models when user loses pro access
@@ -329,18 +419,35 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
       if (isSubscriptionLoading) return;
 
       const currentModelRequiresPro = requiresProSubscription(selectedModel);
-      const currentModelExists = availableModels.find((m) => m.value === selectedModel);
+      const currentModelExists = availableModels.find(
+        (m) => m.value === selectedModel
+      );
 
       // If current model requires pro but user is not pro, switch to default
       // Also prevent infinite loops by ensuring we're not already on the default model
-      if (currentModelExists && currentModelRequiresPro && !isProUser && selectedModel !== 'gpt5-mini') {
-        console.log(`Auto-switching from pro model '${selectedModel}' to 'gpt5-mini' - user lost pro access`);
-        setSelectedModel('gpt5-mini');
+      if (
+        currentModelExists &&
+        currentModelRequiresPro &&
+        !isProUser &&
+        selectedModel !== "gpt5-mini"
+      ) {
+        console.log(
+          `Auto-switching from pro model '${selectedModel}' to 'gpt5-mini' - user lost pro access`
+        );
+        setSelectedModel("gpt5-mini");
 
         // Show a toast notification to inform the user
-        toast.info('Switched to default model - Pro subscription required for premium models');
+        toast.info(
+          "Switched to default model - Pro subscription required for premium models"
+        );
       }
-    }, [selectedModel, isProUser, isSubscriptionLoading, setSelectedModel, availableModels]);
+    }, [
+      selectedModel,
+      isProUser,
+      isSubscriptionLoading,
+      setSelectedModel,
+      availableModels,
+    ]);
 
     const handleModelChange = useCallback(
       (value: string) => {
@@ -366,55 +473,73 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
           return;
         }
 
-        console.log('Selected model:', model.value);
+        console.log("Selected model:", model.value);
         setSelectedModel(model.value.trim());
 
         if (onModelSelect) {
           onModelSelect(model);
         }
       },
-      [availableModels, user, isProUser, isSubscriptionLoading, setSelectedModel, onModelSelect],
+      [
+        availableModels,
+        user,
+        isProUser,
+        isSubscriptionLoading,
+        setSelectedModel,
+        onModelSelect,
+      ]
     );
 
     // Shared command content renderer (not a component) to preserve focus
     const renderModelCommandContent = () => (
       <Command
-        className={cn(isMobile ? 'flex-1 h-full border-0 bg-transparent rounded-lg' : 'rounded-lg')}
+        className={cn(
+          isMobile
+            ? "h-full flex-1 rounded-lg border-0 bg-transparent"
+            : "rounded-lg"
+        )}
         filter={() => 1}
         shouldFilter={false}
       >
         {!isMobile && (
           <CommandInput
-            placeholder="Search models..."
             className="h-9"
-            value={searchQuery}
             onValueChange={setSearchQuery}
+            placeholder="Search models..."
+            value={searchQuery}
           />
         )}
         <CommandEmpty>No model found.</CommandEmpty>
-        <CommandList className={isMobile ? 'flex-1 !max-h-full p-2' : 'max-h-[15em]'}>
+        <CommandList
+          className={isMobile ? "!max-h-full flex-1 p-2" : "max-h-[15em]"}
+        >
           {rankedModels && searchQuery.trim() ? (
             rankedModels.length > 0 ? (
               <CommandGroup key="best-matches">
                 <div
-                  className={cn('font-medium text-muted-foreground px-2 py-1', isMobile ? 'text-xs' : 'text-[10px]')}
+                  className={cn(
+                    "px-2 py-1 font-medium text-muted-foreground",
+                    isMobile ? "text-xs" : "text-[10px]"
+                  )}
                 >
                   Best matches
                 </div>
                 {rankedModels.map((model) => {
-                  const requiresAuth = requiresAuthentication(model.value) && !user;
-                  const requiresPro = requiresProSubscription(model.value) && !isProUser;
+                  const requiresAuth =
+                    requiresAuthentication(model.value) && !user;
+                  const requiresPro =
+                    requiresProSubscription(model.value) && !isProUser;
                   const isLocked = requiresAuth || requiresPro;
 
                   if (isLocked) {
                     return (
                       <div
-                        key={model.value}
                         className={cn(
-                          'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs cursor-pointer',
-                          'transition-all duration-200',
-                          'opacity-50 hover:opacity-70 hover:bg-accent',
+                          "mb-0.5 flex cursor-pointer items-center justify-between rounded-lg px-2 py-1.5 text-xs",
+                          "transition-all duration-200",
+                          "opacity-50 hover:bg-accent hover:opacity-70"
                         )}
+                        key={model.value}
                         onClick={() => {
                           if (isSubscriptionLoading) {
                             return;
@@ -430,61 +555,83 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                           setOpen(false);
                         }}
                       >
-                        <div className="flex items-center gap-1 min-w-0 flex-1">
+                        <div className="flex min-w-0 flex-1 items-center gap-1">
                           <div
                             className={cn(
-                              'font-medium truncate flex-1',
-                              isMobile ? 'text-sm' : 'text-[11px]',
+                              "flex-1 truncate font-medium",
+                              isMobile ? "text-sm" : "text-[11px]"
                             )}
                           >
                             {!isMobile && searchQuery ? (
                               <span
                                 className="inline"
-                                dangerouslySetInnerHTML={{ __html: buildHighlightHtml(model.label) }}
+                                dangerouslySetInnerHTML={{
+                                  __html: buildHighlightHtml(model.label),
+                                }}
                               />
                             ) : (
                               <span className="inline">{model.label}</span>
                             )}
                           </div>
                           {requiresAuth ? (
-                            <LockIcon className={cn('text-muted-foreground flex-shrink-0', isMobile ? 'size-3.5' : 'size-3')} />
+                            <LockIcon
+                              className={cn(
+                                "flex-shrink-0 text-muted-foreground",
+                                isMobile ? "size-3.5" : "size-3"
+                              )}
+                            />
                           ) : (
                             <HugeiconsIcon
+                              className="flex-shrink-0 text-muted-foreground"
+                              color="currentColor"
                               icon={Crown02Icon}
                               size={isMobile ? 14 : 12}
-                              color="currentColor"
                               strokeWidth={1.5}
-                              className="text-muted-foreground flex-shrink-0"
                             />
                           )}
                           {model.vision && (
                             <div
                               className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50 flex-shrink-0',
-                                isMobile ? 'p-1' : 'p-0.5',
+                                "inline-flex flex-shrink-0 items-center justify-center rounded bg-secondary/50",
+                                isMobile ? "p-1" : "p-0.5"
                               )}
                             >
-                              <Eye className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
+                              <Eye
+                                className={cn(
+                                  "text-muted-foreground",
+                                  isMobile ? "size-3" : "size-2.5"
+                                )}
+                              />
                             </div>
                           )}
                           {model.reasoning && (
                             <div
                               className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50 flex-shrink-0',
-                                isMobile ? 'p-1' : 'p-0.5',
+                                "inline-flex flex-shrink-0 items-center justify-center rounded bg-secondary/50",
+                                isMobile ? "p-1" : "p-0.5"
                               )}
                             >
-                              <Brain className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
+                              <Brain
+                                className={cn(
+                                  "text-muted-foreground",
+                                  isMobile ? "size-3" : "size-2.5"
+                                )}
+                              />
                             </div>
                           )}
                           {model.pdf && (
                             <div
                               className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50 flex-shrink-0',
-                                isMobile ? 'p-1' : 'p-0.5',
+                                "inline-flex flex-shrink-0 items-center justify-center rounded bg-secondary/50",
+                                isMobile ? "p-1" : "p-0.5"
                               )}
                             >
-                              <FilePdf className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
+                              <FilePdf
+                                className={cn(
+                                  "text-muted-foreground",
+                                  isMobile ? "size-3" : "size-2.5"
+                                )}
+                              />
                             </div>
                           )}
                         </div>
@@ -494,75 +641,101 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
 
                   return (
                     <CommandItem
+                      className={cn(
+                        "mb-0.5 flex items-center justify-between rounded-lg px-2 py-1.5 text-xs",
+                        "transition-all duration-200",
+                        "hover:bg-accent",
+                        "data-[selected=true]:bg-accent"
+                      )}
                       key={model.value}
-                      value={model.value}
                       onSelect={(currentValue) => {
                         handleModelChange(currentValue);
                         setOpen(false);
                       }}
-                      className={cn(
-                        'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs',
-                        'transition-all duration-200',
-                        'hover:bg-accent',
-                        'data-[selected=true]:bg-accent',
-                      )}
+                      value={model.value}
                     >
-                      <div className="flex items-center gap-1 min-w-0 flex-1">
+                      <div className="flex min-w-0 flex-1 items-center gap-1">
                         <div
                           className={cn(
-                            'font-medium truncate',
-                            isMobile ? 'text-sm' : 'text-[11px]',
+                            "truncate font-medium",
+                            isMobile ? "text-sm" : "text-[11px]"
                           )}
                         >
                           {!isMobile && searchQuery ? (
                             <span
                               className="inline"
-                              dangerouslySetInnerHTML={{ __html: buildHighlightHtml(model.label) }}
+                              dangerouslySetInnerHTML={{
+                                __html: buildHighlightHtml(model.label),
+                              }}
                             />
                           ) : (
                             <span className="inline">{model.label}</span>
                           )}
                         </div>
                         <Check
-                          className={cn('h-4 w-4 flex-shrink-0', selectedModel === model.value ? 'opacity-100' : 'opacity-0')}
+                          className={cn(
+                            "h-4 w-4 flex-shrink-0",
+                            selectedModel === model.value
+                              ? "opacity-100"
+                              : "opacity-0"
+                          )}
                         />
-                        <div className="flex items-center gap-1 ml-auto flex-shrink-0">
+                        <div className="ml-auto flex flex-shrink-0 items-center gap-1">
                           {model.isNew && (
                             <div
                               className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50',
-                                isMobile ? 'p-1' : 'p-0.5',
+                                "inline-flex items-center justify-center rounded bg-secondary/50",
+                                isMobile ? "p-1" : "p-0.5"
                               )}
                             >
-                              <Sparkles className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
+                              <Sparkles
+                                className={cn(
+                                  "text-muted-foreground",
+                                  isMobile ? "size-3" : "size-2.5"
+                                )}
+                              />
                             </div>
                           )}
                           {model.fast && (
                             <div
                               className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50',
-                                isMobile ? 'p-1' : 'p-0.5',
+                                "inline-flex items-center justify-center rounded bg-secondary/50",
+                                isMobile ? "p-1" : "p-0.5"
                               )}
                             >
-                              <Zap className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
+                              <Zap
+                                className={cn(
+                                  "text-muted-foreground",
+                                  isMobile ? "size-3" : "size-2.5"
+                                )}
+                              />
                             </div>
                           )}
                           {(() => {
-                            const requiresAuth = requiresAuthentication(model.value) && !user;
-                            const requiresPro = requiresProSubscription(model.value) && !isProUser;
+                            const requiresAuth =
+                              requiresAuthentication(model.value) && !user;
+                            const requiresPro =
+                              requiresProSubscription(model.value) &&
+                              !isProUser;
 
                             if (requiresAuth) {
                               return (
-                                <LockIcon className={cn('text-muted-foreground', isMobile ? 'size-4' : 'size-3')} />
+                                <LockIcon
+                                  className={cn(
+                                    "text-muted-foreground",
+                                    isMobile ? "size-4" : "size-3"
+                                  )}
+                                />
                               );
-                            } else if (requiresPro) {
+                            }
+                            if (requiresPro) {
                               return (
                                 <HugeiconsIcon
+                                  className="text-muted-foreground"
+                                  color="currentColor"
                                   icon={Crown02Icon}
                                   size={isMobile ? 14 : 12}
-                                  color="currentColor"
                                   strokeWidth={1.5}
-                                  className="text-muted-foreground"
                                 />
                               );
                             }
@@ -571,31 +744,46 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                           {model.vision && (
                             <div
                               className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50',
-                                isMobile ? 'p-1' : 'p-0.5',
+                                "inline-flex items-center justify-center rounded bg-secondary/50",
+                                isMobile ? "p-1" : "p-0.5"
                               )}
                             >
-                              <Eye className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
+                              <Eye
+                                className={cn(
+                                  "text-muted-foreground",
+                                  isMobile ? "size-3" : "size-2.5"
+                                )}
+                              />
                             </div>
                           )}
                           {model.reasoning && (
                             <div
                               className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50',
-                                isMobile ? 'p-1' : 'p-0.5',
+                                "inline-flex items-center justify-center rounded bg-secondary/50",
+                                isMobile ? "p-1" : "p-0.5"
                               )}
                             >
-                              <Brain className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
+                              <Brain
+                                className={cn(
+                                  "text-muted-foreground",
+                                  isMobile ? "size-3" : "size-2.5"
+                                )}
+                              />
                             </div>
                           )}
                           {model.pdf && (
                             <div
                               className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50',
-                                isMobile ? 'p-1' : 'p-0.5',
+                                "inline-flex items-center justify-center rounded bg-secondary/50",
+                                isMobile ? "p-1" : "p-0.5"
                               )}
                             >
-                              <FilePdf className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
+                              <FilePdf
+                                className={cn(
+                                  "text-muted-foreground",
+                                  isMobile ? "size-3" : "size-2.5"
+                                )}
+                              />
                             </div>
                           )}
                         </div>
@@ -605,221 +793,295 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                 })}
               </CommandGroup>
             ) : (
-              <div className="px-3 py-6 text-xs text-muted-foreground">No model found.</div>
+              <div className="px-3 py-6 text-muted-foreground text-xs">
+                No model found.
+              </div>
             )
           ) : (
-            orderedGroupEntries.map(([category, categoryModels], categoryIndex) => (
-              <CommandGroup key={category}>
-                {categoryIndex > 0 && <div className="my-1 border-t border-border" />}
-                <div
-                  className={cn('font-medium text-muted-foreground px-2 py-1', isMobile ? 'text-xs' : 'text-[10px]')}
-                >
-                  {category} Models
-                </div>
-                {categoryModels.map((model) => {
-                  const requiresAuth = requiresAuthentication(model.value) && !user;
-                  const requiresPro = requiresProSubscription(model.value) && !isProUser;
-                  const isLocked = requiresAuth || requiresPro;
+            orderedGroupEntries.map(
+              ([category, categoryModels], categoryIndex) => (
+                <CommandGroup key={category}>
+                  {categoryIndex > 0 && (
+                    <div className="my-1 border-border border-t" />
+                  )}
+                  <div
+                    className={cn(
+                      "px-2 py-1 font-medium text-muted-foreground",
+                      isMobile ? "text-xs" : "text-[10px]"
+                    )}
+                  >
+                    {category} Models
+                  </div>
+                  {categoryModels.map((model) => {
+                    const requiresAuth =
+                      requiresAuthentication(model.value) && !user;
+                    const requiresPro =
+                      requiresProSubscription(model.value) && !isProUser;
+                    const isLocked = requiresAuth || requiresPro;
 
-                  if (isLocked) {
+                    if (isLocked) {
+                      return (
+                        <div
+                          className={cn(
+                            "mb-0.5 flex cursor-pointer items-center justify-between rounded-lg px-2 py-1.5 text-xs",
+                            "transition-all duration-200",
+                            "opacity-50 hover:bg-accent hover:opacity-70"
+                          )}
+                          key={model.value}
+                          onClick={() => {
+                            if (isSubscriptionLoading) {
+                              return;
+                            }
+
+                            if (requiresAuth) {
+                              setSelectedAuthModel(model);
+                              setShowSignInDialog(true);
+                            } else if (requiresPro && !isProUser) {
+                              setSelectedProModel(model);
+                              setShowUpgradeDialog(true);
+                            }
+                            setOpen(false);
+                          }}
+                        >
+                          <div className="flex min-w-0 flex-1 items-center gap-1">
+                            <div
+                              className={cn(
+                                "flex-1 truncate font-medium",
+                                isMobile ? "text-sm" : "text-[11px]"
+                              )}
+                            >
+                              {!isMobile && searchQuery ? (
+                                <span
+                                  className="inline"
+                                  dangerouslySetInnerHTML={{
+                                    __html: buildHighlightHtml(model.label),
+                                  }}
+                                />
+                              ) : (
+                                <span className="inline">{model.label}</span>
+                              )}
+                            </div>
+                            {requiresAuth ? (
+                              <LockIcon
+                                className={cn(
+                                  "flex-shrink-0 text-muted-foreground",
+                                  isMobile ? "size-3.5" : "size-3"
+                                )}
+                              />
+                            ) : (
+                              <HugeiconsIcon
+                                className="flex-shrink-0 text-muted-foreground"
+                                color="currentColor"
+                                icon={Crown02Icon}
+                                size={isMobile ? 14 : 12}
+                                strokeWidth={1.5}
+                              />
+                            )}
+                            {model.vision && (
+                              <div
+                                className={cn(
+                                  "inline-flex flex-shrink-0 items-center justify-center rounded bg-secondary/50",
+                                  isMobile ? "p-1" : "p-0.5"
+                                )}
+                              >
+                                <Eye
+                                  className={cn(
+                                    "text-muted-foreground",
+                                    isMobile ? "size-3" : "size-2.5"
+                                  )}
+                                />
+                              </div>
+                            )}
+                            {model.reasoning && (
+                              <div
+                                className={cn(
+                                  "inline-flex flex-shrink-0 items-center justify-center rounded bg-secondary/50",
+                                  isMobile ? "p-1" : "p-0.5"
+                                )}
+                              >
+                                <Brain
+                                  className={cn(
+                                    "text-muted-foreground",
+                                    isMobile ? "size-3" : "size-2.5"
+                                  )}
+                                />
+                              </div>
+                            )}
+                            {model.pdf && (
+                              <div
+                                className={cn(
+                                  "inline-flex flex-shrink-0 items-center justify-center rounded bg-secondary/50",
+                                  isMobile ? "p-1" : "p-0.5"
+                                )}
+                              >
+                                <FilePdf
+                                  className={cn(
+                                    "text-muted-foreground",
+                                    isMobile ? "size-3" : "size-2.5"
+                                  )}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    }
+
                     return (
-                      <div
-                        key={model.value}
+                      <CommandItem
                         className={cn(
-                          'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs cursor-pointer',
-                          'transition-all duration-200',
-                          'opacity-50 hover:opacity-70 hover:bg-accent',
+                          "mb-0.5 flex items-center justify-between rounded-lg px-2 py-1.5 text-xs",
+                          "transition-all duration-200",
+                          "hover:bg-accent",
+                          "data-[selected=true]:bg-accent"
                         )}
-                        onClick={() => {
-                          if (isSubscriptionLoading) {
-                            return;
-                          }
-
-                          if (requiresAuth) {
-                            setSelectedAuthModel(model);
-                            setShowSignInDialog(true);
-                          } else if (requiresPro && !isProUser) {
-                            setSelectedProModel(model);
-                            setShowUpgradeDialog(true);
-                          }
+                        key={model.value}
+                        onSelect={(currentValue) => {
+                          handleModelChange(currentValue);
                           setOpen(false);
                         }}
+                        value={model.value}
                       >
-                        <div className="flex items-center gap-1 min-w-0 flex-1">
+                        <div className="flex min-w-0 flex-1 items-center gap-1">
                           <div
                             className={cn(
-                              'font-medium truncate flex-1',
-                              isMobile ? 'text-sm' : 'text-[11px]',
+                              "truncate font-medium",
+                              isMobile ? "text-sm" : "text-[11px]"
                             )}
                           >
                             {!isMobile && searchQuery ? (
                               <span
                                 className="inline"
-                                dangerouslySetInnerHTML={{ __html: buildHighlightHtml(model.label) }}
+                                dangerouslySetInnerHTML={{
+                                  __html: buildHighlightHtml(model.label),
+                                }}
                               />
                             ) : (
                               <span className="inline">{model.label}</span>
                             )}
                           </div>
-                          {requiresAuth ? (
-                            <LockIcon className={cn('text-muted-foreground flex-shrink-0', isMobile ? 'size-3.5' : 'size-3')} />
-                          ) : (
-                            <HugeiconsIcon
-                              icon={Crown02Icon}
-                              size={isMobile ? 14 : 12}
-                              color="currentColor"
-                              strokeWidth={1.5}
-                              className="text-muted-foreground flex-shrink-0"
-                            />
-                          )}
-                          {model.vision && (
-                            <div
-                              className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50 flex-shrink-0',
-                                isMobile ? 'p-1' : 'p-0.5',
-                              )}
-                            >
-                              <Eye className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
-                            </div>
-                          )}
-                          {model.reasoning && (
-                            <div
-                              className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50 flex-shrink-0',
-                                isMobile ? 'p-1' : 'p-0.5',
-                              )}
-                            >
-                              <Brain className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
-                            </div>
-                          )}
-                          {model.pdf && (
-                            <div
-                              className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50 flex-shrink-0',
-                                isMobile ? 'p-1' : 'p-0.5',
-                              )}
-                            >
-                              <FilePdf className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <CommandItem
-                      key={model.value}
-                      value={model.value}
-                      onSelect={(currentValue) => {
-                        handleModelChange(currentValue);
-                        setOpen(false);
-                      }}
-                      className={cn(
-                        'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs',
-                        'transition-all duration-200',
-                        'hover:bg-accent',
-                        'data-[selected=true]:bg-accent',
-                      )}
-                    >
-                      <div className="flex items-center gap-1 min-w-0 flex-1">
-                        <div
-                          className={cn(
-                            'font-medium truncate',
-                            isMobile ? 'text-sm' : 'text-[11px]',
-                          )}
-                        >
-                          {!isMobile && searchQuery ? (
-                            <span
-                              className="inline"
-                              dangerouslySetInnerHTML={{ __html: buildHighlightHtml(model.label) }}
-                            />
-                          ) : (
-                            <span className="inline">{model.label}</span>
-                          )}
-                        </div>
-                        <Check
-                          className={cn('h-4 w-4 flex-shrink-0', selectedModel === model.value ? 'opacity-100' : 'opacity-0')}
-                        />
-                        <div className="flex items-center gap-1 ml-auto flex-shrink-0">
-                          {model.isNew && (
-                            <div
-                              className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50',
-                                isMobile ? 'p-1' : 'p-0.5',
-                              )}
-                            >
-                              <Sparkles className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
-                            </div>
-                          )}
-                          {model.fast && (
-                            <div
-                              className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50',
-                                isMobile ? 'p-1' : 'p-0.5',
-                              )}
-                            >
-                              <Zap className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
-                            </div>
-                          )}
-                          {(() => {
-                            const requiresAuth = requiresAuthentication(model.value) && !user;
-                            const requiresPro = requiresProSubscription(model.value) && !isProUser;
-
-                            if (requiresAuth) {
-                              return (
-                                <LockIcon className={cn('text-muted-foreground', isMobile ? 'size-4' : 'size-3')} />
-                              );
-                            } else if (requiresPro) {
-                              return (
-                                <HugeiconsIcon
-                                  icon={Crown02Icon}
-                                  size={isMobile ? 14 : 12}
-                                  color="currentColor"
-                                  strokeWidth={1.5}
-                                  className="text-muted-foreground"
+                          <Check
+                            className={cn(
+                              "h-4 w-4 flex-shrink-0",
+                              selectedModel === model.value
+                                ? "opacity-100"
+                                : "opacity-0"
+                            )}
+                          />
+                          <div className="ml-auto flex flex-shrink-0 items-center gap-1">
+                            {model.isNew && (
+                              <div
+                                className={cn(
+                                  "inline-flex items-center justify-center rounded bg-secondary/50",
+                                  isMobile ? "p-1" : "p-0.5"
+                                )}
+                              >
+                                <Sparkles
+                                  className={cn(
+                                    "text-muted-foreground",
+                                    isMobile ? "size-3" : "size-2.5"
+                                  )}
                                 />
-                              );
-                            }
-                            return null;
-                          })()}
-                          {model.vision && (
-                            <div
-                              className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50',
-                                isMobile ? 'p-1' : 'p-0.5',
-                              )}
-                            >
-                              <Eye className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
-                            </div>
-                          )}
-                          {model.reasoning && (
-                            <div
-                              className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50',
-                                isMobile ? 'p-1' : 'p-0.5',
-                              )}
-                            >
-                              <Brain className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
-                            </div>
-                          )}
-                          {model.pdf && (
-                            <div
-                              className={cn(
-                                'inline-flex items-center justify-center rounded bg-secondary/50',
-                                isMobile ? 'p-1' : 'p-0.5',
-                              )}
-                            >
-                              <FilePdf className={cn('text-muted-foreground', isMobile ? 'size-3' : 'size-2.5')} />
-                            </div>
-                          )}
+                              </div>
+                            )}
+                            {model.fast && (
+                              <div
+                                className={cn(
+                                  "inline-flex items-center justify-center rounded bg-secondary/50",
+                                  isMobile ? "p-1" : "p-0.5"
+                                )}
+                              >
+                                <Zap
+                                  className={cn(
+                                    "text-muted-foreground",
+                                    isMobile ? "size-3" : "size-2.5"
+                                  )}
+                                />
+                              </div>
+                            )}
+                            {(() => {
+                              const requiresAuth =
+                                requiresAuthentication(model.value) && !user;
+                              const requiresPro =
+                                requiresProSubscription(model.value) &&
+                                !isProUser;
+
+                              if (requiresAuth) {
+                                return (
+                                  <LockIcon
+                                    className={cn(
+                                      "text-muted-foreground",
+                                      isMobile ? "size-4" : "size-3"
+                                    )}
+                                  />
+                                );
+                              }
+                              if (requiresPro) {
+                                return (
+                                  <HugeiconsIcon
+                                    className="text-muted-foreground"
+                                    color="currentColor"
+                                    icon={Crown02Icon}
+                                    size={isMobile ? 14 : 12}
+                                    strokeWidth={1.5}
+                                  />
+                                );
+                              }
+                              return null;
+                            })()}
+                            {model.vision && (
+                              <div
+                                className={cn(
+                                  "inline-flex items-center justify-center rounded bg-secondary/50",
+                                  isMobile ? "p-1" : "p-0.5"
+                                )}
+                              >
+                                <Eye
+                                  className={cn(
+                                    "text-muted-foreground",
+                                    isMobile ? "size-3" : "size-2.5"
+                                  )}
+                                />
+                              </div>
+                            )}
+                            {model.reasoning && (
+                              <div
+                                className={cn(
+                                  "inline-flex items-center justify-center rounded bg-secondary/50",
+                                  isMobile ? "p-1" : "p-0.5"
+                                )}
+                              >
+                                <Brain
+                                  className={cn(
+                                    "text-muted-foreground",
+                                    isMobile ? "size-3" : "size-2.5"
+                                  )}
+                                />
+                              </div>
+                            )}
+                            {model.pdf && (
+                              <div
+                                className={cn(
+                                  "inline-flex items-center justify-center rounded bg-secondary/50",
+                                  isMobile ? "p-1" : "p-0.5"
+                                )}
+                              >
+                                <FilePdf
+                                  className={cn(
+                                    "text-muted-foreground",
+                                    isMobile ? "size-3" : "size-2.5"
+                                  )}
+                                />
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </CommandItem>
-                  );
-                })}
-              </CommandGroup>
-            ))
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              )
+            )
           )}
         </CommandList>
       </Command>
@@ -831,88 +1093,109 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
       React.ComponentPropsWithoutRef<typeof Button>
     >((props, ref) => (
       <Button
-        ref={ref}
-        variant="outline"
-        role="combobox"
         aria-expanded={open}
-        size="sm"
         className={cn(
-          'flex items-center gap-2 px-3 h-7.5 rounded-lg',
-          'border border-border',
-          'bg-background text-foreground',
-          'hover:bg-accent transition-colors',
-          'focus:!outline-none focus:!ring-0',
-          'shadow-none',
-          className,
+          "flex h-7.5 items-center gap-2 rounded-lg px-3",
+          "border border-border",
+          "bg-background text-foreground",
+          "transition-colors hover:bg-accent",
+          "focus:!outline-none focus:!ring-0",
+          "shadow-none",
+          className
         )}
+        ref={ref}
+        role="combobox"
+        size="sm"
+        variant="outline"
         {...props}
       >
-        <HugeiconsIcon icon={CpuIcon} size={24} color="currentColor" strokeWidth={2} />
-        <span className="text-xs font-medium sm:block hidden">{currentModel?.label}</span>
+        <HugeiconsIcon
+          color="currentColor"
+          icon={CpuIcon}
+          size={24}
+          strokeWidth={2}
+        />
+        <span className="hidden font-medium text-xs sm:block">
+          {currentModel?.label}
+        </span>
         <ChevronsUpDown className="h-4 w-4 opacity-50" />
       </Button>
     ));
 
-    TriggerButton.displayName = 'TriggerButton';
+    TriggerButton.displayName = "TriggerButton";
 
     return (
       <>
         {isMobile ? (
-          <Drawer open={open} onOpenChange={setOpen}>
+          <Drawer onOpenChange={setOpen} open={open}>
             <DrawerTrigger asChild>
               <TriggerButton />
             </DrawerTrigger>
-            <DrawerContent className="min-h-[60vh] max-h-[80vh] flex flex-col">
-              <DrawerHeader className="pb-4 flex-shrink-0">
-                <DrawerTitle className="text-left flex items-center gap-2 font-medium font-be-vietnam-pro text-lg">
-                  <HugeiconsIcon icon={CpuIcon} size={22} color="currentColor" strokeWidth={2} />
+            <DrawerContent className="flex max-h-[80vh] min-h-[60vh] flex-col">
+              <DrawerHeader className="flex-shrink-0 pb-4">
+                <DrawerTitle className="flex items-center gap-2 text-left font-be-vietnam-pro font-medium text-lg">
+                  <HugeiconsIcon
+                    color="currentColor"
+                    icon={CpuIcon}
+                    size={22}
+                    strokeWidth={2}
+                  />
                   Select Model
                 </DrawerTitle>
               </DrawerHeader>
-              <div className="flex-1 flex flex-col min-h-0">{renderModelCommandContent()}</div>
+              <div className="flex min-h-0 flex-1 flex-col">
+                {renderModelCommandContent()}
+              </div>
             </DrawerContent>
           </Drawer>
         ) : (
-          <Popover open={open} onOpenChange={setOpen}>
+          <Popover onOpenChange={setOpen} open={open}>
             <PopoverTrigger asChild>
               <TriggerButton />
             </PopoverTrigger>
             <PopoverContent
-              className="w-[90vw] sm:w-[20em] max-w-[20em] p-0 font-sans rounded-lg bg-popover z-40 border !shadow-none"
               align="start"
+              avoidCollisions={true}
+              className="!shadow-none z-40 w-[90vw] max-w-[20em] rounded-lg border bg-popover p-0 font-sans sm:w-[20em]"
+              collisionPadding={8}
               side="bottom"
               sideOffset={4}
-              avoidCollisions={true}
-              collisionPadding={8}
             >
               {renderModelCommandContent()}
             </PopoverContent>
           </Popover>
         )}
 
-        <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
-          <DialogContent className="p-0 overflow-hidden gap-0 bg-background sm:max-w-[450px]" showCloseButton={false}>
+        <Dialog onOpenChange={setShowUpgradeDialog} open={showUpgradeDialog}>
+          <DialogContent
+            className="gap-0 overflow-hidden bg-background p-0 sm:max-w-[450px]"
+            showCloseButton={false}
+          >
             <DialogHeader className="p-2">
-              <div className="relative w-full p-6 rounded-md text-white overflow-hidden">
-                <div className="absolute inset-0 bg-[url('/placeholder.png')] bg-cover bg-center rounded-sm">
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-black/10"></div>
+              <div className="relative w-full overflow-hidden rounded-md p-6 text-white">
+                <div className="absolute inset-0 rounded-sm bg-[url('/placeholder.png')] bg-center bg-cover">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-black/10" />
                 </div>
                 <div className="relative z-10 flex flex-col gap-4">
                   <DialogTitle className="flex items-start gap-3 text-white">
-                    <div className="flex flex-col gap-2 min-w-0 flex-1">
+                    <div className="flex min-w-0 flex-1 flex-col gap-2">
                       {selectedProModel?.label ? (
                         <>
                           <div className="flex flex-col gap-1">
-                            <span className="text-lg sm:text-xl font-bold truncate">{selectedProModel.label}</span>
-                            <div className="flex items-center gap-1 flex-wrap">
+                            <span className="truncate font-bold text-lg sm:text-xl">
+                              {selectedProModel.label}
+                            </span>
+                            <div className="flex flex-wrap items-center gap-1">
                               <span className="text-white/80">requires</span>
                               <ProBadge className="!text-white !bg-white/20 !ring-white/30 font-extralight" />
                             </div>
                           </div>
                         </>
                       ) : (
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <span className="text-xl sm:text-2xl font-be-vietnam-pro">Scira</span>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span className="font-be-vietnam-pro text-xl sm:text-2xl">
+                            Scira
+                          </span>
                           <ProBadge className="!text-white !bg-white/20 !ring-white/30 font-extralight" />
                         </div>
                       )}
@@ -920,20 +1203,22 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                   </DialogTitle>
                   <DialogDescription className="text-white/90">
                     <div className="flex items-center gap-2">
-                      <span className="text-2xl font-bold">${PRICING.PRO_MONTHLY}</span>
+                      <span className="font-bold text-2xl">
+                        ${PRICING.PRO_MONTHLY}
+                      </span>
                       <span className="text-sm text-white/80">/month</span>
                     </div>
-                    <p className="text-sm text-white/80 text-left mt-2">
+                    <p className="mt-2 text-left text-sm text-white/80">
                       {selectedProModel?.label
-                        ? 'Upgrade to access premium AI models and features'
-                        : 'Unlock advanced AI models, unlimited searches, and premium features'}
+                        ? "Upgrade to access premium AI models and features"
+                        : "Unlock advanced AI models, unlimited searches, and premium features"}
                     </p>
                   </DialogDescription>
                   <Button
+                    className="w-full border border-white/20 bg-white/90 font-medium text-black backdrop-blur-md hover:bg-white"
                     onClick={() => {
-                      window.location.href = '/pricing';
+                      window.location.href = "/pricing";
                     }}
-                    className="backdrop-blur-md bg-white/90 border border-white/20 text-black hover:bg-white w-full font-medium"
                   >
                     Upgrade to Pro
                   </Button>
@@ -941,52 +1226,68 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
               </div>
             </DialogHeader>
 
-            <div className="px-6 py-6 flex flex-col gap-4">
+            <div className="flex flex-col gap-4 px-6 py-6">
               <div className="flex items-center gap-4">
-                <CheckIcon className="size-4 text-primary flex-shrink-0" />
+                <CheckIcon className="size-4 flex-shrink-0 text-primary" />
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">Advanced AI Models</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="font-medium text-foreground text-sm">
+                    Advanced AI Models
+                  </p>
+                  <p className="text-muted-foreground text-xs">
                     Access to all AI models including Grok 4, Claude and GPT-5
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-4">
-                <CheckIcon className="size-4 text-primary flex-shrink-0" />
+                <CheckIcon className="size-4 flex-shrink-0 text-primary" />
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">Unlimited Searches</p>
-                  <p className="text-xs text-muted-foreground">No daily limits on your research</p>
+                  <p className="font-medium text-foreground text-sm">
+                    Unlimited Searches
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    No daily limits on your research
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-4">
-                <CheckIcon className="size-4 text-primary flex-shrink-0" />
+                <CheckIcon className="size-4 flex-shrink-0 text-primary" />
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">Prompt Enhancement</p>
-                  <p className="text-xs text-muted-foreground">AI-powered prompt optimization</p>
+                  <p className="font-medium text-foreground text-sm">
+                    Prompt Enhancement
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    AI-powered prompt optimization
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-4">
-                <CheckIcon className="size-4 text-primary flex-shrink-0" />
+                <CheckIcon className="size-4 flex-shrink-0 text-primary" />
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">Scira Lookout</p>
-                  <p className="text-xs text-muted-foreground">Automated search monitoring on your schedule</p>
+                  <p className="font-medium text-foreground text-sm">
+                    Scira Lookout
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    Automated search monitoring on your schedule
+                  </p>
                 </div>
               </div>
 
-              <div className="flex gap-2 w-full items-center mt-4">
-                <div className="flex-1 border-b border-foreground/10" />
-                <p className="text-xs text-foreground/50">Cancel anytime • Secure payment</p>
-                <div className="flex-1 border-b border-foreground/10" />
+              <div className="mt-4 flex w-full items-center gap-2">
+                <div className="flex-1 border-foreground/10 border-b" />
+                <p className="text-foreground/50 text-xs">
+                  Cancel anytime • Secure payment
+                </p>
+                <div className="flex-1 border-foreground/10 border-b" />
               </div>
 
               <Button
-                variant="ghost"
+                className="mt-2 w-full text-muted-foreground hover:text-foreground"
                 onClick={() => setShowUpgradeDialog(false)}
-                className="w-full text-muted-foreground hover:text-foreground mt-2"
                 size="sm"
+                variant="ghost"
               >
                 Not now
               </Button>
@@ -994,49 +1295,63 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
           </DialogContent>
         </Dialog>
 
-        <Dialog open={showSignInDialog} onOpenChange={setShowSignInDialog}>
-          <DialogContent className="sm:max-w-[420px] p-0 gap-0 bg-background" showCloseButton={false}>
+        <Dialog onOpenChange={setShowSignInDialog} open={showSignInDialog}>
+          <DialogContent
+            className="gap-0 bg-background p-0 sm:max-w-[420px]"
+            showCloseButton={false}
+          >
             <DialogHeader className="p-2">
-              <div className="relative w-full p-6 rounded-md text-white overflow-hidden">
-                <div className="absolute inset-0 bg-[url('/placeholder.png')] bg-cover bg-center rounded-sm">
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-black/10"></div>
+              <div className="relative w-full overflow-hidden rounded-md p-6 text-white">
+                <div className="absolute inset-0 rounded-sm bg-[url('/placeholder.png')] bg-center bg-cover">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-black/10" />
                 </div>
                 <div className="relative z-10 flex flex-col gap-4">
                   <DialogTitle className="flex items-center gap-3 text-white">
-                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-white/20">
                       <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
+                        className="h-4 w-4 text-white"
                         fill="none"
                         stroke="currentColor"
-                        strokeWidth="2"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        className="w-4 h-4 text-white"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
                       >
-                        <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                        <rect
+                          height="11"
+                          rx="2"
+                          ry="2"
+                          width="18"
+                          x="3"
+                          y="11"
+                        />
                         <circle cx="12" cy="7" r="4" />
                       </svg>
                     </div>
-                    <div className="flex flex-col gap-1 min-w-0 flex-1">
-                      <span className="text-lg sm:text-xl font-bold">Sign in required</span>
+                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                      <span className="font-bold text-lg sm:text-xl">
+                        Sign in required
+                      </span>
                       {selectedAuthModel?.label && (
-                        <span className="text-sm text-white/70 truncate">for {selectedAuthModel.label}</span>
+                        <span className="truncate text-sm text-white/70">
+                          for {selectedAuthModel.label}
+                        </span>
                       )}
                     </div>
                   </DialogTitle>
                   <DialogDescription className="text-white/90">
-                    <p className="text-sm text-white/80 text-left">
+                    <p className="text-left text-sm text-white/80">
                       {selectedAuthModel?.label
                         ? `${selectedAuthModel.label} requires an account to access`
-                        : 'Create an account to access this AI model and unlock additional features'}
+                        : "Create an account to access this AI model and unlock additional features"}
                     </p>
                   </DialogDescription>
                   <Button
+                    className="w-full border border-white/20 bg-white/90 font-medium text-black backdrop-blur-md hover:bg-white"
                     onClick={() => {
-                      window.location.href = '/sign-in';
+                      window.location.href = "/sign-in";
                     }}
-                    className="backdrop-blur-md bg-white/90 border border-white/20 text-black hover:bg-white w-full font-medium"
                   >
                     Sign in
                   </Button>
@@ -1044,52 +1359,64 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
               </div>
             </DialogHeader>
 
-            <div className="px-6 py-6 flex flex-col gap-4">
+            <div className="flex flex-col gap-4 px-6 py-6">
               <div className="flex items-center gap-4">
-                <CheckIcon className="size-4 text-primary flex-shrink-0" />
+                <CheckIcon className="size-4 flex-shrink-0 text-primary" />
                 <div>
-                  <p className="text-sm font-medium text-foreground">Access better models</p>
-                  <p className="text-xs text-muted-foreground">GPT-5 Nano and more premium models</p>
+                  <p className="font-medium text-foreground text-sm">
+                    Access better models
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    GPT-5 Nano and more premium models
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-4">
-                <CheckIcon className="size-4 text-primary flex-shrink-0" />
+                <CheckIcon className="size-4 flex-shrink-0 text-primary" />
                 <div>
-                  <p className="text-sm font-medium text-foreground">Save search history</p>
-                  <p className="text-xs text-muted-foreground">Keep track of your conversations</p>
+                  <p className="font-medium text-foreground text-sm">
+                    Save search history
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    Keep track of your conversations
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-4">
-                <CheckIcon className="size-4 text-primary flex-shrink-0" />
+                <CheckIcon className="size-4 flex-shrink-0 text-primary" />
                 <div>
-                  <p className="text-sm font-medium text-foreground">Free to start</p>
-                  <p className="text-xs text-muted-foreground">No payment required for basic features</p>
+                  <p className="font-medium text-foreground text-sm">
+                    Free to start
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    No payment required for basic features
+                  </p>
                 </div>
               </div>
 
-              <div className="flex gap-2 w-full items-center mt-4">
-                <div className="flex-1 border-b border-foreground/10" />
+              <div className="mt-4 flex w-full items-center gap-2">
+                <div className="flex-1 border-foreground/10 border-b" />
                 <Button
-                  variant="ghost"
+                  className="px-3 text-muted-foreground text-xs hover:text-foreground"
                   onClick={() => setShowSignInDialog(false)}
                   size="sm"
-                  className="text-muted-foreground hover:text-foreground text-xs px-3"
+                  variant="ghost"
                 >
                   Maybe later
                 </Button>
-                <div className="flex-1 border-b border-foreground/10" />
+                <div className="flex-1 border-foreground/10 border-b" />
               </div>
             </div>
           </DialogContent>
         </Dialog>
       </>
     );
-  },
+  }
 );
 
-ModelSwitcher.displayName = 'ModelSwitcher';
+ModelSwitcher.displayName = "ModelSwitcher";
 
 interface Attachment {
   name: string;
@@ -1099,42 +1426,56 @@ interface Attachment {
   size: number;
 }
 
-const ArrowUpIcon = ({ size = 16 }: { size?: number }) => {
-  return (
-    <svg height={size} strokeLinejoin="round" viewBox="0 0 16 16" width={size} style={{ color: 'currentcolor' }}>
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M8.70711 1.39644C8.31659 1.00592 7.68342 1.00592 7.2929 1.39644L2.21968 6.46966L1.68935 6.99999L2.75001 8.06065L3.28034 7.53032L7.25001 3.56065V14.25V15H8.75001V14.25V3.56065L12.7197 7.53032L13.25 8.06065L14.3107 6.99999L13.7803 6.46966L8.70711 1.39644Z"
-        fill="currentColor"
-      ></path>
-    </svg>
-  );
-};
+const ArrowUpIcon = ({ size = 16 }: { size?: number }) => (
+  <svg
+    height={size}
+    strokeLinejoin="round"
+    style={{ color: "currentcolor" }}
+    viewBox="0 0 16 16"
+    width={size}
+  >
+    <path
+      clipRule="evenodd"
+      d="M8.70711 1.39644C8.31659 1.00592 7.68342 1.00592 7.2929 1.39644L2.21968 6.46966L1.68935 6.99999L2.75001 8.06065L3.28034 7.53032L7.25001 3.56065V14.25V15H8.75001V14.25V3.56065L12.7197 7.53032L13.25 8.06065L14.3107 6.99999L13.7803 6.46966L8.70711 1.39644Z"
+      fill="currentColor"
+      fillRule="evenodd"
+    />
+  </svg>
+);
 
-const StopIcon = ({ size = 16 }: { size?: number }) => {
-  return (
-    <svg height={size} viewBox="0 0 16 16" width={size} style={{ color: 'currentcolor' }}>
-      <path fillRule="evenodd" clipRule="evenodd" d="M3 3H13V13H3V3Z" fill="currentColor"></path>
-    </svg>
-  );
-};
+const StopIcon = ({ size = 16 }: { size?: number }) => (
+  <svg
+    height={size}
+    style={{ color: "currentcolor" }}
+    viewBox="0 0 16 16"
+    width={size}
+  >
+    <path
+      clipRule="evenodd"
+      d="M3 3H13V13H3V3Z"
+      fill="currentColor"
+      fillRule="evenodd"
+    />
+  </svg>
+);
 
 const MAX_FILES = 4;
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
-const MAX_INPUT_CHARS = 50000;
+const MAX_INPUT_CHARS = 50_000;
 
-const fileToDataURL = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
+const fileToDataURL = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => resolve(e.target?.result as string);
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
-};
 
 // Debounce utility function
-const debounce = <T extends (...args: any[]) => any>(func: T, wait: number): T => {
+const debounce = <T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): T => {
   let timeout: NodeJS.Timeout;
   return ((...args: any[]) => {
     clearTimeout(timeout);
@@ -1142,9 +1483,9 @@ const debounce = <T extends (...args: any[]) => any>(func: T, wait: number): T =
   }) as T;
 };
 
-const truncateFilename = (filename: string, maxLength: number = 20) => {
+const truncateFilename = (filename: string, maxLength = 20) => {
   if (filename.length <= maxLength) return filename;
-  const extension = filename.split('.').pop();
+  const extension = filename.split(".").pop();
   const name = filename.substring(0, maxLength - 4);
   return `${name}...${extension}`;
 };
@@ -1155,146 +1496,163 @@ const AttachmentPreview: React.FC<{
   isUploading: boolean;
 }> = React.memo(({ attachment, onRemove, isUploading }) => {
   const formatFileSize = useCallback((bytes: number): string => {
-    if (bytes < 1024) return bytes + ' bytes';
-    else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-    else return (bytes / 1048576).toFixed(1) + ' MB' + (bytes > MAX_FILE_SIZE ? ' (exceeds 5MB limit)' : '');
+    if (bytes < 1024) return bytes + " bytes";
+    if (bytes < 1_048_576) return (bytes / 1024).toFixed(1) + " KB";
+    return (
+      (bytes / 1_048_576).toFixed(1) +
+      " MB" +
+      (bytes > MAX_FILE_SIZE ? " (exceeds 5MB limit)" : "")
+    );
   }, []);
 
   const isUploadingAttachment = useCallback(
-    (attachment: Attachment | UploadingAttachment): attachment is UploadingAttachment => {
-      return 'progress' in attachment;
-    },
-    [],
+    (
+      attachment: Attachment | UploadingAttachment
+    ): attachment is UploadingAttachment => "progress" in attachment,
+    []
   );
 
   const isPdf = useCallback(
     (attachment: Attachment | UploadingAttachment): boolean => {
       if (isUploadingAttachment(attachment)) {
-        return attachment.file.type === 'application/pdf';
+        return attachment.file.type === "application/pdf";
       }
-      return (attachment as Attachment).contentType === 'application/pdf';
+      return (attachment as Attachment).contentType === "application/pdf";
     },
-    [isUploadingAttachment],
+    [isUploadingAttachment]
   );
 
   return (
     <motion.div
-      layout
-      initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.8 }}
-      transition={{ duration: 0.2 }}
       className={cn(
-        'relative flex items-center',
-        'bg-background/90 backdrop-blur-xs',
-        'border border-border/80',
-        'rounded-lg p-2 pr-8 gap-2.5',
-        'shrink-0 z-0',
-        'hover:bg-background',
-        'transition-all duration-200',
-        'group',
-        '!shadow-none',
+        "relative flex items-center",
+        "bg-background/90 backdrop-blur-xs",
+        "border border-border/80",
+        "gap-2.5 rounded-lg p-2 pr-8",
+        "z-0 shrink-0",
+        "hover:bg-background",
+        "transition-all duration-200",
+        "group",
+        "!shadow-none"
       )}
+      exit={{ opacity: 0, scale: 0.8 }}
+      initial={{ opacity: 0, scale: 0.8 }}
+      layout
+      transition={{ duration: 0.2 }}
     >
       {isUploading ? (
-        <div className="w-8 h-8 flex items-center justify-center">
+        <div className="flex h-8 w-8 items-center justify-center">
           <svg
-            className="animate-spin h-4 w-4 text-muted-foreground"
-            xmlns="http://www.w3.org/2000/svg"
+            className="h-4 w-4 animate-spin text-muted-foreground"
             fill="none"
             viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
           >
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
             <path
               className="opacity-75"
-              fill="currentColor"
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            ></path>
+              fill="currentColor"
+            />
           </svg>
         </div>
       ) : isUploadingAttachment(attachment) ? (
-        <div className="w-8 h-8 flex items-center justify-center">
-          <div className="relative w-6 h-6">
-            <svg className="w-full h-full" viewBox="0 0 100 100">
+        <div className="flex h-8 w-8 items-center justify-center">
+          <div className="relative h-6 w-6">
+            <svg className="h-full w-full" viewBox="0 0 100 100">
               <circle
-                className="text-muted stroke-current"
-                strokeWidth="8"
+                className="stroke-current text-muted"
                 cx="50"
                 cy="50"
-                r="40"
                 fill="transparent"
-              ></circle>
-              <circle
-                className="text-primary stroke-current"
+                r="40"
                 strokeWidth="8"
-                strokeLinecap="round"
+              />
+              <circle
+                className="stroke-current text-primary"
                 cx="50"
                 cy="50"
-                r="40"
                 fill="transparent"
+                r="40"
                 strokeDasharray={`${attachment.progress * 251.2}, 251.2`}
+                strokeLinecap="round"
+                strokeWidth="8"
                 transform="rotate(-90 50 50)"
-              ></circle>
+              />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-[10px] font-medium text-foreground">{Math.round(attachment.progress * 100)}%</span>
+              <span className="font-medium text-[10px] text-foreground">
+                {Math.round(attachment.progress * 100)}%
+              </span>
             </div>
           </div>
         </div>
       ) : (
-        <div className="w-8 h-8 rounded-lg overflow-hidden bg-muted shrink-0 ring-1 ring-border flex items-center justify-center">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted ring-1 ring-border">
           {isPdf(attachment) ? (
             <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
+              className="text-red-500"
               fill="none"
+              height="16"
               stroke="currentColor"
-              strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="text-red-500"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+              width="16"
+              xmlns="http://www.w3.org/2000/svg"
             >
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <path d="M9 15v-2h6v2"></path>
-              <path d="M12 18v-5"></path>
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <path d="M9 15v-2h6v2" />
+              <path d="M12 18v-5" />
             </svg>
           ) : (
             <img
-              src={(attachment as Attachment).url}
               alt={`Preview of ${attachment.name}`}
               className="h-full w-full object-cover"
+              src={(attachment as Attachment).url}
             />
           )}
         </div>
       )}
-      <div className="grow min-w-0">
+      <div className="min-w-0 grow">
         {!isUploadingAttachment(attachment) && (
-          <p className="text-xs font-medium truncate text-foreground">{truncateFilename(attachment.name)}</p>
+          <p className="truncate font-medium text-foreground text-xs">
+            {truncateFilename(attachment.name)}
+          </p>
         )}
         <p className="text-[10px] text-muted-foreground">
-          {isUploadingAttachment(attachment) ? 'Uploading...' : formatFileSize((attachment as Attachment).size)}
+          {isUploadingAttachment(attachment)
+            ? "Uploading..."
+            : formatFileSize((attachment as Attachment).size)}
         </p>
       </div>
       <motion.button
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
+        className={cn(
+          "-top-1.5 -right-1.5 absolute m-0 rounded-full p-0.5",
+          "bg-background/90 backdrop-blur-xs",
+          "border border-border/80",
+          "z-20 transition-all duration-200",
+          "opacity-0 group-hover:opacity-100",
+          "scale-75 group-hover:scale-100",
+          "hover:bg-muted/50",
+          "!shadow-none"
+        )}
         onClick={(e) => {
           e.stopPropagation();
           onRemove();
         }}
-        className={cn(
-          'absolute -top-1.5 -right-1.5 p-0.5 m-0 rounded-full',
-          'bg-background/90 backdrop-blur-xs',
-          'border border-border/80',
-          'transition-all duration-200 z-20',
-          'opacity-0 group-hover:opacity-100',
-          'scale-75 group-hover:scale-100',
-          'hover:bg-muted/50',
-          '!shadow-none',
-        )}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
       >
         <X className="h-3 w-3 text-muted-foreground" />
       </motion.button>
@@ -1302,7 +1660,7 @@ const AttachmentPreview: React.FC<{
   );
 });
 
-AttachmentPreview.displayName = 'AttachmentPreview';
+AttachmentPreview.displayName = "AttachmentPreview";
 
 interface UploadingAttachment {
   file: File;
@@ -1321,7 +1679,7 @@ interface FormComponentProps {
   inputRef: React.RefObject<HTMLTextAreaElement>;
   stop: () => void;
   messages: Array<ChatMessage>;
-  sendMessage: UseChatHelpers<ChatMessage>['sendMessage'];
+  sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
   selectedModel: string;
   setSelectedModel: (value: string) => void;
   resetSuggestedQuestions: () => void;
@@ -1329,18 +1687,20 @@ interface FormComponentProps {
   selectedGroup: SearchGroupId;
   setSelectedGroup: React.Dispatch<React.SetStateAction<SearchGroupId>>;
   showExperimentalModels: boolean;
-  status: UseChatHelpers<ChatMessage>['status'];
+  status: UseChatHelpers<ChatMessage>["status"];
   setHasSubmitted: React.Dispatch<React.SetStateAction<boolean>>;
   isLimitBlocked?: boolean;
   onOpenSettings?: (tab?: string) => void;
   selectedConnectors?: ConnectorProvider[];
-  setSelectedConnectors?: React.Dispatch<React.SetStateAction<ConnectorProvider[]>>;
+  setSelectedConnectors?: React.Dispatch<
+    React.SetStateAction<ConnectorProvider[]>
+  >;
 }
 
 interface GroupSelectorProps {
   selectedGroup: SearchGroupId;
   onGroupSelect: (group: SearchGroup) => void;
-  status: UseChatHelpers<ChatMessage>['status'];
+  status: UseChatHelpers<ChatMessage>["status"];
   onOpenSettings?: (tab?: string) => void;
   isProUser?: boolean;
 }
@@ -1360,19 +1720,21 @@ const ConnectorSelector: React.FC<ConnectorSelectorProps> = React.memo(
 
     // Get user's connected connectors
     const { data: connectorsData, isLoading: connectorsLoading } = useQuery({
-      queryKey: ['connectors', user?.id],
+      queryKey: ["connectors", user?.id],
       queryFn: listUserConnectorsAction,
       enabled: !!user && isProUser,
       staleTime: 1000 * 60 * 2,
     });
 
-    const connectedProviders = connectorsData?.connections?.map((conn) => conn.provider) || [];
-    const availableConnectors = Object.entries(CONNECTOR_CONFIGS).filter(([provider]) =>
-      connectedProviders.includes(provider as ConnectorProvider),
+    const connectedProviders =
+      connectorsData?.connections?.map((conn) => conn.provider) || [];
+    const availableConnectors = Object.entries(CONNECTOR_CONFIGS).filter(
+      ([provider]) => connectedProviders.includes(provider as ConnectorProvider)
     );
 
     const selectedCount = selectedConnectors.length;
-    const isAllSelected = selectedConnectors.length === availableConnectors.length;
+    const isAllSelected =
+      selectedConnectors.length === availableConnectors.length;
     const isSingleConnector = availableConnectors.length === 1;
 
     // Auto-select all connectors if none selected (must be before early return to maintain hook order)
@@ -1429,31 +1791,55 @@ const ConnectorSelector: React.FC<ConnectorSelectorProps> = React.memo(
 
     if (isMobile) {
       return (
-        <Dialog open={open} onOpenChange={setOpen}>
-          <Button variant="outline" size="sm" className="h-8 px-2 text-xs" onClick={() => setOpen(true)}>
-            <HugeiconsIcon icon={ConnectIcon} size={16} color="currentColor" strokeWidth={1.5} />
-            <span className="ml-1">{selectedCount > 0 ? `${selectedCount} active` : 'Select'}</span>
+        <Dialog onOpenChange={setOpen} open={open}>
+          <Button
+            className="h-8 px-2 text-xs"
+            onClick={() => setOpen(true)}
+            size="sm"
+            variant="outline"
+          >
+            <HugeiconsIcon
+              color="currentColor"
+              icon={ConnectIcon}
+              size={16}
+              strokeWidth={1.5}
+            />
+            <span className="ml-1">
+              {selectedCount > 0 ? `${selectedCount} active` : "Select"}
+            </span>
           </Button>
           <DialogContent className="sm:max-w-sm">
             <DialogHeader className="pb-1">
               <DialogTitle className="text-sm">Select Connectors</DialogTitle>
             </DialogHeader>
-            <div className="max-h-[60vh] overflow-auto space-y-2">
+            <div className="max-h-[60vh] space-y-2 overflow-auto">
               {availableConnectors.map(([provider, config]) => (
-                <div key={provider} className="flex items-center justify-between p-2 border rounded-md">
+                <div
+                  className="flex items-center justify-between rounded-md border p-2"
+                  key={provider}
+                >
                   <div className="flex items-center gap-2">
-                    <div className="flex items-center justify-center w-4 h-4">
+                    <div className="flex h-4 w-4 items-center justify-center">
                       {(() => {
                         const IconComponent = CONNECTOR_ICONS[config.icon];
-                        return IconComponent ? <IconComponent className="w-4 h-4" /> : null;
+                        return IconComponent ? (
+                          <IconComponent className="h-4 w-4" />
+                        ) : null;
                       })()}
                     </div>
                     <span className="font-medium text-sm">{config.name}</span>
                   </div>
                   <Switch
-                    checked={selectedConnectors.includes(provider as ConnectorProvider)}
-                    onCheckedChange={() => handleConnectorToggle(provider as ConnectorProvider)}
-                    disabled={isSingleConnector && selectedConnectors.includes(provider as ConnectorProvider)}
+                    checked={selectedConnectors.includes(
+                      provider as ConnectorProvider
+                    )}
+                    disabled={
+                      isSingleConnector &&
+                      selectedConnectors.includes(provider as ConnectorProvider)
+                    }
+                    onCheckedChange={() =>
+                      handleConnectorToggle(provider as ConnectorProvider)
+                    }
                   />
                 </div>
               ))}
@@ -1464,30 +1850,49 @@ const ConnectorSelector: React.FC<ConnectorSelectorProps> = React.memo(
     }
 
     return (
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover onOpenChange={setOpen} open={open}>
         <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" className="h-8 px-2 text-xs">
-            <HugeiconsIcon icon={ConnectIcon} size={16} color="currentColor" strokeWidth={1.5} />
-            <span className="ml-1">{selectedCount > 0 ? `${selectedCount} active` : 'Select'}</span>
+          <Button className="h-8 px-2 text-xs" size="sm" variant="outline">
+            <HugeiconsIcon
+              color="currentColor"
+              icon={ConnectIcon}
+              size={16}
+              strokeWidth={1.5}
+            />
+            <span className="ml-1">
+              {selectedCount > 0 ? `${selectedCount} active` : "Select"}
+            </span>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-60 p-2" align="start">
-          <div className="space-y-1 max-h-64 overflow-auto">
+        <PopoverContent align="start" className="w-60 p-2">
+          <div className="max-h-64 space-y-1 overflow-auto">
             {availableConnectors.map(([provider, config]) => (
-              <div key={provider} className="flex items-center justify-between p-2 hover:bg-muted rounded">
+              <div
+                className="flex items-center justify-between rounded p-2 hover:bg-muted"
+                key={provider}
+              >
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center justify-center w-4 h-4">
+                  <div className="flex h-4 w-4 items-center justify-center">
                     {(() => {
                       const IconComponent = CONNECTOR_ICONS[config.icon];
-                      return IconComponent ? <IconComponent className="w-4 h-4" /> : null;
+                      return IconComponent ? (
+                        <IconComponent className="h-4 w-4" />
+                      ) : null;
                     })()}
                   </div>
                   <span className="font-medium text-sm">{config.name}</span>
                 </div>
                 <Switch
-                  checked={selectedConnectors.includes(provider as ConnectorProvider)}
-                  onCheckedChange={() => handleConnectorToggle(provider as ConnectorProvider)}
-                  disabled={isSingleConnector && selectedConnectors.includes(provider as ConnectorProvider)}
+                  checked={selectedConnectors.includes(
+                    provider as ConnectorProvider
+                  )}
+                  disabled={
+                    isSingleConnector &&
+                    selectedConnectors.includes(provider as ConnectorProvider)
+                  }
+                  onCheckedChange={() =>
+                    handleConnectorToggle(provider as ConnectorProvider)
+                  }
                 />
               </div>
             ))}
@@ -1495,46 +1900,55 @@ const ConnectorSelector: React.FC<ConnectorSelectorProps> = React.memo(
         </PopoverContent>
       </Popover>
     );
-  },
+  }
 );
 
-ConnectorSelector.displayName = 'ConnectorSelector';
+ConnectorSelector.displayName = "ConnectorSelector";
 
 const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
   ({ selectedGroup, onGroupSelect, status, onOpenSettings, isProUser }) => {
     const { data: session } = useSession();
     const [open, setOpen] = useState(false);
     const isMobile = useIsMobile();
-    const isExtreme = selectedGroup === 'extreme';
+    const isExtreme = selectedGroup === "extreme";
 
     // Get search provider from localStorage with reactive updates
-    const [searchProvider] = useLocalStorage<SearchProvider>('scira-search-provider', 'parallel');
+    const [searchProvider] = useLocalStorage<SearchProvider>(
+      "scira-search-provider",
+      "parallel"
+    );
 
     // Get dynamic search groups based on the selected search provider
-    const dynamicSearchGroups = useMemo(() => getSearchGroups(searchProvider), [searchProvider]);
+    const dynamicSearchGroups = useMemo(
+      () => getSearchGroups(searchProvider),
+      [searchProvider]
+    );
 
     // Memoize visible groups calculation
     const visibleGroups = useMemo(
       () =>
         dynamicSearchGroups.filter((group) => {
           if (!group.show) return false;
-          if ('requireAuth' in group && group.requireAuth && !session) return false;
+          if ("requireAuth" in group && group.requireAuth && !session)
+            return false;
           // Don't filter out Pro-only groups, show them with Pro indicator
-          if (group.id === 'extreme') return false; // Exclude extreme from dropdown
+          if (group.id === "extreme") return false; // Exclude extreme from dropdown
           return true;
         }),
-      [dynamicSearchGroups, session],
+      [dynamicSearchGroups, session]
     );
 
     const selectedGroupData = useMemo(
       () => visibleGroups.find((group) => group.id === selectedGroup),
-      [visibleGroups, selectedGroup],
+      [visibleGroups, selectedGroup]
     );
 
     const handleToggleExtreme = useCallback(() => {
       if (isExtreme) {
         // Switch back to web mode
-        const webGroup = dynamicSearchGroups.find((group) => group.id === 'web');
+        const webGroup = dynamicSearchGroups.find(
+          (group) => group.id === "web"
+        );
         if (webGroup) {
           onGroupSelect(webGroup);
         }
@@ -1542,12 +1956,14 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
         // Check if user is authenticated before allowing extreme mode
         if (!session) {
           // Redirect to sign in page
-          window.location.href = '/sign-in';
+          window.location.href = "/sign-in";
           return;
         }
 
         // Switch to extreme mode
-        const extremeGroup = dynamicSearchGroups.find((group) => group.id === 'extreme');
+        const extremeGroup = dynamicSearchGroups.find(
+          (group) => group.id === "extreme"
+        );
         if (extremeGroup) {
           onGroupSelect(extremeGroup);
         }
@@ -1561,26 +1977,38 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
 
         if (selectedGroup) {
           // Check if this is a Pro-only group and user is not Pro
-          if ('requirePro' in selectedGroup && selectedGroup.requirePro && !isProUser && onOpenSettings) {
+          if (
+            "requirePro" in selectedGroup &&
+            selectedGroup.requirePro &&
+            !isProUser &&
+            onOpenSettings
+          ) {
             // Open settings to upgrade
-            onOpenSettings('subscription');
+            onOpenSettings("subscription");
             setOpen(false);
             return;
           }
 
           // Check if connectors group is selected but no connectors are connected
-          if (selectedGroup.id === 'connectors' && session && onOpenSettings && isProUser) {
+          if (
+            selectedGroup.id === "connectors" &&
+            session &&
+            onOpenSettings &&
+            isProUser
+          ) {
             try {
-              const { listUserConnectorsAction } = await import('@/app/actions');
+              const { listUserConnectorsAction } = await import(
+                "@/app/actions"
+              );
               const result = await listUserConnectorsAction();
               if (result.success && result.connections.length === 0) {
                 // No connectors connected, open settings dialog to connectors tab
-                onOpenSettings('connectors');
+                onOpenSettings("connectors");
                 setOpen(false);
                 return;
               }
             } catch (error) {
-              console.error('Error checking connectors:', error);
+              console.error("Error checking connectors:", error);
               // If there's an error, still allow group selection
             }
           }
@@ -1589,7 +2017,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
           setOpen(false);
         }
       },
-      [visibleGroups, isProUser, onOpenSettings, session, onGroupSelect],
+      [visibleGroups, isProUser, onOpenSettings, session, onGroupSelect]
     );
 
     // Handle opening the dropdown/drawer
@@ -1597,7 +2025,9 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
       (newOpen: boolean) => {
         if (newOpen && isExtreme) {
           // If trying to open in extreme mode, switch back to web mode instead
-          const webGroup = dynamicSearchGroups.find((group) => group.id === 'web');
+          const webGroup = dynamicSearchGroups.find(
+            (group) => group.id === "web"
+          );
           if (webGroup) {
             onGroupSelect(webGroup);
           }
@@ -1605,14 +2035,16 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
         }
         setOpen(newOpen);
       },
-      [isExtreme, onGroupSelect, dynamicSearchGroups],
+      [isExtreme, onGroupSelect, dynamicSearchGroups]
     );
 
     // Handle group selector button click (mobile only)
     const handleGroupSelectorClick = useCallback(() => {
       if (isExtreme) {
         // Switch back to web mode when clicking groups in extreme mode
-        const webGroup = dynamicSearchGroups.find((group) => group.id === 'web');
+        const webGroup = dynamicSearchGroups.find(
+          (group) => group.id === "web"
+        );
         if (webGroup) {
           onGroupSelect(webGroup);
         }
@@ -1627,48 +2059,66 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
         className="rounded-lg"
         filter={(value, search) => {
           const group = visibleGroups.find((g) => g.id === value);
-          if (!group || !search) return 1;
+          if (!(group && search)) return 1;
 
           const searchTerm = search.toLowerCase();
-          const searchableFields = [group.name, group.description, group.id].join(' ').toLowerCase();
+          const searchableFields = [group.name, group.description, group.id]
+            .join(" ")
+            .toLowerCase();
 
           return searchableFields.includes(searchTerm) ? 1 : 0;
         }}
       >
-        <CommandInput placeholder="Search modes..." className="h-9" />
+        <CommandInput className="h-9" placeholder="Search modes..." />
         <CommandEmpty>No search mode found.</CommandEmpty>
         <CommandList className="max-h-[240px]">
           <CommandGroup>
-            <div className="px-2 py-1 text-[10px] font-medium text-muted-foreground">Search Mode</div>
+            <div className="px-2 py-1 font-medium text-[10px] text-muted-foreground">
+              Search Mode
+            </div>
             {visibleGroups.map((group) => (
               <CommandItem
-                key={group.id}
-                value={group.id}
-                onSelect={(value) => handleGroupSelect(value)}
                 className={cn(
-                  'flex items-center justify-between px-2 py-2 mb-0.5 rounded-lg text-xs',
-                  'transition-all duration-200',
-                  'hover:bg-accent',
-                  'data-[selected=true]:bg-accent',
+                  "mb-0.5 flex items-center justify-between rounded-lg px-2 py-2 text-xs",
+                  "transition-all duration-200",
+                  "hover:bg-accent",
+                  "data-[selected=true]:bg-accent"
                 )}
+                key={group.id}
+                onSelect={(value) => handleGroupSelect(value)}
+                value={group.id}
               >
-                <div className="flex items-center gap-2 min-w-0 flex-1 pr-4">
-                  <HugeiconsIcon icon={group.icon} size={30} color="currentColor" strokeWidth={2} />
-                  <div className="flex flex-col min-w-0 flex-1">
+                <div className="flex min-w-0 flex-1 items-center gap-2 pr-4">
+                  <HugeiconsIcon
+                    color="currentColor"
+                    icon={group.icon}
+                    size={30}
+                    strokeWidth={2}
+                  />
+                  <div className="flex min-w-0 flex-1 flex-col">
                     <div className="flex items-center gap-1">
-                      <span className="font-medium truncate text-[11px] text-foreground">{group.name}</span>
-                      {'requirePro' in group && group.requirePro && !isProUser && (
-                        <span className="inline-flex items-center px-1 py-0.5 rounded text-[8px] font-medium bg-primary/10 text-primary border border-primary/20">
-                          PRO
-                        </span>
-                      )}
+                      <span className="truncate font-medium text-[11px] text-foreground">
+                        {group.name}
+                      </span>
+                      {"requirePro" in group &&
+                        group.requirePro &&
+                        !isProUser && (
+                          <span className="inline-flex items-center rounded border border-primary/20 bg-primary/10 px-1 py-0.5 font-medium text-[8px] text-primary">
+                            PRO
+                          </span>
+                        )}
                     </div>
-                    <div className="text-[9px] text-muted-foreground truncate leading-tight text-wrap!">
+                    <div className="truncate text-[9px] text-muted-foreground text-wrap! leading-tight">
                       {group.description}
                     </div>
                   </div>
                 </div>
-                <Check className={cn('ml-auto h-4 w-4', selectedGroup === group.id ? 'opacity-100' : 'opacity-0')} />
+                <Check
+                  className={cn(
+                    "ml-auto h-4 w-4",
+                    selectedGroup === group.id ? "opacity-100" : "opacity-0"
+                  )}
+                />
               </CommandItem>
             ))}
           </CommandGroup>
@@ -1679,83 +2129,104 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
     return (
       <div className="flex items-center">
         {/* Toggle Switch Container */}
-        <div className="flex items-center bg-background border border-accent/50 rounded-lg !gap-1 !py-1 !px-0.75 h-8">
+        <div className="!gap-1 !py-1 !px-0.75 flex h-8 items-center rounded-lg border border-accent/50 bg-background">
           {/* Group Selector Side - Conditional Rendering for Mobile/Desktop */}
           {isMobile ? (
-            <Drawer open={open} onOpenChange={handleOpenChange}>
+            <Drawer onOpenChange={handleOpenChange} open={open}>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <DrawerTrigger asChild>
                     <Button
-                      variant="ghost"
-                      role="combobox"
                       aria-expanded={open}
-                      size="sm"
-                      onClick={handleGroupSelectorClick}
                       className={cn(
-                        'flex items-center gap-1.5 !m-0 !px-1.5 h-6 !rounded-md transition-all cursor-pointer',
-                        !isExtreme
-                          ? 'bg-accent text-foreground hover:bg-accent/80'
-                          : 'text-muted-foreground hover:bg-accent',
+                        "!m-0 !px-1.5 !rounded-md flex h-6 cursor-pointer items-center gap-1.5 transition-all",
+                        isExtreme
+                          ? "text-muted-foreground hover:bg-accent"
+                          : "bg-accent text-foreground hover:bg-accent/80"
                       )}
+                      onClick={handleGroupSelectorClick}
+                      role="combobox"
+                      size="sm"
+                      variant="ghost"
                     >
                       {selectedGroupData && !isExtreme && (
                         <>
-                          <HugeiconsIcon icon={selectedGroupData.icon} size={30} color="currentColor" strokeWidth={2} />
+                          <HugeiconsIcon
+                            color="currentColor"
+                            icon={selectedGroupData.icon}
+                            size={30}
+                            strokeWidth={2}
+                          />
                           <ChevronsUpDown className="size-4.5 opacity-50" />
                         </>
                       )}
                       {isExtreme && (
                         <>
-                          <HugeiconsIcon icon={GlobalSearchIcon} size={30} color="currentColor" strokeWidth={2} />
+                          <HugeiconsIcon
+                            color="currentColor"
+                            icon={GlobalSearchIcon}
+                            size={30}
+                            strokeWidth={2}
+                          />
                         </>
                       )}
                     </Button>
                   </DrawerTrigger>
                 </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-[220px] p-2">
+                <TooltipContent className="max-w-[220px] p-2" side="bottom">
                   {isExtreme ? (
                     <p className="text-xs">Switch back to search modes</p>
                   ) : selectedGroupData ? (
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-1.5">
-                        <div className="p-0.5 rounded bg-primary">
+                        <div className="rounded bg-primary p-0.5">
                           <HugeiconsIcon
+                            className="text-primary-foreground"
                             icon={selectedGroupData.icon}
                             size={14}
-                            className="text-primary-foreground"
                             strokeWidth={2}
                           />
                         </div>
                         <div className="flex items-center gap-1">
-                          <p className="font-semibold text-xs">{selectedGroupData.name} Active</p>
-                          {'requirePro' in selectedGroupData && selectedGroupData.requirePro && !isProUser && (
-                            <span className="inline-flex items-center px-1 py-0.5 rounded text-[9px] font-medium bg-primary/10 text-primary border border-primary/20">
-                              PRO
-                            </span>
-                          )}
+                          <p className="font-semibold text-xs">
+                            {selectedGroupData.name} Active
+                          </p>
+                          {"requirePro" in selectedGroupData &&
+                            selectedGroupData.requirePro &&
+                            !isProUser && (
+                              <span className="inline-flex items-center rounded border border-primary/20 bg-primary/10 px-1 py-0.5 font-medium text-[9px] text-primary">
+                                PRO
+                              </span>
+                            )}
                         </div>
                       </div>
-                      <p className="text-[11px] leading-snug text-secondary">
+                      <p className="text-[11px] text-secondary leading-snug">
                         {selectedGroupData.description}
                       </p>
                       <p className="text-[10px] text-accent italic">
                         Click to switch search mode
                       </p>
-                      {'requirePro' in selectedGroupData && selectedGroupData.requirePro && !isProUser && (
-                        <div className="pt-1 border-t border-border/50">
-                          <a
-                            href="/pricing"
-                            className="flex items-start gap-1 rounded py-1 transition-colors cursor-pointer group"
-                          >
-                            <HugeiconsIcon icon={Crown02Icon} size={14} strokeWidth={2} className="flex-shrink-0 text-secondary group-hover:scale-110 transition-transform" />
-                            <span className="font-semibold text-[11px] text-secondary group-hover:underline flex items-center gap-0.5">
-                              Unlock with Pro
-                              <ArrowUpRight className="size-3 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                            </span>
-                          </a>
-                        </div>
-                      )}
+                      {"requirePro" in selectedGroupData &&
+                        selectedGroupData.requirePro &&
+                        !isProUser && (
+                          <div className="border-border/50 border-t pt-1">
+                            <a
+                              className="group flex cursor-pointer items-start gap-1 rounded py-1 transition-colors"
+                              href="/pricing"
+                            >
+                              <HugeiconsIcon
+                                className="flex-shrink-0 text-secondary transition-transform group-hover:scale-110"
+                                icon={Crown02Icon}
+                                size={14}
+                                strokeWidth={2}
+                              />
+                              <span className="flex items-center gap-0.5 font-semibold text-[11px] text-secondary group-hover:underline">
+                                Unlock with Pro
+                                <ArrowUpRight className="group-hover:-translate-y-0.5 size-3 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100" />
+                              </span>
+                            </a>
+                          </div>
+                        )}
                     </div>
                   ) : (
                     <p className="text-xs">Choose search mode</p>
@@ -1763,39 +2234,54 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                 </TooltipContent>
               </Tooltip>
               <DrawerContent className="max-h-[80vh]">
-                <DrawerHeader className="text-left pb-4">
+                <DrawerHeader className="pb-4 text-left">
                   <DrawerTitle>Choose Search Mode</DrawerTitle>
                 </DrawerHeader>
-                <div className="px-4 pb-6 max-h-[calc(80vh-100px)] overflow-y-auto">
+                <div className="max-h-[calc(80vh-100px)] overflow-y-auto px-4 pb-6">
                   <div className="space-y-2">
                     {visibleGroups.map((group) => (
                       <button
+                        className={cn(
+                          "flex w-full items-center justify-between rounded-lg p-4 text-left transition-all",
+                          "border border-border hover:bg-accent",
+                          selectedGroup === group.id
+                            ? "border-primary/20 bg-accent"
+                            : "bg-background"
+                        )}
                         key={group.id}
                         onClick={() => handleGroupSelect(group.id)}
-                        className={cn(
-                          'w-full flex items-center justify-between p-4 rounded-lg text-left transition-all',
-                          'border border-border hover:bg-accent',
-                          selectedGroup === group.id ? 'bg-accent border-primary/20' : 'bg-background',
-                        )}
                       >
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <HugeiconsIcon icon={group.icon} size={24} color="currentColor" strokeWidth={2} />
-                          <div className="flex flex-col min-w-0 flex-1">
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
+                          <HugeiconsIcon
+                            color="currentColor"
+                            icon={group.icon}
+                            size={24}
+                            strokeWidth={2}
+                          />
+                          <div className="flex min-w-0 flex-1 flex-col">
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-sm text-foreground">{group.name}</span>
-                              {'requirePro' in group && group.requirePro && !isProUser && (
-                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                                  PRO
-                                </span>
-                              )}
+                              <span className="font-medium text-foreground text-sm">
+                                {group.name}
+                              </span>
+                              {"requirePro" in group &&
+                                group.requirePro &&
+                                !isProUser && (
+                                  <span className="inline-flex items-center rounded border border-primary/20 bg-primary/10 px-2 py-1 font-medium text-primary text-xs">
+                                    PRO
+                                  </span>
+                                )}
                             </div>
-                            <div className="text-xs text-muted-foreground mt-0.5">{group.description}</div>
+                            <div className="mt-0.5 text-muted-foreground text-xs">
+                              {group.description}
+                            </div>
                           </div>
                         </div>
                         <Check
                           className={cn(
-                            'ml-3 h-5 w-5 shrink-0',
-                            selectedGroup === group.id ? 'opacity-100' : 'opacity-0',
+                            "ml-3 h-5 w-5 shrink-0",
+                            selectedGroup === group.id
+                              ? "opacity-100"
+                              : "opacity-0"
                           )}
                         />
                       </button>
@@ -1805,79 +2291,100 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
               </DrawerContent>
             </Drawer>
           ) : (
-            <Popover open={open} onOpenChange={handleOpenChange}>
+            <Popover onOpenChange={handleOpenChange} open={open}>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <PopoverTrigger asChild>
                     <Button
-                      variant="ghost"
-                      role="combobox"
                       aria-expanded={open}
-                      size="sm"
                       className={cn(
-                        'flex items-center gap-1.5 !m-0 !px-1.5 h-6 !rounded-md transition-all cursor-pointer',
-                        !isExtreme
-                          ? 'bg-accent text-foreground hover:bg-accent/80'
-                          : 'text-muted-foreground hover:bg-accent',
+                        "!m-0 !px-1.5 !rounded-md flex h-6 cursor-pointer items-center gap-1.5 transition-all",
+                        isExtreme
+                          ? "text-muted-foreground hover:bg-accent"
+                          : "bg-accent text-foreground hover:bg-accent/80"
                       )}
+                      role="combobox"
+                      size="sm"
+                      variant="ghost"
                     >
                       {selectedGroupData && !isExtreme && (
                         <>
-                          <HugeiconsIcon icon={selectedGroupData.icon} size={30} color="currentColor" strokeWidth={2} />
+                          <HugeiconsIcon
+                            color="currentColor"
+                            icon={selectedGroupData.icon}
+                            size={30}
+                            strokeWidth={2}
+                          />
                           <ChevronsUpDown className="size-4.5 opacity-50" />
                         </>
                       )}
                       {isExtreme && (
                         <>
-                          <HugeiconsIcon icon={GlobalSearchIcon} size={30} color="currentColor" strokeWidth={2} />
+                          <HugeiconsIcon
+                            color="currentColor"
+                            icon={GlobalSearchIcon}
+                            size={30}
+                            strokeWidth={2}
+                          />
                         </>
                       )}
                     </Button>
                   </PopoverTrigger>
                 </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-[220px] p-2">
+                <TooltipContent className="max-w-[220px] p-2" side="bottom">
                   {isExtreme ? (
                     <p className="text-xs">Switch back to search modes</p>
                   ) : selectedGroupData ? (
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-1.5">
-                        <div className="p-0.5 rounded bg-primary">
+                        <div className="rounded bg-primary p-0.5">
                           <HugeiconsIcon
+                            className="text-primary-foreground"
                             icon={selectedGroupData.icon}
                             size={14}
-                            className="text-primary-foreground"
                             strokeWidth={2}
                           />
                         </div>
                         <div className="flex items-center gap-1">
-                          <p className="font-semibold text-xs">{selectedGroupData.name} Active</p>
-                          {'requirePro' in selectedGroupData && selectedGroupData.requirePro && !isProUser && (
-                            <span className="inline-flex items-center px-1 py-0.5 rounded text-[9px] font-medium bg-primary/10 text-primary border border-primary/20">
-                              PRO
-                            </span>
-                          )}
+                          <p className="font-semibold text-xs">
+                            {selectedGroupData.name} Active
+                          </p>
+                          {"requirePro" in selectedGroupData &&
+                            selectedGroupData.requirePro &&
+                            !isProUser && (
+                              <span className="inline-flex items-center rounded border border-primary/20 bg-primary/10 px-1 py-0.5 font-medium text-[9px] text-primary">
+                                PRO
+                              </span>
+                            )}
                         </div>
                       </div>
-                      <p className="text-[11px] leading-snug text-secondary">
+                      <p className="text-[11px] text-secondary leading-snug">
                         {selectedGroupData.description}
                       </p>
                       <p className="text-[10px] text-accent italic">
                         Click to switch search mode
                       </p>
-                      {'requirePro' in selectedGroupData && selectedGroupData.requirePro && !isProUser && (
-                        <div className="pt-1 border-t border-border/50">
-                          <a
-                            href="/pricing"
-                            className="flex items-start gap-1 rounded py-1 transition-colors cursor-pointer group"
-                          >
-                            <HugeiconsIcon icon={Crown02Icon} size={14} strokeWidth={2} className="flex-shrink-0 text-secondary group-hover:scale-110 transition-transform" />
-                            <span className="font-semibold text-[11px] text-secondary group-hover:underline flex items-center gap-0.5">
-                              Unlock with Pro
-                              <ArrowUpRight className="size-3 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                            </span>
-                          </a>
-                        </div>
-                      )}
+                      {"requirePro" in selectedGroupData &&
+                        selectedGroupData.requirePro &&
+                        !isProUser && (
+                          <div className="border-border/50 border-t pt-1">
+                            <a
+                              className="group flex cursor-pointer items-start gap-1 rounded py-1 transition-colors"
+                              href="/pricing"
+                            >
+                              <HugeiconsIcon
+                                className="flex-shrink-0 text-secondary transition-transform group-hover:scale-110"
+                                icon={Crown02Icon}
+                                size={14}
+                                strokeWidth={2}
+                              />
+                              <span className="flex items-center gap-0.5 font-semibold text-[11px] text-secondary group-hover:underline">
+                                Unlock with Pro
+                                <ArrowUpRight className="group-hover:-translate-y-0.5 size-3 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100" />
+                              </span>
+                            </a>
+                          </div>
+                        )}
                     </div>
                   ) : (
                     <p className="text-xs">Choose search mode</p>
@@ -1885,12 +2392,12 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                 </TooltipContent>
               </Tooltip>
               <PopoverContent
-                className="w-[90vw] sm:w-[14em] max-w-[14em] p-0 font-sans rounded-lg bg-popover z-50 border !shadow-none"
                 align="start"
+                avoidCollisions={true}
+                className="!shadow-none z-50 w-[90vw] max-w-[14em] rounded-lg border bg-popover p-0 font-sans sm:w-[14em]"
+                collisionPadding={8}
                 side="bottom"
                 sideOffset={4}
-                avoidCollisions={true}
-                collisionPadding={8}
               >
                 <GroupSelectionContent />
               </PopoverContent>
@@ -1901,54 +2408,64 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleToggleExtreme}
                 className={cn(
-                  'flex items-center gap-1.5 px-3 h-6 rounded-md transition-all',
+                  "flex h-6 items-center gap-1.5 rounded-md px-3 transition-all",
                   isExtreme
-                    ? 'bg-accent text-foreground hover:bg-accent/80'
-                    : !session
-                      ? 'text-muted-foreground/50 cursor-pointer'
-                      : 'text-muted-foreground hover:bg-accent',
+                    ? "bg-accent text-foreground hover:bg-accent/80"
+                    : session
+                      ? "text-muted-foreground hover:bg-accent"
+                      : "cursor-pointer text-muted-foreground/50"
                 )}
+                onClick={handleToggleExtreme}
+                size="sm"
+                variant="ghost"
               >
-                <HugeiconsIcon icon={AtomicPowerIcon} size={30} color="currentColor" strokeWidth={2} />
+                <HugeiconsIcon
+                  color="currentColor"
+                  icon={AtomicPowerIcon}
+                  size={30}
+                  strokeWidth={2}
+                />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="max-w-[220px] p-2">
+            <TooltipContent className="max-w-[220px] p-2" side="bottom">
               <div className="space-y-1.5">
                 <div className="flex items-center gap-1.5">
-                  <div className="p-0.5 rounded bg-primary">
+                  <div className="rounded bg-primary p-0.5">
                     <HugeiconsIcon
+                      className="text-primary-foreground"
                       icon={AtomicPowerIcon}
                       size={14}
-                      className="text-primary-foreground"
                       strokeWidth={2}
                     />
                   </div>
                   <p className="font-semibold text-xs">
                     {isExtreme
-                      ? 'Extreme Search Active'
+                      ? "Extreme Search Active"
                       : session
-                        ? 'Extreme Search'
-                        : 'Sign in Required'
-                    }
+                        ? "Extreme Search"
+                        : "Sign in Required"}
                   </p>
                 </div>
-                <p className="text-[11px] leading-snug text-secondary">
-                  Deep research with multiple sources and in-depth analysis with 3x sources
+                <p className="text-[11px] text-secondary leading-snug">
+                  Deep research with multiple sources and in-depth analysis with
+                  3x sources
                 </p>
                 {!isProUser && (
-                  <div className="pt-1 border-t border-border/50">
+                  <div className="border-border/50 border-t pt-1">
                     <a
+                      className="group flex cursor-pointer items-start gap-1 rounded py-1 transition-colors"
                       href="/pricing"
-                      className="flex items-start gap-1 rounded py-1 transition-colors cursor-pointer group"
                     >
-                      <HugeiconsIcon icon={Crown02Icon} size={14} strokeWidth={2} className="flex-shrink-0 text-secondary group-hover:scale-110 transition-transform" />
-                      <span className="font-semibold text-[11px] text-secondary group-hover:underline flex items-center gap-0.5">
+                      <HugeiconsIcon
+                        className="flex-shrink-0 text-secondary transition-transform group-hover:scale-110"
+                        icon={Crown02Icon}
+                        size={14}
+                        strokeWidth={2}
+                      />
+                      <span className="flex items-center gap-0.5 font-semibold text-[11px] text-secondary group-hover:underline">
                         Get unlimited searches with Pro
-                        <ArrowUpRight className="size-3 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                        <ArrowUpRight className="group-hover:-translate-y-0.5 size-3 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100" />
                       </span>
                     </a>
                   </div>
@@ -1959,10 +2476,10 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
         </div>
       </div>
     );
-  },
+  }
 );
 
-GroupModeToggle.displayName = 'GroupModeToggle';
+GroupModeToggle.displayName = "GroupModeToggle";
 
 const FormComponent: React.FC<FormComponentProps> = ({
   chatId,
@@ -2010,17 +2527,29 @@ const FormComponent: React.FC<FormComponentProps> = ({
   const isMobile = useIsMobile();
 
   const isProUser = useMemo(
-    () => user?.isProUser || (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active'),
-    [user?.isProUser, subscriptionData?.hasSubscription, subscriptionData?.subscription?.status],
+    () =>
+      user?.isProUser ||
+      (subscriptionData?.hasSubscription &&
+        subscriptionData?.subscription?.status === "active"),
+    [
+      user?.isProUser,
+      subscriptionData?.hasSubscription,
+      subscriptionData?.subscription?.status,
+    ]
   );
 
-  const isProcessing = useMemo(() => status === 'submitted' || status === 'streaming', [status]);
+  const isProcessing = useMemo(
+    () => status === "submitted" || status === "streaming",
+    [status]
+  );
 
   const hasInteracted = useMemo(() => messages.length > 0, [messages.length]);
 
   const cleanupMediaRecorder = useCallback(() => {
     if (mediaRecorderRef.current?.stream) {
-      mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
+      mediaRecorderRef.current.stream
+        .getTracks()
+        .forEach((track) => track.stop());
     }
     mediaRecorderRef.current = null;
     setIsRecording(false);
@@ -2033,8 +2562,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
       cleanupMediaRecorder();
     };
   }, [cleanupMediaRecorder]);
-
-
 
   // Control audio lines animation
   useEffect(() => {
@@ -2064,9 +2591,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
       // Don't interfere if user is already typing in an input, textarea, or contenteditable
       const target = event.target as HTMLElement;
       if (
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.contentEditable === 'true' ||
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.contentEditable === "true" ||
         target.closest('[contenteditable="true"]')
       ) {
         return;
@@ -2080,7 +2607,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
       // Don't interfere with function keys, arrow keys, etc.
       if (
         event.key.length > 1 && // Multi-character keys like 'Enter', 'Escape', etc.
-        !['Backspace', 'Delete', 'Space'].includes(event.key)
+        !["Backspace", "Delete", "Space"].includes(event.key)
       ) {
         return;
       }
@@ -2099,7 +2626,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
       if (inputRef.current && event.key.length === 1) {
         inputRef.current.focus();
         // If it's a printable character, add it to the input
-        if (event.key !== ' ' || input.length > 0) {
+        if (event.key !== " " || input.length > 0) {
           // Allow space only if there's already content
           setInput(input + event.key);
           event.preventDefault();
@@ -2107,16 +2634,16 @@ const FormComponent: React.FC<FormComponentProps> = ({
       }
     };
 
-    document.addEventListener('keydown', handleGlobalKeyDown);
+    document.addEventListener("keydown", handleGlobalKeyDown);
 
     return () => {
-      document.removeEventListener('keydown', handleGlobalKeyDown);
+      document.removeEventListener("keydown", handleGlobalKeyDown);
     };
   }, [isRecording, input, setInput, inputRef]);
 
   // Typewriter effect for enhanced text
   const typewriterText = useCallback(
-    (text: string, speed: number = 5) => {
+    (text: string, speed = 5) => {
       if (!inputRef.current) return;
 
       setIsTypewriting(true);
@@ -2129,7 +2656,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
           // Auto-resize textarea during typing
           if (inputRef.current) {
-            inputRef.current.style.height = 'auto';
+            inputRef.current.style.height = "auto";
             inputRef.current.style.height = `${inputRef.current.scrollHeight}px`;
           }
 
@@ -2145,7 +2672,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
       typeNextChar();
     },
-    [setInput, inputRef],
+    [setInput, inputRef]
   );
 
   const handleEnhance = useCallback(async () => {
@@ -2154,7 +2681,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
       return;
     }
     if (!input || input.trim().length === 0) {
-      toast.error('Please enter a prompt to enhance');
+      toast.error("Please enter a prompt to enhance");
       return;
     }
     if (isProcessing || isEnhancing) return;
@@ -2163,26 +2690,30 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
     try {
       setIsEnhancing(true);
-      toast.loading('Enhancing your prompt...', { id: 'enhance-prompt' });
+      toast.loading("Enhancing your prompt...", { id: "enhance-prompt" });
 
       const result = await enhancePrompt(input);
 
       if (result?.success && result.enhanced) {
         // Clear input and start typewriter
-        setInput('');
+        setInput("");
         typewriterText(result.enhanced);
 
-        toast.success('✨ Prompt enhanced successfully!', { id: 'enhance-prompt' });
+        toast.success("✨ Prompt enhanced successfully!", {
+          id: "enhance-prompt",
+        });
         setIsEnhancing(false);
         inputRef.current?.focus();
       } else {
         setInput(originalInput);
-        toast.error(result?.error || 'Failed to enhance prompt', { id: 'enhance-prompt' });
+        toast.error(result?.error || "Failed to enhance prompt", {
+          id: "enhance-prompt",
+        });
         setIsEnhancing(false);
       }
     } catch (e) {
       setInput(originalInput);
-      toast.error('Failed to enhance prompt', { id: 'enhance-prompt' });
+      toast.error("Failed to enhance prompt", { id: "enhance-prompt" });
       setIsEnhancing(false);
     }
   }, [
@@ -2203,13 +2734,13 @@ const FormComponent: React.FC<FormComponentProps> = ({
     } else {
       try {
         // Environment and feature checks
-        if (typeof window === 'undefined') {
-          toast.error('Voice recording is only available in the browser.');
+        if (typeof window === "undefined") {
+          toast.error("Voice recording is only available in the browser.");
           return;
         }
 
         if (!navigator.mediaDevices?.getUserMedia) {
-          toast.error('Voice recording is not supported in this browser.');
+          toast.error("Voice recording is not supported in this browser.");
           return;
         }
 
@@ -2217,9 +2748,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
         try {
           const permApi: any = (navigator as any).permissions;
           if (permApi?.query) {
-            const status = await permApi.query({ name: 'microphone' as any });
-            if (status?.state === 'denied') {
-              toast.error('Microphone access is denied. Enable it in your browser settings.');
+            const status = await permApi.query({ name: "microphone" as any });
+            if (status?.state === "denied") {
+              toast.error(
+                "Microphone access is denied. Enable it in your browser settings."
+              );
               return;
             }
           }
@@ -2227,20 +2760,25 @@ const FormComponent: React.FC<FormComponentProps> = ({
           // Ignore permissions API errors; proceed to request directly
         }
 
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
 
         // Pick a supported MIME type to maximize cross-browser compatibility (e.g., Safari)
         const candidateMimeTypes = [
-          'audio/webm;codecs=opus',
-          'audio/webm',
-          'audio/mp4;codecs=mp4a.40.2',
-          'audio/mp4',
-          'audio/ogg;codecs=opus',
-          'audio/mpeg',
+          "audio/webm;codecs=opus",
+          "audio/webm",
+          "audio/mp4;codecs=mp4a.40.2",
+          "audio/mp4",
+          "audio/ogg;codecs=opus",
+          "audio/mpeg",
         ];
         const isTypeSupported = (type: string) =>
-          typeof MediaRecorder !== 'undefined' && (MediaRecorder as any).isTypeSupported?.(type);
-        const selectedMimeType = candidateMimeTypes.find((t) => isTypeSupported(t));
+          typeof MediaRecorder !== "undefined" &&
+          (MediaRecorder as any).isTypeSupported?.(type);
+        const selectedMimeType = candidateMimeTypes.find((t) =>
+          isTypeSupported(t)
+        );
 
         let recorder: MediaRecorder;
         try {
@@ -2253,22 +2791,22 @@ const FormComponent: React.FC<FormComponentProps> = ({
         }
         mediaRecorderRef.current = recorder;
 
-        recorder.addEventListener('dataavailable', async (event) => {
+        recorder.addEventListener("dataavailable", async (event) => {
           if (event.data.size > 0) {
             const audioBlob = event.data;
 
             try {
               const formData = new FormData();
               const extension = (() => {
-                const type = (audioBlob?.type || '').toLowerCase();
-                if (type.includes('mp4')) return 'mp4';
-                if (type.includes('ogg')) return 'ogg';
-                if (type.includes('mpeg')) return 'mp3';
-                return 'webm';
+                const type = (audioBlob?.type || "").toLowerCase();
+                if (type.includes("mp4")) return "mp4";
+                if (type.includes("ogg")) return "ogg";
+                if (type.includes("mpeg")) return "mp3";
+                return "webm";
               })();
-              formData.append('audio', audioBlob, `recording.${extension}`);
-              const response = await fetch('/api/transcribe', {
-                method: 'POST',
+              formData.append("audio", audioBlob, `recording.${extension}`);
+              const response = await fetch("/api/transcribe", {
+                method: "POST",
                 body: formData,
               });
 
@@ -2281,32 +2819,37 @@ const FormComponent: React.FC<FormComponentProps> = ({
               if (data.text) {
                 setInput(data.text);
               } else {
-                console.error('Transcription response did not contain text:', data);
+                console.error(
+                  "Transcription response did not contain text:",
+                  data
+                );
               }
             } catch (error) {
-              console.error('Error during transcription request:', error);
-              toast.error('Failed to transcribe audio. Please try again.');
+              console.error("Error during transcription request:", error);
+              toast.error("Failed to transcribe audio. Please try again.");
             } finally {
               cleanupMediaRecorder();
             }
           }
         });
 
-        recorder.addEventListener('error', (e) => {
-          console.error('MediaRecorder error:', e);
-          toast.error('Recording failed. Please try again or switch browser.');
+        recorder.addEventListener("error", (e) => {
+          console.error("MediaRecorder error:", e);
+          toast.error("Recording failed. Please try again or switch browser.");
           cleanupMediaRecorder();
         });
 
-        recorder.addEventListener('stop', () => {
+        recorder.addEventListener("stop", () => {
           stream.getTracks().forEach((track) => track.stop());
         });
 
         recorder.start();
         setIsRecording(true);
       } catch (error) {
-        console.error('Error accessing microphone:', error);
-        toast.error('Could not access microphone. Please allow mic permission.');
+        console.error("Error accessing microphone:", error);
+        toast.error(
+          "Could not access microphone. Please allow mic permission."
+        );
         setIsRecording(false);
       }
     }
@@ -2319,22 +2862,24 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
       if (newValue.length > MAX_INPUT_CHARS) {
         setInput(newValue);
-        toast.error(`Your input exceeds the maximum of ${MAX_INPUT_CHARS} characters.`);
+        toast.error(
+          `Your input exceeds the maximum of ${MAX_INPUT_CHARS} characters.`
+        );
       } else {
         setInput(newValue);
       }
     },
-    [setInput],
+    [setInput]
   );
 
   const handleGroupSelect = useCallback(
     (group: SearchGroup) => {
-      if (!isEnhancing && !isTypewriting) {
+      if (!(isEnhancing || isTypewriting)) {
         setSelectedGroup(group.id);
         inputRef.current?.focus();
       }
     },
-    [setSelectedGroup, inputRef, isEnhancing, isTypewriting],
+    [setSelectedGroup, inputRef, isEnhancing, isTypewriting]
   );
 
   const handleConnectorToggle = useCallback(
@@ -2344,37 +2889,37 @@ const FormComponent: React.FC<FormComponentProps> = ({
       setSelectedConnectors((prev) => {
         if (prev.includes(provider)) {
           return prev.filter((p) => p !== provider);
-        } else {
-          return [...prev, provider];
         }
+        return [...prev, provider];
       });
     },
-    [setSelectedConnectors],
+    [setSelectedConnectors]
   );
 
   const uploadFile = useCallback(async (file: File): Promise<Attachment> => {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
 
     try {
-      console.log('Uploading file:', file.name, file.type, file.size);
-      const response = await fetch('/api/upload', {
-        method: 'POST',
+      console.log("Uploading file:", file.name, file.type, file.size);
+      const response = await fetch("/api/upload", {
+        method: "POST",
         body: formData,
       });
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Upload successful:', data);
+        console.log("Upload successful:", data);
         return data;
-      } else {
-        const errorText = await response.text();
-        console.error('Upload failed with status:', response.status, errorText);
-        throw new Error(`Failed to upload file: ${response.status} ${errorText}`);
       }
+      const errorText = await response.text();
+      console.error("Upload failed with status:", response.status, errorText);
+      throw new Error(`Failed to upload file: ${response.status} ${errorText}`);
     } catch (error) {
-      console.error('Error uploading file:', error);
-      toast.error(`Failed to upload ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error("Error uploading file:", error);
+      toast.error(
+        `Failed to upload ${file.name}: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
       throw error;
     }
   }, []);
@@ -2383,13 +2928,13 @@ const FormComponent: React.FC<FormComponentProps> = ({
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(event.target.files || []);
       if (files.length === 0) {
-        console.log('No files selected in file input');
+        console.log("No files selected in file input");
         return;
       }
 
       console.log(
-        'Files selected:',
-        files.map((f) => `${f.name} (${f.type})`),
+        "Files selected:",
+        files.map((f) => `${f.name} (${f.type})`)
       );
 
       const imageFiles: File[] = [];
@@ -2404,13 +2949,13 @@ const FormComponent: React.FC<FormComponentProps> = ({
           return;
         }
 
-        if (file.type.startsWith('image/')) {
+        if (file.type.startsWith("image/")) {
           imageFiles.push(file);
-        } else if (file.type === 'application/pdf') {
-          if (!isProUser) {
-            blockedPdfFiles.push(file);
-          } else {
+        } else if (file.type === "application/pdf") {
+          if (isProUser) {
             pdfFiles.push(file);
+          } else {
+            blockedPdfFiles.push(file);
           }
         } else {
           unsupportedFiles.push(file);
@@ -2419,46 +2964,51 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
       if (unsupportedFiles.length > 0) {
         console.log(
-          'Unsupported files:',
-          unsupportedFiles.map((f) => `${f.name} (${f.type})`),
+          "Unsupported files:",
+          unsupportedFiles.map((f) => `${f.name} (${f.type})`)
         );
-        toast.error(`Some files are not supported: ${unsupportedFiles.map((f) => f.name).join(', ')}`);
+        toast.error(
+          `Some files are not supported: ${unsupportedFiles.map((f) => f.name).join(", ")}`
+        );
       }
 
       if (blockedPdfFiles.length > 0) {
         console.log(
-          'Blocked PDF files for non-Pro user:',
-          blockedPdfFiles.map((f) => f.name),
+          "Blocked PDF files for non-Pro user:",
+          blockedPdfFiles.map((f) => f.name)
         );
-        toast.error(`PDF uploads require Pro subscription. Upgrade to access PDF analysis.`, {
-          action: {
-            label: 'Upgrade',
-            onClick: () => (window.location.href = '/pricing'),
-          },
-        });
+        toast.error(
+          "PDF uploads require Pro subscription. Upgrade to access PDF analysis.",
+          {
+            action: {
+              label: "Upgrade",
+              onClick: () => (window.location.href = "/pricing"),
+            },
+          }
+        );
       }
 
       if (imageFiles.length === 0 && pdfFiles.length === 0) {
-        console.log('No supported files found');
-        event.target.value = '';
+        console.log("No supported files found");
+        event.target.value = "";
         return;
       }
 
       const currentModelData = models.find((m) => m.value === selectedModel);
-      if (pdfFiles.length > 0 && (!currentModelData || !currentModelData.pdf)) {
-        console.log('PDFs detected, switching to compatible model');
+      if (pdfFiles.length > 0 && !(currentModelData && currentModelData.pdf)) {
+        console.log("PDFs detected, switching to compatible model");
 
         const compatibleModel = models.find((m) => m.pdf && m.vision);
 
         if (compatibleModel) {
-          console.log('Switching to compatible model:', compatibleModel.value);
+          console.log("Switching to compatible model:", compatibleModel.value);
           setSelectedModel(compatibleModel.value);
         } else {
-          console.warn('No PDF-compatible model found');
-          toast.error('PDFs are only supported by Claude models');
+          console.warn("No PDF-compatible model found");
+          toast.error("PDFs are only supported by Claude models");
 
           if (imageFiles.length === 0) {
-            event.target.value = '';
+            event.target.value = "";
             return;
           }
         }
@@ -2470,48 +3020,56 @@ const FormComponent: React.FC<FormComponentProps> = ({
       }
 
       console.log(
-        'Valid files for upload:',
-        validFiles.map((f) => f.name),
+        "Valid files for upload:",
+        validFiles.map((f) => f.name)
       );
 
       const totalAttachments = attachments.length + validFiles.length;
       if (totalAttachments > MAX_FILES) {
         toast.error(`You can only attach up to ${MAX_FILES} files.`);
-        event.target.value = '';
+        event.target.value = "";
         return;
       }
 
       if (validFiles.length === 0) {
-        console.error('No valid files to upload');
-        event.target.value = '';
+        console.error("No valid files to upload");
+        event.target.value = "";
         return;
       }
 
       if (imageFiles.length > 0) {
         try {
-          console.log('Checking image moderation for', imageFiles.length, 'images');
-          toast.info('Checking images for safety...');
+          console.log(
+            "Checking image moderation for",
+            imageFiles.length,
+            "images"
+          );
+          toast.info("Checking images for safety...");
 
-          const imageDataURLs = await Promise.all(imageFiles.map((file) => fileToDataURL(file)));
+          const imageDataURLs = await Promise.all(
+            imageFiles.map((file) => fileToDataURL(file))
+          );
 
           const moderationResult = await checkImageModeration(imageDataURLs);
-          console.log('Moderation result:', moderationResult);
+          console.log("Moderation result:", moderationResult);
 
-          if (moderationResult !== 'safe') {
-            const [status, category] = moderationResult.split('\n');
-            if (status === 'unsafe') {
-              console.warn('Unsafe image detected, category:', category);
-              toast.error(`Image content violates safety guidelines (${category}). Please choose different images.`);
-              event.target.value = '';
+          if (moderationResult !== "safe") {
+            const [status, category] = moderationResult.split("\n");
+            if (status === "unsafe") {
+              console.warn("Unsafe image detected, category:", category);
+              toast.error(
+                `Image content violates safety guidelines (${category}). Please choose different images.`
+              );
+              event.target.value = "";
               return;
             }
           }
 
-          console.log('Images passed moderation check');
+          console.log("Images passed moderation check");
         } catch (error) {
-          console.error('Error during image moderation:', error);
-          toast.error('Unable to verify image safety. Please try again.');
-          event.target.value = '';
+          console.error("Error during image moderation:", error);
+          toast.error("Unable to verify image safety. Please try again.");
+          event.target.value = "";
           return;
         }
       }
@@ -2519,7 +3077,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
       setUploadQueue(validFiles.map((file) => file.name));
 
       try {
-        console.log('Starting upload of', validFiles.length, 'files');
+        console.log("Starting upload of", validFiles.length, "files");
 
         const uploadedAttachments: Attachment[] = [];
         for (const file of validFiles) {
@@ -2533,33 +3091,47 @@ const FormComponent: React.FC<FormComponentProps> = ({
           }
         }
 
-        console.log('Upload completed for', uploadedAttachments.length, 'files');
+        console.log(
+          "Upload completed for",
+          uploadedAttachments.length,
+          "files"
+        );
 
         if (uploadedAttachments.length > 0) {
-          setAttachments((currentAttachments) => [...currentAttachments, ...uploadedAttachments]);
+          setAttachments((currentAttachments) => [
+            ...currentAttachments,
+            ...uploadedAttachments,
+          ]);
 
           toast.success(
-            `${uploadedAttachments.length} file${uploadedAttachments.length > 1 ? 's' : ''} uploaded successfully`,
+            `${uploadedAttachments.length} file${uploadedAttachments.length > 1 ? "s" : ""} uploaded successfully`
           );
         } else {
-          toast.error('No files were successfully uploaded');
+          toast.error("No files were successfully uploaded");
         }
       } catch (error) {
-        console.error('Error uploading files!', error);
-        toast.error('Failed to upload one or more files. Please try again.');
+        console.error("Error uploading files!", error);
+        toast.error("Failed to upload one or more files. Please try again.");
       } finally {
         setUploadQueue([]);
-        event.target.value = '';
+        event.target.value = "";
       }
     },
-    [attachments.length, setAttachments, selectedModel, setSelectedModel, isProUser, uploadFile],
+    [
+      attachments.length,
+      setAttachments,
+      selectedModel,
+      setSelectedModel,
+      isProUser,
+      uploadFile,
+    ]
   );
 
   const removeAttachment = useCallback(
     (index: number) => {
       setAttachments((prev) => prev.filter((_, i) => i !== index));
     },
-    [setAttachments],
+    [setAttachments]
   );
 
   const handleDragOver = useCallback(
@@ -2570,13 +3142,15 @@ const FormComponent: React.FC<FormComponentProps> = ({
       if (attachments.length >= MAX_FILES) return;
 
       if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
-        const hasFile = Array.from(e.dataTransfer.items).some((item) => item.kind === 'file');
+        const hasFile = Array.from(e.dataTransfer.items).some(
+          (item) => item.kind === "file"
+        );
         if (hasFile) {
           setIsDragging(true);
         }
       }
     },
-    [attachments.length],
+    [attachments.length]
   );
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
@@ -2585,9 +3159,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
     setIsDragging(false);
   }, []);
 
-  const getFirstVisionModel = useCallback(() => {
-    return models.find((model) => model.vision)?.value || selectedModel;
-  }, [selectedModel]);
+  const getFirstVisionModel = useCallback(
+    () => models.find((model) => model.vision)?.value || selectedModel,
+    [selectedModel]
+  );
 
   const handleDrop = useCallback(
     async (e: React.DragEvent) => {
@@ -2597,12 +3172,12 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
       const allFiles = Array.from(e.dataTransfer.files);
       console.log(
-        'Raw files dropped:',
-        allFiles.map((f) => `${f.name} (${f.type})`),
+        "Raw files dropped:",
+        allFiles.map((f) => `${f.name} (${f.type})`)
       );
 
       if (allFiles.length === 0) {
-        toast.error('No files detected in drop');
+        toast.error("No files detected in drop");
         return;
       }
 
@@ -2622,13 +3197,13 @@ const FormComponent: React.FC<FormComponentProps> = ({
           return;
         }
 
-        if (file.type.startsWith('image/')) {
+        if (file.type.startsWith("image/")) {
           imageFiles.push(file);
-        } else if (file.type === 'application/pdf') {
-          if (!isProUser) {
-            blockedPdfFiles.push(file);
-          } else {
+        } else if (file.type === "application/pdf") {
+          if (isProUser) {
             pdfFiles.push(file);
+          } else {
+            blockedPdfFiles.push(file);
           }
         } else {
           unsupportedFiles.push(file);
@@ -2636,56 +3211,65 @@ const FormComponent: React.FC<FormComponentProps> = ({
       });
 
       console.log(
-        `Images: ${imageFiles.length}, PDFs: ${pdfFiles.length}, Unsupported: ${unsupportedFiles.length}, Oversized: ${oversizedFiles.length}`,
+        `Images: ${imageFiles.length}, PDFs: ${pdfFiles.length}, Unsupported: ${unsupportedFiles.length}, Oversized: ${oversizedFiles.length}`
       );
 
       if (unsupportedFiles.length > 0) {
         console.log(
-          'Unsupported files:',
-          unsupportedFiles.map((f) => `${f.name} (${f.type})`),
+          "Unsupported files:",
+          unsupportedFiles.map((f) => `${f.name} (${f.type})`)
         );
-        toast.error(`Some files not supported: ${unsupportedFiles.map((f) => f.name).join(', ')}`);
+        toast.error(
+          `Some files not supported: ${unsupportedFiles.map((f) => f.name).join(", ")}`
+        );
       }
 
       if (oversizedFiles.length > 0) {
         console.log(
-          'Oversized files:',
-          oversizedFiles.map((f) => `${f.name} (${f.size} bytes)`),
+          "Oversized files:",
+          oversizedFiles.map((f) => `${f.name} (${f.size} bytes)`)
         );
-        toast.error(`Some files exceed the 5MB limit: ${oversizedFiles.map((f) => f.name).join(', ')}`);
+        toast.error(
+          `Some files exceed the 5MB limit: ${oversizedFiles.map((f) => f.name).join(", ")}`
+        );
       }
 
       if (blockedPdfFiles.length > 0) {
         console.log(
-          'Blocked PDF files for non-Pro user:',
-          blockedPdfFiles.map((f) => f.name),
+          "Blocked PDF files for non-Pro user:",
+          blockedPdfFiles.map((f) => f.name)
         );
-        toast.error(`PDF uploads require Pro subscription. Upgrade to access PDF analysis.`, {
-          action: {
-            label: 'Upgrade',
-            onClick: () => (window.location.href = '/pricing'),
-          },
-        });
+        toast.error(
+          "PDF uploads require Pro subscription. Upgrade to access PDF analysis.",
+          {
+            action: {
+              label: "Upgrade",
+              onClick: () => (window.location.href = "/pricing"),
+            },
+          }
+        );
       }
 
       if (imageFiles.length === 0 && pdfFiles.length === 0) {
-        toast.error('Only image and PDF files are supported');
+        toast.error("Only image and PDF files are supported");
         return;
       }
 
       const currentModelData = models.find((m) => m.value === selectedModel);
-      if (pdfFiles.length > 0 && (!currentModelData || !currentModelData.pdf)) {
-        console.log('PDFs detected, switching to compatible model');
+      if (pdfFiles.length > 0 && !(currentModelData && currentModelData.pdf)) {
+        console.log("PDFs detected, switching to compatible model");
 
         const compatibleModel = models.find((m) => m.pdf && m.vision);
 
         if (compatibleModel) {
-          console.log('Switching to compatible model:', compatibleModel.value);
+          console.log("Switching to compatible model:", compatibleModel.value);
           setSelectedModel(compatibleModel.value);
-          toast.info(`Switching to ${compatibleModel.label} to support PDF files`);
+          toast.info(
+            `Switching to ${compatibleModel.label} to support PDF files`
+          );
         } else {
-          console.warn('No PDF-compatible model found');
-          toast.error('PDFs are only supported by Claude models');
+          console.warn("No PDF-compatible model found");
+          toast.error("PDFs are only supported by Claude models");
           if (imageFiles.length === 0) return;
         }
       }
@@ -2696,8 +3280,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
       }
 
       console.log(
-        'Files to upload:',
-        validFiles.map((f) => `${f.name} (${f.type})`),
+        "Files to upload:",
+        validFiles.map((f) => `${f.name} (${f.type})`)
       );
 
       const totalAttachments = attachments.length + validFiles.length;
@@ -2707,34 +3291,42 @@ const FormComponent: React.FC<FormComponentProps> = ({
       }
 
       if (validFiles.length === 0) {
-        console.error('No valid files to upload after filtering');
-        toast.error('No valid files to upload');
+        console.error("No valid files to upload after filtering");
+        toast.error("No valid files to upload");
         return;
       }
 
       if (imageFiles.length > 0) {
         try {
-          console.log('Checking image moderation for', imageFiles.length, 'images');
-          toast.info('Checking images for safety...');
+          console.log(
+            "Checking image moderation for",
+            imageFiles.length,
+            "images"
+          );
+          toast.info("Checking images for safety...");
 
-          const imageDataURLs = await Promise.all(imageFiles.map((file) => fileToDataURL(file)));
+          const imageDataURLs = await Promise.all(
+            imageFiles.map((file) => fileToDataURL(file))
+          );
 
           const moderationResult = await checkImageModeration(imageDataURLs);
-          console.log('Moderation result:', moderationResult);
+          console.log("Moderation result:", moderationResult);
 
-          if (moderationResult !== 'safe') {
-            const [status, category] = moderationResult.split('\n');
-            if (status === 'unsafe') {
-              console.warn('Unsafe image detected, category:', category);
-              toast.error(`Image content violates safety guidelines (${category}). Please choose different images.`);
+          if (moderationResult !== "safe") {
+            const [status, category] = moderationResult.split("\n");
+            if (status === "unsafe") {
+              console.warn("Unsafe image detected, category:", category);
+              toast.error(
+                `Image content violates safety guidelines (${category}). Please choose different images.`
+              );
               return;
             }
           }
 
-          console.log('Images passed moderation check');
+          console.log("Images passed moderation check");
         } catch (error) {
-          console.error('Error during image moderation:', error);
-          toast.error('Unable to verify image safety. Please try again.');
+          console.error("Error during image moderation:", error);
+          toast.error("Unable to verify image safety. Please try again.");
           return;
         }
       }
@@ -2753,7 +3345,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
           visionModel = getFirstVisionModel();
         }
 
-        console.log('Switching to vision model:', visionModel);
+        console.log("Switching to vision model:", visionModel);
         setSelectedModel(visionModel);
       }
 
@@ -2762,7 +3354,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
       setTimeout(async () => {
         try {
-          console.log('Beginning upload of', validFiles.length, 'files');
+          console.log("Beginning upload of", validFiles.length, "files");
 
           const uploadedAttachments: Attachment[] = [];
           for (const file of validFiles) {
@@ -2776,32 +3368,47 @@ const FormComponent: React.FC<FormComponentProps> = ({
             }
           }
 
-          console.log('Upload completed for', uploadedAttachments.length, 'files');
+          console.log(
+            "Upload completed for",
+            uploadedAttachments.length,
+            "files"
+          );
 
           if (uploadedAttachments.length > 0) {
-            setAttachments((currentAttachments) => [...currentAttachments, ...uploadedAttachments]);
+            setAttachments((currentAttachments) => [
+              ...currentAttachments,
+              ...uploadedAttachments,
+            ]);
 
             toast.success(
-              `${uploadedAttachments.length} file${uploadedAttachments.length > 1 ? 's' : ''} uploaded successfully`,
+              `${uploadedAttachments.length} file${uploadedAttachments.length > 1 ? "s" : ""} uploaded successfully`
             );
           } else {
-            toast.error('No files were successfully uploaded');
+            toast.error("No files were successfully uploaded");
           }
         } catch (error) {
-          console.error('Error during file upload:', error);
-          toast.error('Upload failed. Please check console for details.');
+          console.error("Error during file upload:", error);
+          toast.error("Upload failed. Please check console for details.");
         } finally {
           setUploadQueue([]);
         }
       }, 100);
     },
-    [attachments.length, setAttachments, uploadFile, selectedModel, setSelectedModel, getFirstVisionModel, isProUser],
+    [
+      attachments.length,
+      setAttachments,
+      uploadFile,
+      selectedModel,
+      setSelectedModel,
+      getFirstVisionModel,
+      isProUser,
+    ]
   );
 
   const handlePaste = useCallback(
     async (e: React.ClipboardEvent) => {
       const items = Array.from(e.clipboardData.items);
-      const imageItems = items.filter((item) => item.type.startsWith('image/'));
+      const imageItems = items.filter((item) => item.type.startsWith("image/"));
 
       if (imageItems.length === 0) return;
 
@@ -2813,15 +3420,19 @@ const FormComponent: React.FC<FormComponentProps> = ({
         return;
       }
 
-      const files = imageItems.map((item) => item.getAsFile()).filter(Boolean) as File[];
+      const files = imageItems
+        .map((item) => item.getAsFile())
+        .filter(Boolean) as File[];
       const oversizedFiles = files.filter((file) => file.size > MAX_FILE_SIZE);
 
       if (oversizedFiles.length > 0) {
         console.log(
-          'Oversized files:',
-          oversizedFiles.map((f) => `${f.name} (${f.size} bytes)`),
+          "Oversized files:",
+          oversizedFiles.map((f) => `${f.name} (${f.size} bytes)`)
         );
-        toast.error(`Some files exceed the 5MB limit: ${oversizedFiles.map((f) => f.name || 'unnamed').join(', ')}`);
+        toast.error(
+          `Some files exceed the 5MB limit: ${oversizedFiles.map((f) => f.name || "unnamed").join(", ")}`
+        );
 
         const validFiles = files.filter((file) => file.size <= MAX_FILE_SIZE);
         if (validFiles.length === 0) return;
@@ -2833,58 +3444,81 @@ const FormComponent: React.FC<FormComponentProps> = ({
         setSelectedModel(visionModel);
       }
 
-      const filesToUpload = oversizedFiles.length > 0 ? files.filter((file) => file.size <= MAX_FILE_SIZE) : files;
+      const filesToUpload =
+        oversizedFiles.length > 0
+          ? files.filter((file) => file.size <= MAX_FILE_SIZE)
+          : files;
 
       if (filesToUpload.length > 0) {
         try {
-          console.log('Checking image moderation for', filesToUpload.length, 'pasted images');
-          toast.info('Checking pasted images for safety...');
+          console.log(
+            "Checking image moderation for",
+            filesToUpload.length,
+            "pasted images"
+          );
+          toast.info("Checking pasted images for safety...");
 
-          const imageDataURLs = await Promise.all(filesToUpload.map((file) => fileToDataURL(file)));
+          const imageDataURLs = await Promise.all(
+            filesToUpload.map((file) => fileToDataURL(file))
+          );
 
           const moderationResult = await checkImageModeration(imageDataURLs);
-          console.log('Moderation result:', moderationResult);
+          console.log("Moderation result:", moderationResult);
 
-          if (moderationResult !== 'safe') {
-            const [status, category] = moderationResult.split('\n');
-            if (status === 'unsafe') {
-              console.warn('Unsafe pasted image detected, category:', category);
+          if (moderationResult !== "safe") {
+            const [status, category] = moderationResult.split("\n");
+            if (status === "unsafe") {
+              console.warn("Unsafe pasted image detected, category:", category);
               toast.error(
-                `Pasted image content violates safety guidelines (${category}). Please choose different images.`,
+                `Pasted image content violates safety guidelines (${category}). Please choose different images.`
               );
               return;
             }
           }
 
-          console.log('Pasted images passed moderation check');
+          console.log("Pasted images passed moderation check");
         } catch (error) {
-          console.error('Error during pasted image moderation:', error);
-          toast.error('Unable to verify pasted image safety. Please try again.');
+          console.error("Error during pasted image moderation:", error);
+          toast.error(
+            "Unable to verify pasted image safety. Please try again."
+          );
           return;
         }
       }
 
-      setUploadQueue(filesToUpload.map((file, i) => file.name || `Pasted Image ${i + 1}`));
+      setUploadQueue(
+        filesToUpload.map((file, i) => file.name || `Pasted Image ${i + 1}`)
+      );
 
       try {
         const uploadPromises = filesToUpload.map((file) => uploadFile(file));
         const uploadedAttachments = await Promise.all(uploadPromises);
 
-        setAttachments((currentAttachments) => [...currentAttachments, ...uploadedAttachments]);
+        setAttachments((currentAttachments) => [
+          ...currentAttachments,
+          ...uploadedAttachments,
+        ]);
 
-        toast.success('Image pasted successfully');
+        toast.success("Image pasted successfully");
       } catch (error) {
-        console.error('Error uploading pasted files!', error);
-        toast.error('Failed to upload pasted image. Please try again.');
+        console.error("Error uploading pasted files!", error);
+        toast.error("Failed to upload pasted image. Please try again.");
       } finally {
         setUploadQueue([]);
       }
     },
-    [attachments.length, setAttachments, uploadFile, selectedModel, setSelectedModel, getFirstVisionModel],
+    [
+      attachments.length,
+      setAttachments,
+      uploadFile,
+      selectedModel,
+      setSelectedModel,
+      getFirstVisionModel,
+    ]
   );
 
   useEffect(() => {
-    if (status !== 'ready' && inputRef.current) {
+    if (status !== "ready" && inputRef.current) {
       const focusTimeout = setTimeout(() => {
         if (isMounted.current && inputRef.current) {
           inputRef.current.focus({
@@ -2901,63 +3535,70 @@ const FormComponent: React.FC<FormComponentProps> = ({
     (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
 
-      if (status !== 'ready') {
-        toast.error('Please wait for the current response to complete!');
+      if (status !== "ready") {
+        toast.error("Please wait for the current response to complete!");
         return;
       }
 
       if (isRecording) {
-        toast.error('Please stop recording before submitting!');
+        toast.error("Please stop recording before submitting!");
         return;
       }
 
-      const shouldBypassLimitsForThisModel = shouldBypassRateLimits(selectedModel, user);
+      const shouldBypassLimitsForThisModel = shouldBypassRateLimits(
+        selectedModel,
+        user
+      );
 
       if (isLimitBlocked && !shouldBypassLimitsForThisModel) {
-        toast.error('Daily search limit reached. Please upgrade to Pro for unlimited searches.');
+        toast.error(
+          "Daily search limit reached. Please upgrade to Pro for unlimited searches."
+        );
         return;
       }
 
       if (input.length > MAX_INPUT_CHARS) {
-        toast.error(`Your input exceeds the maximum of ${MAX_INPUT_CHARS} characters. Please shorten your message.`);
+        toast.error(
+          `Your input exceeds the maximum of ${MAX_INPUT_CHARS} characters. Please shorten your message.`
+        );
         return;
       }
 
       if (input.trim() || attachments.length > 0) {
-        track('model_selected', {
+        track("model_selected", {
           model: selectedModel,
         });
 
         if (user) {
-          window.history.replaceState({}, '', `/search/${chatId}`);
+          window.history.replaceState({}, "", `/search/${chatId}`);
         }
 
         setHasSubmitted(true);
         lastSubmittedQueryRef.current = input.trim();
 
         sendMessage({
-          role: 'user',
+          role: "user",
           parts: [
             ...attachments.map((attachment) => ({
-              type: 'file' as const,
+              type: "file" as const,
               url: attachment.url,
               name: attachment.name,
-              mediaType: attachment.contentType || attachment.mediaType || '',
+              mediaType: attachment.contentType || attachment.mediaType || "",
             })),
             {
-              type: 'text',
+              type: "text",
               text: input,
             },
           ],
         });
 
-        setInput('');
+        setInput("");
         setAttachments([]);
         if (fileInputRef.current) {
-          fileInputRef.current.value = '';
+          fileInputRef.current.value = "";
         }
       } else {
-        toast.error('Please enter a search query or attach an image.');
+        toast.error("Please enter a search query or attach an image.");
       }
     },
     [
@@ -2975,23 +3616,27 @@ const FormComponent: React.FC<FormComponentProps> = ({
       user,
       isRecording,
       chatId,
-    ],
+    ]
   );
 
   const submitForm = useCallback(
-    () => debounce(() => {
-      onSubmit({ preventDefault: () => { }, stopPropagation: () => { } } as React.FormEvent<HTMLFormElement>);
-      resetSuggestedQuestions();
+    () =>
+      debounce(() => {
+        onSubmit({
+          preventDefault: () => {},
+          stopPropagation: () => {},
+        } as React.FormEvent<HTMLFormElement>);
+        resetSuggestedQuestions();
 
-      // Handle iOS keyboard behavior differently
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      if (isIOS) {
-        inputRef.current?.blur();
-      } else {
-        inputRef.current?.focus();
-      }
-    }, 500)(),
-    [onSubmit, resetSuggestedQuestions, inputRef],
+        // Handle iOS keyboard behavior differently
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        if (isIOS) {
+          inputRef.current?.blur();
+        } else {
+          inputRef.current?.focus();
+        }
+      }, 500)(),
+    [onSubmit, resetSuggestedQuestions, inputRef]
   );
 
   const triggerFileInput = useCallback(() => {
@@ -3000,7 +3645,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
       return;
     }
 
-    if (status === 'ready') {
+    if (status === "ready") {
       postSubmitFileInputRef.current?.click();
     } else {
       fileInputRef.current?.click();
@@ -3011,7 +3656,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
     (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
       // Desktop: submit on Cmd/Ctrl + Enter.
       // Mobile: submit on Enter, allow Shift+Enter to insert newline (when available).
-      if (event.key === 'Enter' && !isCompositionActive.current) {
+      if (event.key === "Enter" && !isCompositionActive.current) {
         if (isMobile) {
           if (event.shiftKey) {
             // Allow newline on Shift+Enter (no preventDefault)
@@ -3019,13 +3664,18 @@ const FormComponent: React.FC<FormComponentProps> = ({
           }
           event.preventDefault();
           if (isProcessing) {
-            toast.error('Please wait for the response to complete!');
+            toast.error("Please wait for the response to complete!");
           } else if (isRecording) {
-            toast.error('Please stop recording before submitting!');
+            toast.error("Please stop recording before submitting!");
           } else {
-            const shouldBypassLimitsForThisModel = shouldBypassRateLimits(selectedModel, user);
+            const shouldBypassLimitsForThisModel = shouldBypassRateLimits(
+              selectedModel,
+              user
+            );
             if (isLimitBlocked && !shouldBypassLimitsForThisModel) {
-              toast.error('Daily search limit reached. Please upgrade to Pro for unlimited searches.');
+              toast.error(
+                "Daily search limit reached. Please upgrade to Pro for unlimited searches."
+              );
             } else {
               submitForm();
               setTimeout(() => {
@@ -3039,13 +3689,18 @@ const FormComponent: React.FC<FormComponentProps> = ({
           }
           event.preventDefault();
           if (isProcessing) {
-            toast.error('Please wait for the response to complete!');
+            toast.error("Please wait for the response to complete!");
           } else if (isRecording) {
-            toast.error('Please stop recording before submitting!');
+            toast.error("Please stop recording before submitting!");
           } else {
-            const shouldBypassLimitsForThisModel = shouldBypassRateLimits(selectedModel, user);
+            const shouldBypassLimitsForThisModel = shouldBypassRateLimits(
+              selectedModel,
+              user
+            );
             if (isLimitBlocked && !shouldBypassLimitsForThisModel) {
-              toast.error('Daily search limit reached. Please upgrade to Pro for unlimited searches.');
+              toast.error(
+                "Daily search limit reached. Please upgrade to Pro for unlimited searches."
+              );
             } else {
               submitForm();
               setTimeout(() => {
@@ -3056,7 +3711,16 @@ const FormComponent: React.FC<FormComponentProps> = ({
         }
       }
     },
-    [isProcessing, isRecording, selectedModel, user, isLimitBlocked, submitForm, inputRef, isMobile],
+    [
+      isProcessing,
+      isRecording,
+      selectedModel,
+      user,
+      isLimitBlocked,
+      submitForm,
+      inputRef,
+      isMobile,
+    ]
   );
 
   const resizeTextarea = useCallback(() => {
@@ -3064,22 +3728,25 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
     const target = inputRef.current;
 
-    target.style.height = 'auto';
+    target.style.height = "auto";
 
     const scrollHeight = target.scrollHeight;
     const maxHeight = 300;
 
     if (scrollHeight > maxHeight) {
       target.style.height = `${maxHeight}px`;
-      target.style.overflowY = 'auto';
+      target.style.overflowY = "auto";
     } else {
       target.style.height = `${scrollHeight}px`;
-      target.style.overflowY = 'hidden';
+      target.style.overflowY = "hidden";
     }
   }, [inputRef]);
 
   // Debounced resize function
-  const debouncedResize = useMemo(() => debounce(resizeTextarea, 100), [resizeTextarea]);
+  const debouncedResize = useMemo(
+    () => debounce(resizeTextarea, 100),
+    [resizeTextarea]
+  );
 
   // Resize textarea when input value changes
   useEffect(() => {
@@ -3087,36 +3754,40 @@ const FormComponent: React.FC<FormComponentProps> = ({
   }, [input, debouncedResize]);
 
   return (
-    <div className={cn('flex flex-col w-full max-w-2xl mx-auto')}>
+    <div className={cn("mx-auto flex w-full max-w-2xl flex-col")}>
       <TooltipProvider>
         <div
           className={cn(
-            'relative w-full flex flex-col gap-1 rounded-lg transition-all duration-300 font-sans!',
-            hasInteracted ? 'z-50' : 'z-10',
-            isDragging && 'ring-1 ring-border',
+            "relative flex w-full flex-col gap-1 rounded-lg font-sans! transition-all duration-300",
+            hasInteracted ? "z-50" : "z-10",
+            isDragging && "ring-1 ring-border",
             attachments.length > 0 || uploadQueue.length > 0
-              ? 'bg-muted/40 !backdrop-blur-md p-1 shadow-sm shadow-black/5 dark:shadow-black/10'
-              : 'bg-transparent',
+              ? "!backdrop-blur-md bg-muted/40 p-1 shadow-black/5 shadow-sm dark:shadow-black/10"
+              : "bg-transparent"
           )}
-          onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
+          onDragOver={handleDragOver}
           onDrop={handleDrop}
         >
           <AnimatePresence>
             {isDragging && (
               <motion.div
-                initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
+                className="absolute inset-0 z-50 m-2 flex items-center justify-center rounded-lg border border-border/60 border-dashed bg-background/90 shadow-black/10 shadow-xl backdrop-blur-md dark:shadow-black/25"
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 backdrop-blur-md bg-background/90 rounded-lg border border-dashed border-border/60 flex items-center justify-center z-50 m-2 shadow-xl shadow-black/10 dark:shadow-black/25"
+                initial={{ opacity: 0 }}
               >
                 <div className="flex items-center gap-4 px-6 py-8">
-                  <div className="p-3 rounded-full bg-muted !shadow-none">
+                  <div className="!shadow-none rounded-full bg-muted p-3">
                     <Upload className="h-6 w-6 text-muted-foreground" />
                   </div>
                   <div className="space-y-1 text-center">
-                    <p className="text-sm font-medium text-foreground">Drop images or PDFs here</p>
-                    <p className="text-xs text-muted-foreground">Max {MAX_FILES} files (5MB per file)</p>
+                    <p className="font-medium text-foreground text-sm">
+                      Drop images or PDFs here
+                    </p>
+                    <p className="text-muted-foreground text-xs">
+                      Max {MAX_FILES} files (5MB per file)
+                    </p>
                   </div>
                 </div>
               </motion.div>
@@ -3124,55 +3795,57 @@ const FormComponent: React.FC<FormComponentProps> = ({
           </AnimatePresence>
 
           <input
-            type="file"
-            className="hidden"
-            ref={fileInputRef}
-            multiple
-            onChange={handleFileChange}
             accept={getAcceptedFileTypes(
               selectedModel,
               user?.isProUser ||
-              (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active'),
+                (subscriptionData?.hasSubscription &&
+                  subscriptionData?.subscription?.status === "active")
             )}
+            className="hidden"
+            multiple
+            onChange={handleFileChange}
+            ref={fileInputRef}
             tabIndex={-1}
+            type="file"
           />
           <input
-            type="file"
-            className="hidden"
-            ref={postSubmitFileInputRef}
-            multiple
-            onChange={handleFileChange}
             accept={getAcceptedFileTypes(
               selectedModel,
               user?.isProUser ||
-              (subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active'),
+                (subscriptionData?.hasSubscription &&
+                  subscriptionData?.subscription?.status === "active")
             )}
+            className="hidden"
+            multiple
+            onChange={handleFileChange}
+            ref={postSubmitFileInputRef}
             tabIndex={-1}
+            type="file"
           />
 
           {(attachments.length > 0 || uploadQueue.length > 0) && (
-            <div className="flex flex-row gap-2 overflow-x-auto py-2 max-h-28 z-10 px-1 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+            <div className="scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent z-10 flex max-h-28 flex-row gap-2 overflow-x-auto px-1 py-2">
               {attachments.map((attachment, index) => (
                 <AttachmentPreview
-                  key={attachment.url}
                   attachment={attachment}
-                  onRemove={() => removeAttachment(index)}
                   isUploading={false}
+                  key={attachment.url}
+                  onRemove={() => removeAttachment(index)}
                 />
               ))}
               {uploadQueue.map((filename) => (
                 <AttachmentPreview
-                  key={filename}
                   attachment={
                     {
-                      url: '',
+                      url: "",
                       name: filename,
-                      contentType: '',
+                      contentType: "",
                       size: 0,
                     } as Attachment
                   }
-                  onRemove={() => { }}
                   isUploading={true}
+                  key={filename}
+                  onRemove={() => {}}
                 />
               ))}
             </div>
@@ -3181,73 +3854,82 @@ const FormComponent: React.FC<FormComponentProps> = ({
           {/* Form container */}
           <div className="relative">
             {/* Shadow-like background blur effect */}
-            <div className="absolute -inset-1 rounded-2xl bg-primary/5 dark:bg-primary/2 !blur-sm pointer-events-none z-9999" />
+            <div className="-inset-1 !blur-sm pointer-events-none absolute z-9999 rounded-2xl bg-primary/5 dark:bg-primary/2" />
             <div
               className={cn(
-                'relative rounded-xl !bg-muted border border-border/60 focus-within:border-ring/50 transition-all duration-200',
-                'border-0',
-                (isEnhancing || isTypewriting) && '!bg-muted',
+                "!bg-muted relative rounded-xl border border-border/60 transition-all duration-200 focus-within:border-ring/50",
+                "border-0",
+                (isEnhancing || isTypewriting) && "!bg-muted"
               )}
             >
               {isRecording ? (
                 <Textarea
-                  ref={inputRef}
-                  placeholder=""
-                  value="◉ Recording..."
-                  disabled={true}
                   className={cn(
-                    'w-full rounded-xl rounded-b-none md:text-base!',
-                    'text-base leading-relaxed',
-                    '!bg-muted',
-                    'border-0!',
-                    '!text-muted-foreground',
-                    'focus:ring-0! focus-visible:ring-0!',
-                    'px-4! py-4!',
-                    'touch-manipulation',
-                    'whatsize',
-                    'text-center',
-                    'cursor-not-allowed',
-                    '!shadow-none',
+                    "w-full rounded-xl rounded-b-none md:text-base!",
+                    "text-base leading-relaxed",
+                    "!bg-muted",
+                    "border-0!",
+                    "!text-muted-foreground",
+                    "focus:ring-0! focus-visible:ring-0!",
+                    "px-4! py-4!",
+                    "touch-manipulation",
+                    "whatsize",
+                    "text-center",
+                    "cursor-not-allowed",
+                    "!shadow-none"
                   )}
-                  style={{
-                    WebkitUserSelect: 'text',
-                    WebkitTouchCallout: 'none',
-                    minHeight: undefined,
-                    resize: 'none',
-                  }}
+                  disabled={true}
+                  placeholder=""
+                  ref={inputRef}
                   rows={1}
+                  style={{
+                    WebkitUserSelect: "text",
+                    WebkitTouchCallout: "none",
+                    minHeight: undefined,
+                    resize: "none",
+                  }}
+                  value="◉ Recording..."
                 />
               ) : (
                 <Textarea
-                  ref={inputRef}
-                  placeholder={
-                    isEnhancing
-                      ? '✨ Enhancing your prompt...'
-                      : isTypewriting
-                        ? '✨ Writing enhanced prompt...'
-                        : hasInteracted
-                          ? 'Ask a new question...'
-                          : 'Ask a question...'
-                  }
-                  value={input}
-                  onChange={handleInput}
+                  autoFocus={!(isEnhancing || isTypewriting)}
+                  className={cn(
+                    "w-full rounded-xl rounded-b-none md:text-base!",
+                    "text-base leading-relaxed",
+                    "!bg-muted",
+                    "!border-0",
+                    "text-foreground",
+                    "focus:!ring-0 focus-visible:!ring-0",
+                    "!px-4 !py-4",
+                    "touch-manipulation",
+                    "whatsize",
+                    "!shadow-none",
+                    "transition-all duration-200",
+                    (isEnhancing || isTypewriting) &&
+                      "cursor-wait text-muted-foreground"
+                  )}
                   disabled={isEnhancing || isTypewriting}
+                  onChange={handleInput}
+                  onCompositionEnd={() => (isCompositionActive.current = false)}
+                  onCompositionStart={() =>
+                    (isCompositionActive.current = true)
+                  }
                   onInput={(e) => {
                     // Auto-resize textarea based on content
                     const target = e.target as HTMLTextAreaElement;
 
                     // Reset height to auto first to get the actual scroll height
-                    target.style.height = 'auto';
+                    target.style.height = "auto";
 
                     const scrollHeight = target.scrollHeight;
                     const maxHeight = 300; // Increased max height for desktop
 
                     if (scrollHeight > maxHeight) {
                       target.style.height = `${maxHeight}px`;
-                      target.style.overflowY = 'auto';
+                      target.style.overflowY = "auto";
                     } else {
                       target.style.height = `${scrollHeight}px`;
-                      target.style.overflowY = 'hidden';
+                      target.style.overflowY = "hidden";
                     }
 
                     // Ensure the cursor position is visible by scrolling to bottom if needed
@@ -3258,115 +3940,129 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       }
                     });
                   }}
-                  className={cn(
-                    'w-full rounded-xl rounded-b-none md:text-base!',
-                    'text-base leading-relaxed',
-                    '!bg-muted',
-                    '!border-0',
-                    'text-foreground',
-                    'focus:!ring-0 focus-visible:!ring-0',
-                    '!px-4 !py-4',
-                    'touch-manipulation',
-                    'whatsize',
-                    '!shadow-none',
-                    'transition-all duration-200',
-                    (isEnhancing || isTypewriting) && 'text-muted-foreground cursor-wait',
-                  )}
-                  style={{
-                    WebkitUserSelect: 'text',
-                    WebkitTouchCallout: 'none',
-                    minHeight: undefined,
-                    resize: 'none',
-                  }}
+                  onKeyDown={
+                    isEnhancing || isTypewriting ? undefined : handleKeyDown
+                  }
+                  onPaste={
+                    isEnhancing || isTypewriting ? undefined : handlePaste
+                  }
+                  placeholder={
+                    isEnhancing
+                      ? "✨ Enhancing your prompt..."
+                      : isTypewriting
+                        ? "✨ Writing enhanced prompt..."
+                        : hasInteracted
+                          ? "Ask a new question..."
+                          : "Ask a question..."
+                  }
+                  ref={inputRef}
                   rows={1}
-                  autoFocus={!isEnhancing && !isTypewriting}
-                  onCompositionStart={() => (isCompositionActive.current = true)}
-                  onCompositionEnd={() => (isCompositionActive.current = false)}
-                  onKeyDown={isEnhancing || isTypewriting ? undefined : handleKeyDown}
-                  onPaste={isEnhancing || isTypewriting ? undefined : handlePaste}
+                  style={{
+                    WebkitUserSelect: "text",
+                    WebkitTouchCallout: "none",
+                    minHeight: undefined,
+                    resize: "none",
+                  }}
+                  value={input}
                 />
               )}
 
               {/* Toolbar as a separate block - no absolute positioning */}
               <div
                 className={cn(
-                  'flex justify-between items-center rounded-t-none rounded-b-xl',
-                  '!bg-muted',
-                  '!border-0',
-                  'p-2 gap-2 shadow-none',
-                  'transition-all duration-200',
-                  (isEnhancing || isTypewriting) && 'pointer-events-none',
-                  isRecording && '!bg-muted text-muted-foreground',
+                  "flex items-center justify-between rounded-t-none rounded-b-xl",
+                  "!bg-muted",
+                  "!border-0",
+                  "gap-2 p-2 shadow-none",
+                  "transition-all duration-200",
+                  (isEnhancing || isTypewriting) && "pointer-events-none",
+                  isRecording && "!bg-muted text-muted-foreground"
                 )}
               >
-                <div className={cn('flex items-center gap-2')}>
+                <div className={cn("flex items-center gap-2")}>
                   <GroupModeToggle
-                    selectedGroup={selectedGroup}
-                    onGroupSelect={handleGroupSelect}
-                    status={status}
-                    onOpenSettings={onOpenSettings}
                     isProUser={isProUser}
+                    onGroupSelect={handleGroupSelect}
+                    onOpenSettings={onOpenSettings}
+                    selectedGroup={selectedGroup}
+                    status={status}
                   />
 
-                  {selectedGroup === 'connectors' && setSelectedConnectors && (
+                  {selectedGroup === "connectors" && setSelectedConnectors && (
                     <ConnectorSelector
-                      selectedConnectors={selectedConnectors}
-                      onConnectorToggle={handleConnectorToggle}
-                      user={user}
                       isProUser={isProUser}
+                      onConnectorToggle={handleConnectorToggle}
+                      selectedConnectors={selectedConnectors}
+                      user={user}
                     />
                   )}
 
                   <ModelSwitcher
-                    selectedModel={selectedModel}
-                    setSelectedModel={setSelectedModel}
                     attachments={attachments}
                     messages={messages}
-                    status={status}
                     onModelSelect={(model) => {
                       setSelectedModel(model.value);
                       const isVisionModel = hasVisionSupport(model.value);
                       toast.message(`Switched to ${model.label}`, {
-                        description: isVisionModel ? 'You can now upload images to the model.' : undefined,
-                        icon: <HugeiconsIcon icon={CpuIcon} size={16} color="currentColor" strokeWidth={2} />,
+                        description: isVisionModel
+                          ? "You can now upload images to the model."
+                          : undefined,
+                        icon: (
+                          <HugeiconsIcon
+                            color="currentColor"
+                            icon={CpuIcon}
+                            size={16}
+                            strokeWidth={2}
+                          />
+                        ),
                       });
                     }}
+                    selectedModel={selectedModel}
+                    setSelectedModel={setSelectedModel}
+                    status={status}
                     subscriptionData={subscriptionData}
                     user={user}
                   />
                 </div>
 
-                <div className={cn('flex items-center flex-shrink-0 gap-1')}>
+                <div className={cn("flex flex-shrink-0 items-center gap-1")}>
                   {hasVisionSupport(selectedModel) && (
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
                         <Button
-                          variant="outline"
-                          size="icon"
-                          className="group rounded-full transition-colors duration-200 !size-8 border-0 !shadow-none hover:!bg-primary/30 hover:!border-0"
+                          className="group !size-8 !shadow-none hover:!bg-primary/30 hover:!border-0 rounded-full border-0 transition-colors duration-200"
+                          disabled={isEnhancing || isTypewriting}
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
-                            if (!isEnhancing && !isTypewriting) {
+                            if (!(isEnhancing || isTypewriting)) {
                               triggerFileInput();
                             }
                           }}
-                          disabled={isEnhancing || isTypewriting}
+                          size="icon"
+                          variant="outline"
                         >
                           <span className="block">
-                            <HugeiconsIcon icon={DocumentAttachmentIcon} size={16} />
+                            <HugeiconsIcon
+                              icon={DocumentAttachmentIcon}
+                              size={16}
+                            />
                           </span>
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent
+                        className="!shadow-none border-0 px-3 py-2 backdrop-blur-xs"
                         side="bottom"
                         sideOffset={6}
-                        className="border-0 backdrop-blur-xs py-2 px-3 !shadow-none"
                       >
                         <div className="flex flex-col gap-0.5">
-                          <span className="font-medium text-[11px]">Attach File</span>
+                          <span className="font-medium text-[11px]">
+                            Attach File
+                          </span>
                           <span className="text-[10px] text-accent leading-tight">
-                            {hasPdfSupport(selectedModel) ? 'Upload an image or PDF document' : 'Upload an image'}
+                            {hasPdfSupport(selectedModel)
+                              ? "Upload an image or PDF document"
+                              : "Upload an image"}
                           </span>
                         </div>
                       </TooltipContent>
@@ -3378,30 +4074,35 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
                         <Button
-                          size="icon"
-                          variant="outline"
                           className={cn(
-                            'group rounded-full transition-colors duration-200 !size-8 border-0 !shadow-none hover:!bg-primary/30 hover:!border-0',
-                            isEnhancementActive && 'bg-primary/10 border-primary/20',
+                            "group !size-8 !shadow-none hover:!bg-primary/30 hover:!border-0 rounded-full border-0 transition-colors duration-200",
+                            isEnhancementActive &&
+                              "border-primary/20 bg-primary/10"
                           )}
-                          onClick={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            if (!isEnhancing && !isTypewriting) {
-                              handleEnhance();
-                            }
-                          }}
                           disabled={
                             isEnhancing ||
                             isTypewriting ||
                             uploadQueue.length > 0 ||
-                            status !== 'ready' ||
+                            status !== "ready" ||
                             isLimitBlocked
                           }
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            if (!(isEnhancing || isTypewriting)) {
+                              handleEnhance();
+                            }
+                          }}
+                          size="icon"
+                          variant="outline"
                         >
                           <span className="block">
                             {isEnhancementActive ? (
-                              <GripIcon ref={gripIconRef} size={16} className="text-primary" />
+                              <GripIcon
+                                className="text-primary"
+                                ref={gripIconRef}
+                                size={16}
+                              />
                             ) : (
                               <Wand2 className="h-4 w-4" />
                             )}
@@ -3409,22 +4110,26 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent
+                        className="!shadow-none border-0 px-3 py-2 backdrop-blur-xs"
                         side="bottom"
                         sideOffset={6}
-                        className="border-0 backdrop-blur-xs py-2 px-3 !shadow-none"
                       >
                         <div className="flex flex-col gap-0.5">
                           <span className="font-medium text-[11px]">
-                            {isEnhancing ? 'Enhancing…' : isTypewriting ? 'Writing…' : 'Enhance Prompt'}
+                            {isEnhancing
+                              ? "Enhancing…"
+                              : isTypewriting
+                                ? "Writing…"
+                                : "Enhance Prompt"}
                           </span>
                           <span className="text-[10px] text-accent leading-tight">
                             {isEnhancing
-                              ? 'Using AI to improve your prompt'
+                              ? "Using AI to improve your prompt"
                               : isTypewriting
-                                ? 'Typing enhanced prompt'
+                                ? "Typing enhanced prompt"
                                 : isProUser
-                                  ? 'Enhance your prompt with AI'
-                                  : 'Enhance your prompt with AI (Pro feature)'}
+                                  ? "Enhance your prompt with AI"
+                                  : "Enhance your prompt with AI (Pro feature)"}
                           </span>
                         </div>
                       </TooltipContent>
@@ -3435,17 +4140,17 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
                         <Button
-                          variant="destructive"
-                          size="icon"
-                          className="group rounded-full transition-colors duration-200 !size-8"
+                          className="group !size-8 rounded-full transition-colors duration-200"
+                          disabled={isEnhancing || isTypewriting}
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
-                            if (!isEnhancing && !isTypewriting) {
+                            if (!(isEnhancing || isTypewriting)) {
                               stop();
                             }
                           }}
-                          disabled={isEnhancing || isTypewriting}
+                          size="icon"
+                          variant="destructive"
                         >
                           <span className="block">
                             <StopIcon size={14} />
@@ -3453,29 +4158,36 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent
+                        className="!shadow-none border-0 px-3 py-2 backdrop-blur-xs"
                         side="bottom"
                         sideOffset={6}
-                        className="border-0 backdrop-blur-xs py-2 px-3 !shadow-none"
                       >
-                        <span className="font-medium text-[11px]">Stop Generation</span>
+                        <span className="font-medium text-[11px]">
+                          Stop Generation
+                        </span>
                       </TooltipContent>
                     </Tooltip>
-                  ) : input.length === 0 && attachments.length === 0 && !isEnhancing && !isTypewriting ? (
+                  ) : input.length === 0 &&
+                    attachments.length === 0 &&
+                    !isEnhancing &&
+                    !isTypewriting ? (
                     /* Show Voice Recording Button when no input */
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
                         <Button
-                          size="icon"
-                          variant={isRecording ? 'destructive' : 'default'}
-                          className={cn('group rounded-full m-auto transition-colors duration-200 !size-8')}
+                          className={cn(
+                            "group !size-8 m-auto rounded-full transition-colors duration-200"
+                          )}
+                          disabled={isEnhancing || isTypewriting}
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
-                            if (!isEnhancing && !isTypewriting) {
+                            if (!(isEnhancing || isTypewriting)) {
                               handleRecord();
                             }
                           }}
-                          disabled={isEnhancing || isTypewriting}
+                          size="icon"
+                          variant={isRecording ? "destructive" : "default"}
                         >
                           <span className="block">
                             <AudioLinesIcon ref={audioLinesRef} size={16} />
@@ -3483,16 +4195,18 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent
+                        className="!shadow-none border-0 px-3 py-2 backdrop-blur-xs"
                         side="bottom"
                         sideOffset={6}
-                        className="border-0 backdrop-blur-xs py-2 px-3 !shadow-none"
                       >
                         <div className="flex flex-col gap-0.5">
                           <span className="font-medium text-[11px]">
-                            {isRecording ? 'Stop Recording' : 'Voice Input'}
+                            {isRecording ? "Stop Recording" : "Voice Input"}
                           </span>
                           <span className="text-[10px] text-accent leading-tight">
-                            {isRecording ? 'Click to stop recording' : 'Record your voice message'}
+                            {isRecording
+                              ? "Click to stop recording"
+                              : "Record your voice message"}
                           </span>
                         </div>
                       </TooltipContent>
@@ -3502,23 +4216,26 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
                         <Button
-                          size="icon"
-                          className="group rounded-full flex m-auto transition-colors duration-200 !size-8"
-                          onClick={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            if (!isEnhancing && !isTypewriting) {
-                              submitForm();
-                            }
-                          }}
+                          className="group !size-8 m-auto flex rounded-full transition-colors duration-200"
                           disabled={
-                            (input.length === 0 && attachments.length === 0 && !isEnhancing && !isTypewriting) ||
+                            (input.length === 0 &&
+                              attachments.length === 0 &&
+                              !isEnhancing &&
+                              !isTypewriting) ||
                             uploadQueue.length > 0 ||
-                            status !== 'ready' ||
+                            status !== "ready" ||
                             isLimitBlocked ||
                             isEnhancing ||
                             isTypewriting
                           }
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            if (!(isEnhancing || isTypewriting)) {
+                              submitForm();
+                            }
+                          }}
+                          size="icon"
                         >
                           <span className="block">
                             <ArrowUpIcon size={16} />
@@ -3526,23 +4243,31 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent
+                        className="!shadow-none border-0 px-3 py-2 backdrop-blur-xs"
                         side="bottom"
                         sideOffset={6}
-                        className="border-0 backdrop-blur-xs py-2 px-3 !shadow-none"
                       >
                         <div className="text-center">
-                          <div className="font-medium text-[11px] mb-1">Send Message</div>
-                          <div className="text-[10px] text-accent space-y-0.5">
+                          <div className="mb-1 font-medium text-[11px]">
+                            Send Message
+                          </div>
+                          <div className="space-y-0.5 text-[10px] text-accent">
                             <div className="flex items-center justify-center gap-1.5">
                               <KbdGroup>
-                                <Kbd className="rounded text-[9px] px-0.5 h-4 min-w-4">Shift</Kbd>
+                                <Kbd className="h-4 min-w-4 rounded px-0.5 text-[9px]">
+                                  Shift
+                                </Kbd>
                                 <span>+</span>
-                                <Kbd className="rounded text-[9px] px-0.5 h-4 min-w-4">Enter</Kbd>
+                                <Kbd className="h-4 min-w-4 rounded px-0.5 text-[9px]">
+                                  Enter
+                                </Kbd>
                               </KbdGroup>
                               <span>for new line</span>
                             </div>
                             <div className="flex items-center justify-center gap-1.5">
-                              <Kbd className="rounded text-[9px] px-0.5 h-4 min-w-4">Enter</Kbd>
+                              <Kbd className="h-4 min-w-4 rounded px-0.5 text-[9px]">
+                                Enter
+                              </Kbd>
                               <span>to send</span>
                             </div>
                           </div>
@@ -3557,34 +4282,42 @@ const FormComponent: React.FC<FormComponentProps> = ({
         </div>
 
         {/* Pro Upgrade Dialog */}
-        <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
-          <DialogContent className="p-0 overflow-hidden gap-0 bg-background sm:max-w-[450px]" showCloseButton={false}>
+        <Dialog onOpenChange={setShowUpgradeDialog} open={showUpgradeDialog}>
+          <DialogContent
+            className="gap-0 overflow-hidden bg-background p-0 sm:max-w-[450px]"
+            showCloseButton={false}
+          >
             <DialogHeader className="p-2">
-              <div className="relative w-full p-6 rounded-md text-white overflow-hidden">
-                <div className="absolute inset-0 bg-[url('/placeholder.png')] bg-cover bg-center rounded-sm">
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-black/10"></div>
+              <div className="relative w-full overflow-hidden rounded-md p-6 text-white">
+                <div className="absolute inset-0 rounded-sm bg-[url('/placeholder.png')] bg-center bg-cover">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-black/10" />
                 </div>
                 <div className="relative z-10 flex flex-col gap-4">
                   <DialogTitle className="flex items-center gap-3 text-white">
-                    <div className="flex items-center gap-1 flex-wrap">
-                      <span className="text-xl sm:text-2xl font-bold">Unlock</span>
-                      <ProBadge className="!text-white !bg-white/20 !ring-white/30 font-extralight mb-0.5" />
+                    <div className="flex flex-wrap items-center gap-1">
+                      <span className="font-bold text-xl sm:text-2xl">
+                        Unlock
+                      </span>
+                      <ProBadge className="!text-white !bg-white/20 !ring-white/30 mb-0.5 font-extralight" />
                     </div>
                   </DialogTitle>
                   <DialogDescription className="text-white/90">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-2xl font-bold">${PRICING.PRO_MONTHLY}</span>
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="font-bold text-2xl">
+                        ${PRICING.PRO_MONTHLY}
+                      </span>
                       <span className="text-sm text-white/80">/month</span>
                     </div>
-                    <p className="text-sm text-white/80 text-left">
-                      Get enhanced capabilities including prompt enhancement and unlimited features
+                    <p className="text-left text-sm text-white/80">
+                      Get enhanced capabilities including prompt enhancement and
+                      unlimited features
                     </p>
                   </DialogDescription>
                   <Button
+                    className="mt-3 w-full border border-white/20 bg-white/90 font-medium text-black backdrop-blur-md hover:bg-white"
                     onClick={() => {
-                      window.location.href = '/pricing';
+                      window.location.href = "/pricing";
                     }}
-                    className="backdrop-blur-md bg-white/90 border border-white/20 text-black hover:bg-white w-full font-medium mt-3"
                   >
                     Upgrade to Pro
                   </Button>
@@ -3592,52 +4325,68 @@ const FormComponent: React.FC<FormComponentProps> = ({
               </div>
             </DialogHeader>
 
-            <div className="px-6 py-6 flex flex-col gap-4">
+            <div className="flex flex-col gap-4 px-6 py-6">
               <div className="flex items-center gap-4">
-                <CheckIcon className="size-4 text-primary flex-shrink-0" />
+                <CheckIcon className="size-4 flex-shrink-0 text-primary" />
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">Prompt Enhancement</p>
-                  <p className="text-xs text-muted-foreground">AI-powered prompt optimization</p>
+                  <p className="font-medium text-foreground text-sm">
+                    Prompt Enhancement
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    AI-powered prompt optimization
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-4">
-                <CheckIcon className="size-4 text-primary flex-shrink-0" />
+                <CheckIcon className="size-4 flex-shrink-0 text-primary" />
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">Unlimited Searches</p>
-                  <p className="text-xs text-muted-foreground">No daily limits on your research</p>
+                  <p className="font-medium text-foreground text-sm">
+                    Unlimited Searches
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    No daily limits on your research
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-4">
-                <CheckIcon className="size-4 text-primary flex-shrink-0" />
+                <CheckIcon className="size-4 flex-shrink-0 text-primary" />
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">Advanced AI Models</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="font-medium text-foreground text-sm">
+                    Advanced AI Models
+                  </p>
+                  <p className="text-muted-foreground text-xs">
                     Access to all AI models including Grok 4, Claude and GPT-5
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-4">
-                <CheckIcon className="size-4 text-primary flex-shrink-0" />
+                <CheckIcon className="size-4 flex-shrink-0 text-primary" />
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">Scira Lookout</p>
-                  <p className="text-xs text-muted-foreground">Automated search monitoring on your schedule</p>
+                  <p className="font-medium text-foreground text-sm">
+                    Scira Lookout
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    Automated search monitoring on your schedule
+                  </p>
                 </div>
               </div>
 
-              <div className="flex gap-2 w-full items-center mt-4">
-                <div className="flex-1 border-b border-foreground/10" />
-                <p className="text-xs text-foreground/50">Cancel anytime • Secure payment</p>
-                <div className="flex-1 border-b border-foreground/10" />
+              <div className="mt-4 flex w-full items-center gap-2">
+                <div className="flex-1 border-foreground/10 border-b" />
+                <p className="text-foreground/50 text-xs">
+                  Cancel anytime • Secure payment
+                </p>
+                <div className="flex-1 border-foreground/10 border-b" />
               </div>
 
               <Button
-                variant="ghost"
+                className="mt-2 w-full text-muted-foreground hover:text-foreground"
                 onClick={() => setShowUpgradeDialog(false)}
-                className="w-full text-muted-foreground hover:text-foreground mt-2"
                 size="sm"
+                variant="ghost"
               >
                 Not now
               </Button>

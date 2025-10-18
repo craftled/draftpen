@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { useCallback, useRef } from 'react';
+import { useRouter } from "next/navigation";
+import { useCallback, useRef } from "react";
 
 // Client-safe, route-only prefetching (no server-only imports)
 export function useChatPrefetch() {

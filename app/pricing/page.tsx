@@ -1,8 +1,8 @@
 // Force dynamic rendering to access headers
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-import { getCurrentUser } from '@/app/actions';
-import PricingTable from './_component/pricing-table';
+import { getCurrentUser } from "@/app/actions";
+import PricingTable from "./_component/pricing-table";
 
 export default async function PricingPage() {
   const user = await getCurrentUser();
@@ -11,10 +11,16 @@ export default async function PricingPage() {
   const linkId = process.env.POLAR_CHECKOUT_LINK_ID as string | undefined;
   let priceUSD: number | undefined;
   const token = process.env.POLAR_ACCESS_TOKEN;
-  const endpoints = ['https://api.polar.sh/v1', 'https://sandbox-api.polar.sh/v1'];
+  const endpoints = [
+    "https://api.polar.sh/v1",
+    "https://sandbox-api.polar.sh/v1",
+  ];
 
   async function tryFetch(url: string) {
-    return fetch(url, { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 3600 } });
+    return fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+      next: { revalidate: 3600 },
+    });
   }
 
   try {
@@ -41,8 +47,16 @@ export default async function PricingPage() {
         const items = data.items || [];
         const prod = items.find((i: any) => i?.id === productId);
         const prices = prod?.prices || [];
-        const chosen = prices.find((p: any) => (p.recurring_interval === 'month' || p.type === 'recurring') && String(p.price_currency).toUpperCase() === 'USD') || prices[0];
-        if (chosen?.price_amount) { priceUSD = Math.round(chosen.price_amount / 100); break; }
+        const chosen =
+          prices.find(
+            (p: any) =>
+              (p.recurring_interval === "month" || p.type === "recurring") &&
+              String(p.price_currency).toUpperCase() === "USD"
+          ) || prices[0];
+        if (chosen?.price_amount) {
+          priceUSD = Math.round(chosen.price_amount / 100);
+          break;
+        }
       }
     }
   } catch (_) {
@@ -62,7 +76,11 @@ export default async function PricingPage() {
 
   return (
     <div className="w-full">
-      <PricingTable subscriptionDetails={subscriptionDetails} user={user} priceUSD={priceUSD} />
+      <PricingTable
+        priceUSD={priceUSD}
+        subscriptionDetails={subscriptionDetails}
+        user={user}
+      />
     </div>
   );
 }

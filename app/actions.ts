@@ -1,86 +1,94 @@
 // app/actions.ts
-'use server';
+"use server";
 
-import { serverEnv } from '@/env/server';
-import { SearchGroupId } from '@/lib/utils';
-import { generateObject, generateText } from 'ai';
-import type { CoreMessage, ModelMessage, UIMessage } from 'ai';
-import { z } from 'zod';
-import { getUser } from '@/lib/auth-utils';
-import { modelProvider } from '@/ai/providers';
+import { elevenlabs } from "@ai-sdk/elevenlabs";
+import { Client } from "@upstash/qstash";
+import type { ModelMessage, UIMessage } from "ai";
 import {
-  getChatsByUserId,
-  deleteChatById,
-  updateChatVisibilityById,
-  getChatById,
-  getMessageById,
-  deleteMessagesByChatIdAfterTimestamp,
-  updateChatTitleById,
-  getExtremeSearchCount,
-  incrementMessageUsage,
-  getMessageCount,
-  getHistoricalUsageData,
-  getCustomInstructionsByUserId,
+  generateObject,
+  generateText,
+  experimental_generateSpeech as generateVoice,
+} from "ai";
+import { CronExpressionParser } from "cron-parser";
+import { z } from "zod";
+import { modelProvider } from "@/ai/providers";
+import { serverEnv } from "@/env/server";
+import { getUser } from "@/lib/auth-utils";
+import {
+  type ConnectorProvider,
+  createConnection,
+  deleteConnection,
+  getSyncStatus,
+  listUserConnections,
+  manualSync,
+} from "@/lib/connectors";
+import {
   createCustomInstructions,
-  updateCustomInstructions,
-  deleteCustomInstructions,
   createLookout,
-  getLookoutsByUserId,
+  deleteChatById,
+  deleteCustomInstructions,
+  deleteLookout,
+  deleteMessagesByChatIdAfterTimestamp,
+  getChatById,
+  getChatsByUserId,
+  getCustomInstructionsByUserId,
+  getExtremeSearchCount,
+  getHistoricalUsageData,
   getLookoutById,
+  getLookoutsByUserId,
+  getMessageById,
+  getMessageCount,
+  incrementMessageUsage,
+  updateChatTitleById,
+  updateChatVisibilityById,
+  updateCustomInstructions,
   updateLookout,
   updateLookoutStatus,
-  deleteLookout,
-} from '@/lib/db/queries';
-
-
-
-import { Client } from '@upstash/qstash';
-import { experimental_generateSpeech as generateVoice } from 'ai';
-import { elevenlabs } from '@ai-sdk/elevenlabs';
-import { usageCountCache, createMessageCountKey, createExtremeCountKey } from '@/lib/performance-cache';
-import { CronExpressionParser } from 'cron-parser';
-import { getComprehensiveUserData, getLightweightUserAuth } from '@/lib/user-data-server';
+} from "@/lib/db/queries";
 import {
-  createConnection,
-  listUserConnections,
-  deleteConnection,
-  manualSync,
-  getSyncStatus,
-  type ConnectorProvider,
-} from '@/lib/connectors';
+  createExtremeCountKey,
+  createMessageCountKey,
+  usageCountCache,
+} from "@/lib/performance-cache";
+import {
+  getComprehensiveUserData,
+  getLightweightUserAuth,
+} from "@/lib/user-data-server";
+import type { SearchGroupId } from "@/lib/utils";
 
 // Server action to get the current user with Pro status - UNIFIED VERSION
 export async function getCurrentUser() {
-  'use server';
+  "use server";
 
   return await getComprehensiveUserData();
 }
 
 // Lightweight auth check for fast authentication validation
 export async function getLightweightUser() {
-  'use server';
+  "use server";
 
   return await getLightweightUserAuth();
 }
 
 export async function suggestQuestions(history: unknown) {
-  'use server';
+  "use server";
 
   const normalizedHistory = Array.isArray(history)
     ? history
         .map((entry) => {
-          if (!entry || typeof entry !== 'object') {
+          if (!entry || typeof entry !== "object") {
             return null;
           }
 
           const role =
-            (entry as { role?: string }).role === 'assistant'
-              ? 'assistant'
-              : (entry as { role?: string }).role === 'system'
-                ? 'system'
-                : 'user';
+            (entry as { role?: string }).role === "assistant"
+              ? "assistant"
+              : (entry as { role?: string }).role === "system"
+                ? "system"
+                : "user";
           const rawContent = (entry as { content?: unknown }).content;
-          const content = typeof rawContent === 'string' ? rawContent.trim() : '';
+          const content =
+            typeof rawContent === "string" ? rawContent.trim() : "";
 
           if (!content) {
             return null;
@@ -88,13 +96,19 @@ export async function suggestQuestions(history: unknown) {
 
           return { role, content };
         })
-        .filter((item): item is { role: 'user' | 'assistant' | 'system'; content: string } => Boolean(item))
+        .filter(
+          (
+            item
+          ): item is {
+            role: "user" | "assistant" | "system";
+            content: string;
+          } => Boolean(item)
+        )
     : [];
 
   if (!normalizedHistory.length) {
     return { questions: [] };
   }
-
 
   const systemPrompt = `You are a search engine follow up query/questions generator. You MUST create EXACTLY 3 questions for the search engine based on the conversation history.
 
@@ -132,10 +146,11 @@ export async function suggestQuestions(history: unknown) {
 - Questions must be diverse and not redundant
 - Do not include instructions or meta-commentary in the questions`;
 
+  const chatContext = normalizedHistory
+    .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
+    .join("\n");
 
-  const chatContext = normalizedHistory.map((m) => `${m.role.toUpperCase()}: ${m.content}`).join('\n');
-
-  const modelsToTry = ['gpt5-mini', 'claude-4-5-sonnet'] as const;
+  const modelsToTry = ["gpt5-mini", "claude-4-5-sonnet"] as const;
 
   for (const modelId of modelsToTry) {
     try {
@@ -146,7 +161,7 @@ export async function suggestQuestions(history: unknown) {
         schema: z.object({
           questions: z
             .array(z.string().max(150))
-            .describe('The generated questions based on the message history.')
+            .describe("The generated questions based on the message history.")
             .length(3),
         }),
       });
@@ -155,7 +170,10 @@ export async function suggestQuestions(history: unknown) {
         questions: object.questions,
       };
     } catch (error) {
-      console.error(`Failed to generate suggested questions with model ${modelId}:`, error);
+      console.error(
+        `Failed to generate suggested questions with model ${modelId}:`,
+        error
+      );
     }
   }
 
@@ -164,20 +182,24 @@ export async function suggestQuestions(history: unknown) {
 
 export async function checkImageModeration(images: string[]) {
   const messages: ModelMessage[] = images.map((image) => ({
-    role: 'user',
-    content: [{ type: 'image', image: image }],
+    role: "user",
+    content: [{ type: "image", image }],
   }));
 
   const { text } = await generateText({
-    model: modelProvider.languageModel('gpt5-mini'),
+    model: modelProvider.languageModel("gpt5-mini"),
     messages,
   });
   return text;
 }
 
-export async function generateTitleFromUserMessage({ message }: { message: UIMessage }) {
+export async function generateTitleFromUserMessage({
+  message,
+}: {
+  message: UIMessage;
+}) {
   const { text: title } = await generateText({
-    model: modelProvider.languageModel('gpt4-1-nano'),
+    model: modelProvider.languageModel("gpt4-1-nano"),
     system: `You are an expert title generator. You are given a message and you need to generate a short title based on it.
 
     - you will generate a short title based on the first message a user begins a conversation with
@@ -189,7 +211,7 @@ export async function generateTitleFromUserMessage({ message }: { message: UIMes
     prompt: JSON.stringify(message),
     providerOptions: {
       groq: {
-        service_tier: 'flex',
+        service_tier: "flex",
       },
     },
   });
@@ -200,13 +222,13 @@ export async function generateTitleFromUserMessage({ message }: { message: UIMes
 export async function enhancePrompt(raw: string) {
   try {
     const user = await getComprehensiveUserData();
-    if (!user || !user.isProUser) {
-      return { success: false, error: 'Pro subscription required' };
+    if (!(user && user.isProUser)) {
+      return { success: false, error: "Pro subscription required" };
     }
 
     const system = `You are an expert prompt engineer. You are given a prompt and you need to enhance it.
 
-Today's Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
+Today's Date: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
 
 Guidelines (MANDATORY):
 - Preserve the user's original intent and constraints
@@ -223,7 +245,7 @@ Guidelines (MANDATORY):
 - Just return the improved prompt text in plain text format, no other text or commentary or markdown or anything else!!`;
 
     const { text } = await generateText({
-      model: modelProvider.languageModel('gpt5-mini'),
+      model: modelProvider.languageModel("gpt5-mini"),
       temperature: 0.6,
       topP: 0.95,
       maxOutputTokens: 1024,
@@ -233,16 +255,16 @@ Guidelines (MANDATORY):
 
     return { success: true, enhanced: text.trim() };
   } catch (error) {
-    console.error('Error enhancing prompt:', error);
-    return { success: false, error: 'Failed to enhance prompt' };
+    console.error("Error enhancing prompt:", error);
+    return { success: false, error: "Failed to enhance prompt" };
   }
 }
 
 export async function generateSpeech(text: string) {
   const result = await generateVoice({
-    model: elevenlabs.speech('eleven_v3'),
+    model: elevenlabs.speech("eleven_v3"),
     text,
-    voice: 'TX3LPaxmHKxFdv7VOQHJ',
+    voice: "TX3LPaxmHKxFdv7VOQHJ",
   });
 
   return {
@@ -251,34 +273,34 @@ export async function generateSpeech(text: string) {
 }
 
 // Map deprecated 'buddy' group ID to 'memory' for backward compatibility
-type LegacyGroupId = SearchGroupId | 'buddy';
+type LegacyGroupId = SearchGroupId | "buddy";
 
 const groupTools = {
   web: [
-    'web_search',
-    'greeting',
-    'code_interpreter',
-    'get_weather_data',
-    'retrieve',
-    'text_translate',
-    'track_flight',
-    'movie_or_tv_search',
-    'trending_movies',
-    'trending_tv',
-    'datetime'
+    "web_search",
+    "greeting",
+    "code_interpreter",
+    "get_weather_data",
+    "retrieve",
+    "text_translate",
+    "track_flight",
+    "movie_or_tv_search",
+    "trending_movies",
+    "trending_tv",
+    "datetime",
   ] as const,
-  academic: ['academic_search', 'code_interpreter', 'datetime'] as const,
-  youtube: ['youtube_search', 'datetime'] as const,
-  reddit: ['reddit_search', 'datetime'] as const,
+  academic: ["academic_search", "code_interpreter", "datetime"] as const,
+  youtube: ["youtube_search", "datetime"] as const,
+  reddit: ["reddit_search", "datetime"] as const,
   chat: [] as const,
-  extreme: ['extreme_search'] as const,
-  x: ['x_search'] as const,
-  memory: ['datetime', 'search_memories', 'add_memory'] as const,
-  connectors: ['connectors_search', 'datetime'] as const,
-  keywords: ['keyword_research', 'datetime'] as const,
-  serp: ['serp_checker', 'datetime'] as const,
+  extreme: ["extreme_search"] as const,
+  x: ["x_search"] as const,
+  memory: ["datetime", "search_memories", "add_memory"] as const,
+  connectors: ["connectors_search", "datetime"] as const,
+  keywords: ["keyword_research", "datetime"] as const,
+  serp: ["serp_checker", "datetime"] as const,
   // Add legacy mapping for backward compatibility
-  buddy: ['datetime', 'search_memories', 'add_memory'] as const,
+  buddy: ["datetime", "search_memories", "add_memory"] as const,
 } as const;
 
 const groupInstructions = {
@@ -287,7 +309,7 @@ const groupInstructions = {
 
 You are Scira, an AI search engine designed to help users find information on the internet with no unnecessary chatter and focus on content delivery in markdown format.
 
-**Today's Date:** ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}
+**Today's Date:** ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}
 
 ---
 
@@ -578,7 +600,7 @@ code_example()
   memory: `
   You are a memory companion called Memory, designed to help users manage and interact with their personal memories.
   Your goal is to help users store, retrieve, and manage their memories in a natural and conversational way.
-  Today's date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
+  Today's date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
 
   ### Memory Management Tool Guidelines:
   - ⚠️ URGENT: RUN THE MEMORY_MANAGER TOOL IMMEDIATELY on receiving ANY user message - NO EXCEPTIONS
@@ -612,7 +634,7 @@ code_example()
 
   x: `
   You are a X content expert that transforms search results into comprehensive answers with mix of lists, paragraphs and tables as required.
-  The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
+  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
 
   ### Tool Guidelines:
   #### X Search Tool:
@@ -654,7 +676,7 @@ code_example()
   buddy: `
   You are a memory companion called Memory, designed to help users manage and interact with their personal memories.
   Your goal is to help users store, retrieve, and manage their memories in a natural and conversational way.
-  Today's date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
+  Today's date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
 
   ### Memory Management Tool Guidelines:
   - ⚠️ URGENT: RUN THE MEMORY_MANAGER TOOL IMMEDIATELY on receiving ANY user message - NO EXCEPTIONS
@@ -686,12 +708,10 @@ code_example()
   - Maintain a friendly, personal tone
   - Always save the memory user asks you to save`,
 
-
-
   academic: `
   ⚠️ CRITICAL: YOU MUST RUN THE ACADEMIC_SEARCH TOOL IMMEDIATELY ON RECEIVING ANY USER MESSAGE!
   You are an academic research assistant that helps find and analyze scholarly content.
-  The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
+  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
 
   ### Tool Guidelines:
   #### Academic Search Tool:
@@ -752,7 +772,7 @@ code_example()
 
   youtube: `
   You are a YouTube content expert that transforms search results into comprehensive answers with mix of lists, paragraphs and tables as required.
-  The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
+  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
 
   ### Tool Guidelines:
   #### YouTube Search Tool:
@@ -810,7 +830,7 @@ code_example()
   - Do NOT include generic timestamps (0:00) - all timestamps must be precise and relevant`,
   reddit: `
   You are a Reddit content expert that will search for the most relevant content on Reddit and return it to the user.
-  The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
+  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
 
   ### Tool Guidelines:
   #### Reddit Search Tool:
@@ -848,7 +868,7 @@ code_example()
 
   chat: `
   You are Scira, a helpful assistant that helps with the task asked by the user.
-  Today's date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
+  Today's date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
 
   ### Guidelines:
   - You do not have access to any tools. You can code like a professional software engineer.
@@ -879,7 +899,7 @@ code_example()
   You are an advanced research assistant focused on deep analysis and comprehensive understanding with focus to be backed by citations in a 3 page long research paper format.
   You objective is to always run the tool first and then write the response with citations with 3 pages of content!
 
-**Today's Date:** ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}
+**Today's Date:** ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}
 
 ---
 
@@ -1098,11 +1118,9 @@ $$
 - ❌ **SHORT RESPONSES**: Never write brief responses - aim for 3-page research paper format
 - ❌ **BULLET-POINT RESPONSES**: Use paragraphs for main content, bullets only for lists within sections`,
 
-
-
   connectors: `
   You are a connectors search assistant that helps users find information from their connected Google Drive and other documents.
-  The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
+  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
 
   ### CRITICAL INSTRUCTION:
   - ⚠️ URGENT: RUN THE CONNECTORS_SEARCH TOOL IMMEDIATELY on receiving ANY user message - NO EXCEPTIONS
@@ -1152,7 +1170,7 @@ $$
 
   keywords: `
   You are a Keyword Research Assistant powered by DataForSEO, specialized in finding keyword ideas with search volume and difficulty metrics.
-  The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
+  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
 
   ### CRITICAL INSTRUCTION:
   - ⚠️ URGENT: RUN THE KEYWORD_RESEARCH TOOL IMMEDIATELY on receiving ANY user message - NO EXCEPTIONS
@@ -1209,10 +1227,9 @@ $$
   - Suggest keyword clusters or themes when applicable
   - Keep explanations concise and data-focused`,
 
-
   serp: `
   You are a SERP Research Assistant powered by Serper.dev, specialized in retrieving Google SERP data (top 20 organic results, People Also Ask, and Related Searches).
-  The current date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
+  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
 
   ### CRITICAL INSTRUCTION:
   - ⚠️ URGENT: RUN THE SERP_CHECKER TOOL IMMEDIATELY on receiving ANY user message — NO EXCEPTIONS
@@ -1241,26 +1258,24 @@ $$
   - Be concise and skimmable; prioritize clarity
   - Do not add commentary beyond what the results justify
   - No citations beyond the URLs already provided`,
-
-
 };
 
-export async function getGroupConfig(groupId: LegacyGroupId = 'web') {
-  'use server';
+export async function getGroupConfig(groupId: LegacyGroupId = "web") {
+  "use server";
 
   // Check if the user is authenticated for memory, buddy, or connectors group
-  if (groupId === 'memory' || groupId === 'buddy' || groupId === 'connectors') {
+  if (groupId === "memory" || groupId === "buddy" || groupId === "connectors") {
     const user = await getCurrentUser();
     if (!user) {
       // Redirect to web group if user is not authenticated
-      groupId = 'web';
-    } else if (groupId === 'connectors') {
+      groupId = "web";
+    } else if (groupId === "connectors") {
       // Check if user has Pro access for connectors
       if (!user.isProUser) {
         // Redirect to web group if user is not Pro
-        groupId = 'web';
+        groupId = "web";
       }
-    } else if (groupId === 'buddy') {
+    } else if (groupId === "buddy") {
       // If authenticated and using 'buddy', still use the memory_manager tool but with buddy instructions
       // The tools are the same, just different instructions
       const tools = groupTools[groupId];
@@ -1273,14 +1288,13 @@ export async function getGroupConfig(groupId: LegacyGroupId = 'web') {
     }
   }
   // Fallback: if groupId is not recognized, default to 'web' to avoid runtime errors
-  if (!Object.prototype.hasOwnProperty.call(groupTools, groupId)) {
-    groupId = 'web';
+  if (!Object.hasOwn(groupTools, groupId)) {
+    groupId = "web";
   }
 
-
-
   const tools = groupTools[groupId as keyof typeof groupTools];
-  const instructions = groupInstructions[groupId as keyof typeof groupInstructions];
+  const instructions =
+    groupInstructions[groupId as keyof typeof groupInstructions];
 
   return {
     tools,
@@ -1291,11 +1305,11 @@ export async function getGroupConfig(groupId: LegacyGroupId = 'web') {
 // Add functions to fetch user chats
 export async function getUserChats(
   userId: string,
-  limit: number = 20,
+  limit = 20,
   startingAfter?: string,
-  endingBefore?: string,
+  endingBefore?: string
 ): Promise<{ chats: any[]; hasMore: boolean }> {
-  'use server';
+  "use server";
 
   if (!userId) return { chats: [], hasMore: false };
 
@@ -1307,7 +1321,7 @@ export async function getUserChats(
       endingBefore: endingBefore || null,
     });
   } catch (error) {
-    console.error('Error fetching user chats:', error);
+    console.error("Error fetching user chats:", error);
     return { chats: [], hasMore: false };
   }
 }
@@ -1316,11 +1330,11 @@ export async function getUserChats(
 export async function loadMoreChats(
   userId: string,
   lastChatId: string,
-  limit: number = 20,
+  limit = 20
 ): Promise<{ chats: any[]; hasMore: boolean }> {
-  'use server';
+  "use server";
 
-  if (!userId || !lastChatId) return { chats: [], hasMore: false };
+  if (!(userId && lastChatId)) return { chats: [], hasMore: false };
 
   try {
     return await getChatsByUserId({
@@ -1330,40 +1344,46 @@ export async function loadMoreChats(
       endingBefore: lastChatId,
     });
   } catch (error) {
-    console.error('Error loading more chats:', error);
+    console.error("Error loading more chats:", error);
     return { chats: [], hasMore: false };
   }
 }
 
 // Add function to delete a chat
 export async function deleteChat(chatId: string) {
-  'use server';
+  "use server";
 
   if (!chatId) return null;
 
   try {
     return await deleteChatById({ id: chatId });
   } catch (error) {
-    console.error('Error deleting chat:', error);
+    console.error("Error deleting chat:", error);
     return null;
   }
 }
 
 // Add function to update chat visibility
-export async function updateChatVisibility(chatId: string, visibility: 'private' | 'public') {
-  'use server';
+export async function updateChatVisibility(
+  chatId: string,
+  visibility: "private" | "public"
+) {
+  "use server";
 
-  console.log('🔄 updateChatVisibility called with:', { chatId, visibility });
+  console.log("🔄 updateChatVisibility called with:", { chatId, visibility });
 
   if (!chatId) {
-    console.error('❌ updateChatVisibility: No chatId provided');
-    throw new Error('Chat ID is required');
+    console.error("❌ updateChatVisibility: No chatId provided");
+    throw new Error("Chat ID is required");
   }
 
   try {
-    console.log('📡 Calling updateChatVisibilityById with:', { chatId, visibility });
+    console.log("📡 Calling updateChatVisibilityById with:", {
+      chatId,
+      visibility,
+    });
     const result = await updateChatVisibilityById({ chatId, visibility });
-    console.log('✅ updateChatVisibilityById successful, result:', result);
+    console.log("✅ updateChatVisibilityById successful, result:", result);
 
     // Return a serializable plain object instead of raw database result
     return {
@@ -1373,7 +1393,7 @@ export async function updateChatVisibility(chatId: string, visibility: 'private'
       rowCount: result?.rowCount || 0,
     };
   } catch (error) {
-    console.error('❌ Error in updateChatVisibility:', {
+    console.error("❌ Error in updateChatVisibility:", {
       chatId,
       visibility,
       error: error instanceof Error ? error.message : error,
@@ -1385,23 +1405,23 @@ export async function updateChatVisibility(chatId: string, visibility: 'private'
 
 // Add function to get chat info
 export async function getChatInfo(chatId: string) {
-  'use server';
+  "use server";
 
   if (!chatId) return null;
 
   try {
     return await getChatById({ id: chatId });
   } catch (error) {
-    console.error('Error getting chat info:', error);
+    console.error("Error getting chat info:", error);
     return null;
   }
 }
 
 export async function deleteTrailingMessages({ id }: { id: string }) {
-  'use server';
+  "use server";
   try {
     const [message] = await getMessageById({ id });
-    console.log('Message: ', message);
+    console.log("Message: ", message);
 
     if (!message) {
       console.error(`No message found with id: ${id}`);
@@ -1413,7 +1433,9 @@ export async function deleteTrailingMessages({ id }: { id: string }) {
       timestamp: message.createdAt,
     });
 
-    console.log(`Successfully deleted trailing messages after message ID: ${id}`);
+    console.log(
+      `Successfully deleted trailing messages after message ID: ${id}`
+    );
   } catch (error) {
     console.error(`Error deleting trailing messages: ${error}`);
     throw error; // Re-throw to allow caller to handle
@@ -1422,23 +1444,23 @@ export async function deleteTrailingMessages({ id }: { id: string }) {
 
 // Add function to update chat title
 export async function updateChatTitle(chatId: string, title: string) {
-  'use server';
+  "use server";
 
-  if (!chatId || !title.trim()) return null;
+  if (!(chatId && title.trim())) return null;
 
   try {
     return await updateChatTitleById({ chatId, title: title.trim() });
   } catch (error) {
-    console.error('Error updating chat title:', error);
+    console.error("Error updating chat title:", error);
     return null;
   }
 }
 
 export async function getSubDetails() {
-  'use server';
+  "use server";
 
   // Import here to avoid issues with SSR
-  const { getComprehensiveUserData } = await import('@/lib/user-data-server');
+  const { getComprehensiveUserData } = await import("@/lib/user-data-server");
   const userData = await getComprehensiveUserData();
 
   if (!userData) return { hasSubscription: false };
@@ -1452,12 +1474,12 @@ export async function getSubDetails() {
 }
 
 export async function getUserMessageCount(providedUser?: any) {
-  'use server';
+  "use server";
 
   try {
     const user = providedUser || (await getUser());
     if (!user) {
-      return { count: 0, error: 'User not found' };
+      return { count: 0, error: "User not found" };
     }
 
     // Check cache first
@@ -1476,18 +1498,18 @@ export async function getUserMessageCount(providedUser?: any) {
 
     return { count, error: null };
   } catch (error) {
-    console.error('Error getting user message count:', error);
-    return { count: 0, error: 'Failed to get message count' };
+    console.error("Error getting user message count:", error);
+    return { count: 0, error: "Failed to get message count" };
   }
 }
 
 export async function incrementUserMessageCount() {
-  'use server';
+  "use server";
 
   try {
     const user = await getUser();
     if (!user) {
-      return { success: false, error: 'User not found' };
+      return { success: false, error: "User not found" };
     }
 
     await incrementMessageUsage({
@@ -1500,18 +1522,18 @@ export async function incrementUserMessageCount() {
 
     return { success: true, error: null };
   } catch (error) {
-    console.error('Error incrementing user message count:', error);
-    return { success: false, error: 'Failed to increment message count' };
+    console.error("Error incrementing user message count:", error);
+    return { success: false, error: "Failed to increment message count" };
   }
 }
 
 export async function getExtremeSearchUsageCount(providedUser?: any) {
-  'use server';
+  "use server";
 
   try {
     const user = providedUser || (await getUser());
     if (!user) {
-      return { count: 0, error: 'User not found' };
+      return { count: 0, error: "User not found" };
     }
 
     // Check cache first
@@ -1530,14 +1552,13 @@ export async function getExtremeSearchUsageCount(providedUser?: any) {
 
     return { count, error: null };
   } catch (error) {
-    console.error('Error getting extreme search usage count:', error);
-    return { count: 0, error: 'Failed to get extreme search count' };
+    console.error("Error getting extreme search usage count:", error);
+    return { count: 0, error: "Failed to get extreme search count" };
   }
 }
 
-
-export async function getHistoricalUsage(providedUser?: any, months: number = 9) {
-  'use server';
+export async function getHistoricalUsage(providedUser?: any, months = 9) {
+  "use server";
 
   try {
     const user = providedUser || (await getUser());
@@ -1545,7 +1566,10 @@ export async function getHistoricalUsage(providedUser?: any, months: number = 9)
       return [];
     }
 
-    const historicalData = await getHistoricalUsageData({ userId: user.id, months });
+    const historicalData = await getHistoricalUsageData({
+      userId: user.id,
+      months,
+    });
 
     // Calculate days based on months (approximately 30 days per month)
     const totalDays = months * 30;
@@ -1562,7 +1586,7 @@ export async function getHistoricalUsage(providedUser?: any, months: number = 9)
     // Create a map of existing data for quick lookup
     const dataMap = new Map<string, number>();
     historicalData.forEach((record) => {
-      const dateKey = record.date.toISOString().split('T')[0];
+      const dateKey = record.date.toISOString().split("T")[0];
       dataMap.set(dateKey, record.messageCount || 0);
     });
 
@@ -1571,7 +1595,7 @@ export async function getHistoricalUsage(providedUser?: any, months: number = 9)
     for (let i = 0; i < totalDays; i++) {
       const currentDate = new Date(startDate);
       currentDate.setDate(startDate.getDate() + i);
-      const dateKey = currentDate.toISOString().split('T')[0];
+      const dateKey = currentDate.toISOString().split("T")[0];
 
       const count = dataMap.get(dateKey) || 0;
       let level: 0 | 1 | 2 | 3 | 4;
@@ -1592,14 +1616,14 @@ export async function getHistoricalUsage(providedUser?: any, months: number = 9)
 
     return completeData;
   } catch (error) {
-    console.error('Error getting historical usage:', error);
+    console.error("Error getting historical usage:", error);
     return [];
   }
 }
 
 // Custom Instructions Server Actions
 export async function getCustomInstructions(providedUser?: any) {
-  'use server';
+  "use server";
 
   try {
     const user = providedUser || (await getUser());
@@ -1607,67 +1631,77 @@ export async function getCustomInstructions(providedUser?: any) {
       return null;
     }
 
-    const instructions = await getCustomInstructionsByUserId({ userId: user.id });
+    const instructions = await getCustomInstructionsByUserId({
+      userId: user.id,
+    });
     return instructions ?? null;
   } catch (error) {
-    console.error('Error getting custom instructions:', error);
+    console.error("Error getting custom instructions:", error);
     return null;
   }
 }
 
 export async function saveCustomInstructions(content: string) {
-  'use server';
+  "use server";
 
   try {
     const user = await getUser();
     if (!user) {
-      return { success: false, error: 'User not found' };
+      return { success: false, error: "User not found" };
     }
 
     if (!content.trim()) {
-      return { success: false, error: 'Content cannot be empty' };
+      return { success: false, error: "Content cannot be empty" };
     }
 
     // Check if instructions already exist
-    const existingInstructions = await getCustomInstructionsByUserId({ userId: user.id });
+    const existingInstructions = await getCustomInstructionsByUserId({
+      userId: user.id,
+    });
 
     let result;
     if (existingInstructions) {
-      result = await updateCustomInstructions({ userId: user.id, content: content.trim() });
+      result = await updateCustomInstructions({
+        userId: user.id,
+        content: content.trim(),
+      });
     } else {
-      result = await createCustomInstructions({ userId: user.id, content: content.trim() });
+      result = await createCustomInstructions({
+        userId: user.id,
+        content: content.trim(),
+      });
     }
 
     return { success: true, data: result };
   } catch (error) {
-    console.error('Error saving custom instructions:', error);
-    return { success: false, error: 'Failed to save custom instructions' };
+    console.error("Error saving custom instructions:", error);
+    return { success: false, error: "Failed to save custom instructions" };
   }
 }
 
 export async function deleteCustomInstructionsAction() {
-  'use server';
+  "use server";
 
   try {
     const user = await getUser();
     if (!user) {
-      return { success: false, error: 'User not found' };
+      return { success: false, error: "User not found" };
     }
 
     const result = await deleteCustomInstructions({ userId: user.id });
     return { success: true, data: result };
   } catch (error) {
-    console.error('Error deleting custom instructions:', error);
-    return { success: false, error: 'Failed to delete custom instructions' };
+    console.error("Error deleting custom instructions:", error);
+    return { success: false, error: "Failed to delete custom instructions" };
   }
 }
 
 // Fast pro user status check - UNIFIED VERSION
 export async function getProUserStatusOnly(): Promise<boolean> {
-  'use server';
+  "use server";
 
   // Import here to avoid issues with SSR
-  const { isUserPro } = await import('@/lib/user-data-server');
+  const { isUserPro } = await import("@/lib/user-data-server");
   return await isUserPro();
 }
 
@@ -1679,27 +1713,33 @@ export async function getPaymentHistory() {
 const qstash = new Client({ token: serverEnv.QSTASH_TOKEN });
 
 // Helper function to convert frequency to cron schedule with timezone
-function frequencyToCron(frequency: string, time: string, timezone: string, dayOfWeek?: string): string {
-  const [hours, minutes] = time.split(':').map(Number);
+function frequencyToCron(
+  frequency: string,
+  time: string,
+  timezone: string,
+  dayOfWeek?: string
+): string {
+  const [hours, minutes] = time.split(":").map(Number);
 
-  let cronExpression = '';
+  let cronExpression = "";
   switch (frequency) {
-    case 'once':
+    case "once":
       // For 'once', we'll handle it differently - no cron schedule needed
-      return '';
-    case 'daily':
+      return "";
+    case "daily":
       cronExpression = `${minutes} ${hours} * * *`;
       break;
-    case 'weekly':
+    case "weekly": {
       // Use the day of week if provided, otherwise default to Sunday (0)
-      const day = dayOfWeek || '0';
+      const day = dayOfWeek || "0";
       cronExpression = `${minutes} ${hours} * * ${day}`;
       break;
-    case 'monthly':
+    }
+    case "monthly":
       // Run on the 1st of each month
       cronExpression = `${minutes} ${hours} 1 * *`;
       break;
-    case 'yearly':
+    case "yearly":
       // Run on January 1st
       cronExpression = `${minutes} ${hours} 1 1 *`;
       break;
@@ -1716,8 +1756,8 @@ function calculateNextRun(cronSchedule: string, timezone: string): Date {
   try {
     // Extract the actual cron expression from the timezone-prefixed format
     // Format: "CRON_TZ=timezone 0 9 * * *" -> "0 9 * * *"
-    const actualCronExpression = cronSchedule.startsWith('CRON_TZ=')
-      ? cronSchedule.split(' ').slice(1).join(' ')
+    const actualCronExpression = cronSchedule.startsWith("CRON_TZ=")
+      ? cronSchedule.split(" ").slice(1).join(" ")
       : cronSchedule;
 
     const options = {
@@ -1728,7 +1768,7 @@ function calculateNextRun(cronSchedule: string, timezone: string): Date {
     const interval = CronExpressionParser.parse(actualCronExpression, options);
     return interval.next().toDate();
   } catch (error) {
-    console.error('Error parsing cron expression:', cronSchedule, error);
+    console.error("Error parsing cron expression:", cronSchedule, error);
     // Fallback to simple calculation
     const now = new Date();
     const nextRun = new Date(now);
@@ -1738,8 +1778,12 @@ function calculateNextRun(cronSchedule: string, timezone: string): Date {
 }
 
 // Helper function to calculate next run for 'once' frequency
-function calculateOnceNextRun(time: string, timezone: string, date?: string): Date {
-  const [hours, minutes] = time.split(':').map(Number);
+function calculateOnceNextRun(
+  time: string,
+  timezone: string,
+  date?: string
+): Date {
+  const [hours, minutes] = time.split(":").map(Number);
 
   if (date) {
     // If a specific date is provided, use it
@@ -1766,12 +1810,12 @@ export async function createScheduledLookout({
   prompt,
   frequency,
   time,
-  timezone = 'UTC',
+  timezone = "UTC",
   date,
 }: {
   title: string;
   prompt: string;
-  frequency: 'once' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+  frequency: "once" | "daily" | "weekly" | "monthly" | "yearly";
   time: string; // Format: "HH:MM" or "HH:MM:dayOfWeek" for weekly
   timezone?: string;
   date?: string; // For 'once' frequency
@@ -1779,50 +1823,58 @@ export async function createScheduledLookout({
   try {
     const user = await getCurrentUser();
     if (!user) {
-      throw new Error('Authentication required');
+      throw new Error("Authentication required");
     }
 
     // Check if user is Pro
     if (!user.isProUser) {
-      throw new Error('Pro subscription required for scheduled searches');
+      throw new Error("Pro subscription required for scheduled searches");
     }
 
     // Check lookout limits
     const existingLookouts = await getLookoutsByUserId({ userId: user.id });
     if (existingLookouts.length >= 10) {
-      throw new Error('You have reached the maximum limit of 10 lookouts');
+      throw new Error("You have reached the maximum limit of 10 lookouts");
     }
 
     // Check daily lookout limit specifically
-    if (frequency === 'daily') {
+    if (frequency === "daily") {
       const activeDailyLookouts = existingLookouts.filter(
-        (lookout) => lookout.frequency === 'daily' && lookout.status === 'active',
+        (lookout) =>
+          lookout.frequency === "daily" && lookout.status === "active"
       );
       if (activeDailyLookouts.length >= 5) {
-        throw new Error('You have reached the maximum limit of 5 active daily lookouts');
+        throw new Error(
+          "You have reached the maximum limit of 5 active daily lookouts"
+        );
       }
     }
 
-    let cronSchedule = '';
+    let cronSchedule = "";
     let nextRunAt: Date;
     let actualTime = time;
     let dayOfWeek: string | undefined;
 
     // Extract day of week for weekly frequency
-    if (frequency === 'weekly' && time.includes(':')) {
-      const parts = time.split(':');
+    if (frequency === "weekly" && time.includes(":")) {
+      const parts = time.split(":");
       if (parts.length === 3) {
         actualTime = `${parts[0]}:${parts[1]}`;
         dayOfWeek = parts[2];
       }
     }
 
-    if (frequency === 'once') {
+    if (frequency === "once") {
       // For 'once', calculate the next run time without cron
       nextRunAt = calculateOnceNextRun(actualTime, timezone, date);
     } else {
       // Generate cron schedule for recurring frequencies
-      cronSchedule = frequencyToCron(frequency, actualTime, timezone, dayOfWeek);
+      cronSchedule = frequencyToCron(
+        frequency,
+        actualTime,
+        timezone,
+        dayOfWeek
+      );
       nextRunAt = calculateNextRun(cronSchedule, timezone);
     }
 
@@ -1838,7 +1890,11 @@ export async function createScheduledLookout({
       qstashScheduleId: undefined, // Will be updated if needed
     });
 
-    console.log('📝 Created lookout in database:', lookout.id, 'Now scheduling with QStash...');
+    console.log(
+      "📝 Created lookout in database:",
+      lookout.id,
+      "Now scheduling with QStash..."
+    );
 
     // Small delay to ensure database transaction is committed
     await new Promise((resolve) => setTimeout(resolve, 100));
@@ -1846,9 +1902,12 @@ export async function createScheduledLookout({
     // Create QStash schedule for all frequencies (recurring and once)
     if (lookout.id) {
       try {
-        if (frequency === 'once') {
-          console.log('⏰ Creating QStash one-time execution for lookout:', lookout.id);
-          console.log('📅 Scheduled time:', nextRunAt.toISOString());
+        if (frequency === "once") {
+          console.log(
+            "⏰ Creating QStash one-time execution for lookout:",
+            lookout.id
+          );
+          console.log("📅 Scheduled time:", nextRunAt.toISOString());
 
           const delay = Math.floor((nextRunAt.getTime() - Date.now()) / 1000); // Delay in seconds
           const minimumDelay = Math.max(delay, 5); // At least 5 seconds to ensure DB consistency
@@ -1857,44 +1916,47 @@ export async function createScheduledLookout({
             await qstash.publish({
               // if dev env use localhost:3000/api/lookout, else use scira.ai/api/lookout
               url:
-                process.env.NODE_ENV === 'development'
-                  ? process.env.NGROK_URL + '/api/lookout'
-                  : `https://draftpen.com/api/lookout`,
+                process.env.NODE_ENV === "development"
+                  ? process.env.NGROK_URL + "/api/lookout"
+                  : "https://draftpen.com/api/lookout",
               body: JSON.stringify({
                 lookoutId: lookout.id,
                 prompt,
                 userId: user.id,
               }),
               headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
               },
               delay: minimumDelay,
             });
 
             console.log(
-              '✅ QStash one-time execution scheduled for lookout:',
+              "✅ QStash one-time execution scheduled for lookout:",
               lookout.id,
-              'with delay:',
+              "with delay:",
               minimumDelay,
-              'seconds',
+              "seconds"
             );
 
             // For consistency, we don't store a qstashScheduleId for one-time executions
             // since they use the publish API instead of schedules API
           } else {
-            throw new Error('Cannot schedule for a time in the past');
+            throw new Error("Cannot schedule for a time in the past");
           }
         } else {
-          console.log('⏰ Creating QStash recurring schedule for lookout:', lookout.id);
-          console.log('📅 Cron schedule with timezone:', cronSchedule);
+          console.log(
+            "⏰ Creating QStash recurring schedule for lookout:",
+            lookout.id
+          );
+          console.log("📅 Cron schedule with timezone:", cronSchedule);
 
           const scheduleResponse = await qstash.schedules.create({
             // if dev env use localhost:3000/api/lookout, else use scira.ai/api/lookout
             destination:
-              process.env.NODE_ENV === 'development'
-                ? process.env.NGROK_URL + '/api/lookout'
-                : `https://draftpen.com/api/lookout`,
-            method: 'POST',
+              process.env.NODE_ENV === "development"
+                ? process.env.NGROK_URL + "/api/lookout"
+                : "https://draftpen.com/api/lookout",
+            method: "POST",
             cron: cronSchedule,
             body: JSON.stringify({
               lookoutId: lookout.id,
@@ -1902,11 +1964,16 @@ export async function createScheduledLookout({
               userId: user.id,
             }),
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
           });
 
-          console.log('✅ QStash recurring schedule created:', scheduleResponse.scheduleId, 'for lookout:', lookout.id);
+          console.log(
+            "✅ QStash recurring schedule created:",
+            scheduleResponse.scheduleId,
+            "for lookout:",
+            lookout.id
+          );
 
           // Update lookout with QStash schedule ID
           await updateLookout({
@@ -1917,19 +1984,22 @@ export async function createScheduledLookout({
           lookout.qstashScheduleId = scheduleResponse.scheduleId;
         }
       } catch (qstashError) {
-        console.error('Error creating QStash schedule:', qstashError);
+        console.error("Error creating QStash schedule:", qstashError);
         // Delete the lookout if QStash creation fails
         await deleteLookout({ id: lookout.id });
         throw new Error(
-          `Failed to ${frequency === 'once' ? 'schedule one-time search' : 'create recurring schedule'}. Please try again.`,
+          `Failed to ${frequency === "once" ? "schedule one-time search" : "create recurring schedule"}. Please try again.`
         );
       }
     }
 
     return { success: true, lookout };
   } catch (error) {
-    console.error('Error creating scheduled lookout:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    console.error("Error creating scheduled lookout:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
   }
 }
 
@@ -1937,19 +2007,30 @@ export async function getUserLookouts() {
   try {
     const user = await getCurrentUser();
     if (!user) {
-      throw new Error('Authentication required');
+      throw new Error("Authentication required");
     }
 
     const lookouts = await getLookoutsByUserId({ userId: user.id });
 
     // Update next run times for active lookouts
     const updatedLookouts = lookouts.map((lookout) => {
-      if (lookout.status === 'active' && lookout.cronSchedule && lookout.frequency !== 'once') {
+      if (
+        lookout.status === "active" &&
+        lookout.cronSchedule &&
+        lookout.frequency !== "once"
+      ) {
         try {
-          const nextRunAt = calculateNextRun(lookout.cronSchedule, lookout.timezone);
+          const nextRunAt = calculateNextRun(
+            lookout.cronSchedule,
+            lookout.timezone
+          );
           return { ...lookout, nextRunAt };
         } catch (error) {
-          console.error('Error calculating next run for lookout:', lookout.id, error);
+          console.error(
+            "Error calculating next run for lookout:",
+            lookout.id,
+            error
+          );
           return lookout;
         }
       }
@@ -1958,8 +2039,11 @@ export async function getUserLookouts() {
 
     return { success: true, lookouts: updatedLookouts };
   } catch (error) {
-    console.error('Error getting user lookouts:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    console.error("Error getting user lookouts:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
   }
 }
 
@@ -1968,37 +2052,40 @@ export async function updateLookoutStatusAction({
   status,
 }: {
   id: string;
-  status: 'active' | 'paused' | 'archived' | 'running';
+  status: "active" | "paused" | "archived" | "running";
 }) {
   try {
     const user = await getCurrentUser();
     if (!user) {
-      throw new Error('Authentication required');
+      throw new Error("Authentication required");
     }
 
     // Get lookout to verify ownership
     const lookout = await getLookoutById({ id });
     if (!lookout || lookout.userId !== user.id) {
-      throw new Error('Lookout not found or access denied');
+      throw new Error("Lookout not found or access denied");
     }
 
     // Update QStash schedule status if it exists
     if (lookout.qstashScheduleId) {
       try {
-        if (status === 'paused') {
+        if (status === "paused") {
           await qstash.schedules.pause({ schedule: lookout.qstashScheduleId });
-        } else if (status === 'active') {
+        } else if (status === "active") {
           await qstash.schedules.resume({ schedule: lookout.qstashScheduleId });
           // Update next run time when resuming
           if (lookout.cronSchedule) {
-            const nextRunAt = calculateNextRun(lookout.cronSchedule, lookout.timezone);
+            const nextRunAt = calculateNextRun(
+              lookout.cronSchedule,
+              lookout.timezone
+            );
             await updateLookout({ id, nextRunAt });
           }
-        } else if (status === 'archived') {
+        } else if (status === "archived") {
           await qstash.schedules.delete(lookout.qstashScheduleId);
         }
       } catch (qstashError) {
-        console.error('Error updating QStash schedule:', qstashError);
+        console.error("Error updating QStash schedule:", qstashError);
         // Continue with database update even if QStash fails
       }
     }
@@ -2007,8 +2094,11 @@ export async function updateLookoutStatusAction({
     const updatedLookout = await updateLookoutStatus({ id, status });
     return { success: true, lookout: updatedLookout };
   } catch (error) {
-    console.error('Error updating lookout status:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    console.error("Error updating lookout status:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
   }
 }
 
@@ -2024,7 +2114,7 @@ export async function updateLookoutAction({
   id: string;
   title: string;
   prompt: string;
-  frequency: 'once' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+  frequency: "once" | "daily" | "weekly" | "monthly" | "yearly";
   time: string;
   timezone: string;
   dayOfWeek?: string;
@@ -2032,40 +2122,44 @@ export async function updateLookoutAction({
   try {
     const user = await getCurrentUser();
     if (!user) {
-      throw new Error('Authentication required');
+      throw new Error("Authentication required");
     }
 
     // Get lookout to verify ownership
     const lookout = await getLookoutById({ id });
     if (!lookout || lookout.userId !== user.id) {
-      throw new Error('Lookout not found or access denied');
+      throw new Error("Lookout not found or access denied");
     }
 
     // Check daily lookout limit if changing to daily frequency
-    if (frequency === 'daily' && lookout.frequency !== 'daily') {
+    if (frequency === "daily" && lookout.frequency !== "daily") {
       const existingLookouts = await getLookoutsByUserId({ userId: user.id });
       const activeDailyLookouts = existingLookouts.filter(
         (existingLookout) =>
-          existingLookout.frequency === 'daily' && existingLookout.status === 'active' && existingLookout.id !== id,
+          existingLookout.frequency === "daily" &&
+          existingLookout.status === "active" &&
+          existingLookout.id !== id
       );
       if (activeDailyLookouts.length >= 5) {
-        throw new Error('You have reached the maximum limit of 5 active daily lookouts');
+        throw new Error(
+          "You have reached the maximum limit of 5 active daily lookouts"
+        );
       }
     }
 
     // Handle weekly day selection
     let adjustedTime = time;
-    if (frequency === 'weekly' && dayOfWeek) {
+    if (frequency === "weekly" && dayOfWeek) {
       adjustedTime = `${time}:${dayOfWeek}`;
     }
 
     // Generate new cron schedule if frequency changed
-    let cronSchedule = '';
+    let cronSchedule = "";
     let nextRunAt: Date;
 
-    if (frequency === 'once') {
+    if (frequency === "once") {
       // For 'once', set next run to today/tomorrow at specified time
-      const [hours, minutes] = time.split(':').map(Number);
+      const [hours, minutes] = time.split(":").map(Number);
       const now = new Date();
       nextRunAt = new Date(now);
       nextRunAt.setHours(hours, minutes, 0, 0);
@@ -2079,22 +2173,22 @@ export async function updateLookoutAction({
     }
 
     // Update QStash schedule if it exists and frequency/time changed
-    if (lookout.qstashScheduleId && frequency !== 'once') {
+    if (lookout.qstashScheduleId && frequency !== "once") {
       try {
         // Delete old schedule
         await qstash.schedules.delete(lookout.qstashScheduleId);
 
-        console.log('⏰ Recreating QStash schedule for lookout:', id);
-        console.log('📅 Updated cron schedule with timezone:', cronSchedule);
+        console.log("⏰ Recreating QStash schedule for lookout:", id);
+        console.log("📅 Updated cron schedule with timezone:", cronSchedule);
 
         // Create new schedule with updated cron
         const scheduleResponse = await qstash.schedules.create({
           // if dev env use localhost:3000/api/lookout, else use scira.ai/api/lookout
           destination:
-            process.env.NODE_ENV === 'development'
-              ? process.env.NGROK_URL + '/api/lookout'
-              : `https://draftpen.com/api/lookout`,
-          method: 'POST',
+            process.env.NODE_ENV === "development"
+              ? process.env.NGROK_URL + "/api/lookout"
+              : "https://draftpen.com/api/lookout",
+          method: "POST",
           cron: cronSchedule,
           body: JSON.stringify({
             lookoutId: id,
@@ -2102,7 +2196,7 @@ export async function updateLookoutAction({
             userId: user.id,
           }),
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
         });
 
@@ -2120,8 +2214,8 @@ export async function updateLookoutAction({
 
         return { success: true, lookout: updatedLookout };
       } catch (qstashError) {
-        console.error('Error updating QStash schedule:', qstashError);
-        throw new Error('Failed to update schedule. Please try again.');
+        console.error("Error updating QStash schedule:", qstashError);
+        throw new Error("Failed to update schedule. Please try again.");
       }
     } else {
       // Update database only
@@ -2138,8 +2232,11 @@ export async function updateLookoutAction({
       return { success: true, lookout: updatedLookout };
     }
   } catch (error) {
-    console.error('Error updating lookout:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    console.error("Error updating lookout:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
   }
 }
 
@@ -2147,13 +2244,13 @@ export async function deleteLookoutAction({ id }: { id: string }) {
   try {
     const user = await getCurrentUser();
     if (!user) {
-      throw new Error('Authentication required');
+      throw new Error("Authentication required");
     }
 
     // Get lookout to verify ownership
     const lookout = await getLookoutById({ id });
     if (!lookout || lookout.userId !== user.id) {
-      throw new Error('Lookout not found or access denied');
+      throw new Error("Lookout not found or access denied");
     }
 
     // Delete QStash schedule if it exists
@@ -2161,7 +2258,7 @@ export async function deleteLookoutAction({ id }: { id: string }) {
       try {
         await qstash.schedules.delete(lookout.qstashScheduleId);
       } catch (error) {
-        console.error('Error deleting QStash schedule:', error);
+        console.error("Error deleting QStash schedule:", error);
         // Continue with database deletion even if QStash deletion fails
       }
     }
@@ -2170,8 +2267,11 @@ export async function deleteLookoutAction({ id }: { id: string }) {
     const deletedLookout = await deleteLookout({ id });
     return { success: true, lookout: deletedLookout };
   } catch (error) {
-    console.error('Error deleting lookout:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    console.error("Error deleting lookout:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
   }
 }
 
@@ -2179,139 +2279,150 @@ export async function testLookoutAction({ id }: { id: string }) {
   try {
     const user = await getCurrentUser();
     if (!user) {
-      throw new Error('Authentication required');
+      throw new Error("Authentication required");
     }
 
     // Get lookout to verify ownership
     const lookout = await getLookoutById({ id });
     if (!lookout || lookout.userId !== user.id) {
-      throw new Error('Lookout not found or access denied');
+      throw new Error("Lookout not found or access denied");
     }
 
     // Only allow testing of active or paused lookouts
-    if (lookout.status === 'archived' || lookout.status === 'running') {
+    if (lookout.status === "archived" || lookout.status === "running") {
       throw new Error(`Cannot test lookout with status: ${lookout.status}`);
     }
 
     // Make a POST request to the lookout API endpoint to trigger the run
     const response = await fetch(
-      process.env.NODE_ENV === 'development' ? process.env.NGROK_URL + '/api/lookout' : `https://draftpen.com/api/lookout`,
+      process.env.NODE_ENV === "development"
+        ? process.env.NGROK_URL + "/api/lookout"
+        : "https://draftpen.com/api/lookout",
       {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           lookoutId: lookout.id,
           prompt: lookout.prompt,
           userId: user.id,
         }),
-      },
+      }
     );
 
     if (!response.ok) {
       throw new Error(`Failed to trigger lookout test: ${response.statusText}`);
     }
 
-    return { success: true, message: 'Lookout test started successfully' };
+    return { success: true, message: "Lookout test started successfully" };
   } catch (error) {
-    console.error('Error testing lookout:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    console.error("Error testing lookout:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
   }
 }
 
-
 // Connector management actions
 export async function createConnectorAction(provider: ConnectorProvider) {
-  'use server';
+  "use server";
 
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return { success: false, error: 'Authentication required' };
+      return { success: false, error: "Authentication required" };
     }
 
     const authLink = await createConnection(provider, user.id);
     return { success: true, authLink };
   } catch (error) {
-    console.error('Error creating connector:', error);
-    return { success: false, error: 'Failed to create connector' };
+    console.error("Error creating connector:", error);
+    return { success: false, error: "Failed to create connector" };
   }
 }
 
 export async function listUserConnectorsAction() {
-  'use server';
+  "use server";
 
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return { success: false, error: 'Authentication required', connections: [] };
+      return {
+        success: false,
+        error: "Authentication required",
+        connections: [],
+      };
     }
 
     const connections = await listUserConnections(user.id);
     return { success: true, connections };
   } catch (error) {
-    console.error('Error listing connectors:', error);
-    return { success: false, error: 'Failed to list connectors', connections: [] };
+    console.error("Error listing connectors:", error);
+    return {
+      success: false,
+      error: "Failed to list connectors",
+      connections: [],
+    };
   }
 }
 
 export async function deleteConnectorAction(connectionId: string) {
-  'use server';
+  "use server";
 
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return { success: false, error: 'Authentication required' };
+      return { success: false, error: "Authentication required" };
     }
 
     const result = await deleteConnection(connectionId);
     if (result) {
       return { success: true };
-    } else {
-      return { success: false, error: 'Failed to delete connector' };
     }
+    return { success: false, error: "Failed to delete connector" };
   } catch (error) {
-    console.error('Error deleting connector:', error);
-    return { success: false, error: 'Failed to delete connector' };
+    console.error("Error deleting connector:", error);
+    return { success: false, error: "Failed to delete connector" };
   }
 }
 
 export async function manualSyncConnectorAction(provider: ConnectorProvider) {
-  'use server';
+  "use server";
 
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return { success: false, error: 'Authentication required' };
+      return { success: false, error: "Authentication required" };
     }
 
     const result = await manualSync(provider, user.id);
     if (result) {
       return { success: true };
-    } else {
-      return { success: false, error: 'Failed to start sync' };
     }
+    return { success: false, error: "Failed to start sync" };
   } catch (error) {
-    console.error('Error syncing connector:', error);
-    return { success: false, error: 'Failed to start sync' };
+    console.error("Error syncing connector:", error);
+    return { success: false, error: "Failed to start sync" };
   }
 }
 
-export async function getConnectorSyncStatusAction(provider: ConnectorProvider) {
-  'use server';
+export async function getConnectorSyncStatusAction(
+  provider: ConnectorProvider
+) {
+  "use server";
 
   try {
     const user = await getCurrentUser();
     if (!user) {
-      return { success: false, error: 'Authentication required', status: null };
+      return { success: false, error: "Authentication required", status: null };
     }
 
     const status = await getSyncStatus(provider, user.id);
     return { success: true, status };
   } catch (error) {
-    console.error('Error getting sync status:', error);
-    return { success: false, error: 'Failed to get sync status', status: null };
+    console.error("Error getting sync status:", error);
+    return { success: false, error: "Failed to get sync status", status: null };
   }
 }
-

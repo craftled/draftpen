@@ -1,16 +1,14 @@
-'use client'
+"use client";
 
-import React from 'react'
-import { Analytics } from '@vercel/analytics/react'
-import { SpeedInsights } from '@vercel/speed-insights/next'
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import type React from "react";
 
-export function ClientAnalytics (): React.JSX.Element {
-	return (
-		<>
-			<Analytics />
-			<SpeedInsights />
-		</>
-	)
+export function ClientAnalytics(): React.JSX.Element {
+  return (
+    <>
+      <Analytics />
+      <SpeedInsights />
+    </>
+  );
 }
-
-

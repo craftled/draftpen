@@ -1,8 +1,12 @@
-import { useQuery } from '@tanstack/react-query';
-import { getCurrentUser } from '@/app/actions';
-import { type ComprehensiveUserData } from '@/lib/user-data';
-import { shouldBypassRateLimits } from '@/ai/providers';
-import { isInTrial, getSubscriptionType, getDaysLeftInTrial } from '@/lib/subscription-utils';
+import { useQuery } from "@tanstack/react-query";
+import { shouldBypassRateLimits } from "@/ai/providers";
+import { getCurrentUser } from "@/app/actions";
+import {
+  getDaysLeftInTrial,
+  getSubscriptionType,
+  isInTrial,
+} from "@/lib/subscription-utils";
+import type { ComprehensiveUserData } from "@/lib/user-data";
 
 export function useUserData() {
   const {
@@ -12,7 +16,7 @@ export function useUserData() {
     refetch,
     isRefetching,
   } = useQuery({
-    queryKey: ['comprehensive-user-data'],
+    queryKey: ["comprehensive-user-data"],
     queryFn: getCurrentUser,
     // Keep this aggressively fresh so subscription changes reflect quickly
     staleTime: 0, // Changed from 5s to 0 for immediate updates
@@ -23,9 +27,8 @@ export function useUserData() {
   });
 
   // Helper function to check if user should have unlimited access for specific models
-  const shouldBypassLimitsForModel = (selectedModel: string) => {
-    return shouldBypassRateLimits(selectedModel, userData);
-  };
+  const shouldBypassLimitsForModel = (selectedModel: string) =>
+    shouldBypassRateLimits(selectedModel, userData);
 
   return {
     // Core user data
@@ -37,28 +40,34 @@ export function useUserData() {
 
     // Quick access to commonly used properties
     isProUser: Boolean(userData?.isProUser),
-    proSource: userData?.proSource || 'none',
-    subscriptionStatus: userData?.subscriptionStatus || 'none',
+    proSource: userData?.proSource || "none",
+    subscriptionStatus: userData?.subscriptionStatus || "none",
 
     // Polar subscription details
     polarSubscription: userData?.polarSubscription,
     hasPolarSubscription: Boolean(userData?.polarSubscription),
 
     // Trial status (new)
-    isInTrial: userData?.polarSubscription ? isInTrial(userData.polarSubscription) : false,
-    subscriptionType: userData?.polarSubscription ? getSubscriptionType(userData.polarSubscription) : 'none',
+    isInTrial: userData?.polarSubscription
+      ? isInTrial(userData.polarSubscription)
+      : false,
+    subscriptionType: userData?.polarSubscription
+      ? getSubscriptionType(userData.polarSubscription)
+      : "none",
     trialEndsAt: userData?.polarSubscription?.trialEnd,
-    daysLeftInTrial: userData?.polarSubscription ? getDaysLeftInTrial(userData.polarSubscription) : 0,
+    daysLeftInTrial: userData?.polarSubscription
+      ? getDaysLeftInTrial(userData.polarSubscription)
+      : 0,
 
     // Rate limiting helpers
     shouldCheckLimits: Boolean(!isLoading && userData && !userData.isProUser),
     shouldBypassLimitsForModel,
 
     // Subscription status checks
-    hasActiveSubscription: userData?.subscriptionStatus === 'active',
-    isSubscriptionCanceled: userData?.subscriptionStatus === 'canceled',
-    isSubscriptionExpired: userData?.subscriptionStatus === 'expired',
-    hasNoSubscription: userData?.subscriptionStatus === 'none',
+    hasActiveSubscription: userData?.subscriptionStatus === "active",
+    isSubscriptionCanceled: userData?.subscriptionStatus === "canceled",
+    isSubscriptionExpired: userData?.subscriptionStatus === "expired",
+    hasNoSubscription: userData?.subscriptionStatus === "none",
 
     // Legacy compatibility helpers
     subscriptionData: userData?.polarSubscription
@@ -67,8 +76,6 @@ export function useUserData() {
           subscription: userData.polarSubscription,
         }
       : { hasSubscription: false },
-
-
   };
 }
 

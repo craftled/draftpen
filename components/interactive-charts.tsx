@@ -1,18 +1,18 @@
-import React, { useMemo } from 'react';
-import ReactECharts, { EChartsOption } from 'echarts-for-react';
-import { Card, CardTitle, CardHeader } from '@/components/ui/card';
-import { useTheme } from 'next-themes';
-import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import ReactECharts, { type EChartsOption } from "echarts-for-react";
+import { motion } from "framer-motion";
+import { useTheme } from "next-themes";
+import React, { useMemo } from "react";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 // Minimal, vibrant color palette
 const CHART_COLORS = {
-  blue: ['#3b82f6', '#60a5fa'], // Primary & Hover
-  green: ['#22c55e', '#4ade80'], // Success & Hover
-  amber: ['#f59e0b', '#fbbf24'], // Warning & Hover
-  violet: ['#8b5cf6', '#a78bfa'], // Info & Hover
-  pink: ['#ec4899', '#f472b6'], // Secondary & Hover
-  red: ['#ef4444', '#f87171'], // Danger & Hover
+  blue: ["#3b82f6", "#60a5fa"], // Primary & Hover
+  green: ["#22c55e", "#4ade80"], // Success & Hover
+  amber: ["#f59e0b", "#fbbf24"], // Warning & Hover
+  violet: ["#8b5cf6", "#a78bfa"], // Info & Hover
+  pink: ["#ec4899", "#f472b6"], // Secondary & Hover
+  red: ["#ef4444", "#f87171"], // Danger & Hover
 };
 
 interface BaseChart {
@@ -28,22 +28,22 @@ interface BaseChart {
 const InteractiveChart = React.memo(
   ({ chart }: { chart: BaseChart }) => {
     const { theme } = useTheme();
-    const isDark = theme === 'dark';
+    const isDark = theme === "dark";
 
     // Memoized theme-based styles
     const themeStyles = useMemo(
       () => ({
-        text: isDark ? '#e5e5e5' : '#171717',
-        subtext: isDark ? '#737373' : '#525252',
-        grid: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-        tooltip: isDark ? '#171717' : '#ffffff',
+        text: isDark ? "#e5e5e5" : "#171717",
+        subtext: isDark ? "#737373" : "#525252",
+        grid: isDark ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)",
+        tooltip: isDark ? "#171717" : "#ffffff",
       }),
-      [isDark],
+      [isDark]
     );
 
     const sharedOptions: EChartsOption = useMemo(
       () => ({
-        backgroundColor: 'transparent',
+        backgroundColor: "transparent",
         grid: {
           top: chart.title ? 50 : 25,
           right: 25,
@@ -53,14 +53,14 @@ const InteractiveChart = React.memo(
         },
         legend: {
           show: chart.elements.length > 1,
-          type: 'scroll',
+          type: "scroll",
           top: chart.title ? 24 : 8,
           textStyle: {
             color: themeStyles.subtext,
             fontSize: 10,
-            fontFamily: 'system-ui, -apple-system, sans-serif',
+            fontFamily: "system-ui, -apple-system, sans-serif",
           },
-          icon: 'circle',
+          icon: "circle",
           itemWidth: 6,
           itemHeight: 6,
           itemGap: 10,
@@ -70,49 +70,49 @@ const InteractiveChart = React.memo(
           tooltip: { show: true },
         },
         tooltip: {
-          trigger: 'axis',
+          trigger: "axis",
           backgroundColor: themeStyles.tooltip,
           borderWidth: 1,
-          borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+          borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
           padding: [6, 10],
           className: cn(
-            'rounded-md shadow-lg!',
-            'border border-neutral-200 dark:border-neutral-800',
-            'backdrop-blur-sm bg-white/90 dark:bg-neutral-900/90',
+            "rounded-md shadow-lg!",
+            "border border-neutral-200 dark:border-neutral-800",
+            "bg-white/90 backdrop-blur-sm dark:bg-neutral-900/90"
           ),
           textStyle: {
             color: themeStyles.text,
             fontSize: 11,
-            fontFamily: 'system-ui, -apple-system, sans-serif',
+            fontFamily: "system-ui, -apple-system, sans-serif",
           },
           axisPointer: {
-            type: 'line',
+            type: "line",
             lineStyle: {
-              color: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+              color: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
               width: 1,
             },
           },
-          position: function (
+          position(
             pos: [number, number],
             params: any,
             dom: HTMLElement,
             rect: { x: number; y: number; width: number; height: number },
-            size: { contentSize: [number, number]; viewSize: [number, number] },
+            size: { contentSize: [number, number]; viewSize: [number, number] }
           ) {
             // Handle mobile positioning
             const isMobile = window.innerWidth < 640;
             if (isMobile) {
-              return { top: 10, left: 'center' };
+              return { top: 10, left: "center" };
             }
             // Default positioning
             return [pos[0], pos[1]];
           },
-          formatter: function (params: any) {
+          formatter(params: any) {
             // Shorten text for mobile
             const isMobile = window.innerWidth < 640;
             if (isMobile && Array.isArray(params)) {
               // Limit to just values for mobile
-              let result = params[0].axisValueLabel + '<br/>';
+              let result = params[0].axisValueLabel + "<br/>";
               params.forEach((param: any) => {
                 result += `<div style="display:flex;align-items:center;margin:3px 0">
               <span style="display:inline-block;width:6px;height:6px;margin-right:5px;border-radius:50%;background-color:${param.color};"></span>
@@ -121,16 +121,16 @@ const InteractiveChart = React.memo(
               });
               return result;
             }
-            return undefined; // Use default formatter for non-mobile
+            return; // Use default formatter for non-mobile
           },
         },
         animation: true,
         animationDuration: 300,
-        animationEasing: 'cubicOut',
+        animationEasing: "cubicOut",
         responsive: true,
         maintainAspectRatio: false,
       }),
-      [chart.title, chart.elements.length, themeStyles, isDark],
+      [chart.title, chart.elements.length, themeStyles, isDark]
     );
 
     // Memoize the getChartOptions function to prevent recalculation during rerenders
@@ -139,7 +139,7 @@ const InteractiveChart = React.memo(
         axisLine: {
           show: true,
           lineStyle: {
-            color: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+            color: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
             width: 1,
           },
         },
@@ -147,7 +147,7 @@ const InteractiveChart = React.memo(
           show: true,
           length: 3,
           lineStyle: {
-            color: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+            color: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
           },
         },
         axisLabel: {
@@ -155,7 +155,7 @@ const InteractiveChart = React.memo(
           color: themeStyles.subtext,
           margin: 8,
           fontSize: 10,
-          fontFamily: 'system-ui, -apple-system, sans-serif',
+          fontFamily: "system-ui, -apple-system, sans-serif",
           hideOverlap: false,
           showMinLabel: true,
           showMaxLabel: true,
@@ -171,18 +171,21 @@ const InteractiveChart = React.memo(
       };
 
       // Mobile optimizations
-      const isMobileMediaQuery = '(max-width: 640px)';
+      const isMobileMediaQuery = "(max-width: 640px)";
       const isMobile = window.matchMedia(isMobileMediaQuery).matches;
 
-      if (chart.type === 'pie') {
+      if (chart.type === "pie") {
         // Prepare pie chart data
         const series = [
           {
-            type: 'pie',
-            radius: '75%',
-            center: ['50%', '58%'],
+            type: "pie",
+            radius: "75%",
+            center: ["50%", "58%"],
             data: chart.elements.map((e, index) => {
-              const colorSet = Object.values(CHART_COLORS)[index % Object.keys(CHART_COLORS).length];
+              const colorSet =
+                Object.values(CHART_COLORS)[
+                  index % Object.keys(CHART_COLORS).length
+                ];
               return {
                 name: e.label,
                 value: e.angle,
@@ -194,31 +197,31 @@ const InteractiveChart = React.memo(
                     color: colorSet[1],
                     shadowBlur: 10,
                     shadowOffsetX: 0,
-                    shadowColor: 'rgba(0, 0, 0, 0.2)',
+                    shadowColor: "rgba(0, 0, 0, 0.2)",
                   },
                 },
               };
             }),
             label: {
               show: !isMobile,
-              position: 'outside',
-              formatter: '{b}: {d}%',
+              position: "outside",
+              formatter: "{b}: {d}%",
               fontSize: 10,
               color: themeStyles.text,
             },
             labelLine: {
               show: !isMobile,
               lineStyle: {
-                color: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)',
+                color: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.2)",
               },
             },
             itemStyle: {
               borderRadius: 2,
-              borderColor: isDark ? '#1e1e1e' : '#ffffff',
+              borderColor: isDark ? "#1e1e1e" : "#ffffff",
               borderWidth: 1,
             },
-            animationType: 'scale',
-            animationEasing: 'elasticOut',
+            animationType: "scale",
+            animationEasing: "elasticOut",
           },
         ];
 
@@ -233,29 +236,33 @@ const InteractiveChart = React.memo(
           },
           tooltip: {
             ...sharedOptions.tooltip,
-            trigger: 'item',
-            formatter: '{a} <br/>{b}: {c} ({d}%)',
+            trigger: "item",
+            formatter: "{a} <br/>{b}: {c} ({d}%)",
           },
           series,
         };
       }
 
-      if (chart.type === 'line' || chart.type === 'scatter') {
+      if (chart.type === "line" || chart.type === "scatter") {
         const series = chart.elements.map((e, index) => {
-          const colorSet = Object.values(CHART_COLORS)[index % Object.keys(CHART_COLORS).length];
+          const colorSet =
+            Object.values(CHART_COLORS)[
+              index % Object.keys(CHART_COLORS).length
+            ];
           return {
             name: e.label,
             type: chart.type,
             data: e.points.map((p: [number | string, number]) => {
-              const x = chart.x_scale === 'datetime' ? new Date(p[0]).getTime() : p[0];
+              const x =
+                chart.x_scale === "datetime" ? new Date(p[0]).getTime() : p[0];
               return [x, p[1]];
             }),
             smooth: 0.15,
-            symbol: 'circle',
+            symbol: "circle",
             symbolSize: 3,
             showSymbol: false,
             emphasis: {
-              focus: 'series',
+              focus: "series",
               scale: false,
               itemStyle: {
                 color: colorSet[1],
@@ -264,18 +271,18 @@ const InteractiveChart = React.memo(
             lineStyle: {
               width: 1.5,
               color: colorSet[0],
-              cap: 'round',
-              join: 'round',
+              cap: "round",
+              join: "round",
             },
             itemStyle: {
               color: colorSet[0],
               borderWidth: 0,
             },
             areaStyle:
-              chart.type === 'line'
+              chart.type === "line"
                 ? {
                     color: {
-                      type: 'linear',
+                      type: "linear",
                       x: 0,
                       y: 0,
                       x2: 0,
@@ -299,49 +306,53 @@ const InteractiveChart = React.memo(
         return {
           ...sharedOptions,
           xAxis: {
-            type: chart.x_scale === 'datetime' ? 'time' : 'value',
-            name: isMobile ? '' : chart.x_label,
-            nameLocation: 'middle',
+            type: chart.x_scale === "datetime" ? "time" : "value",
+            name: isMobile ? "" : chart.x_label,
+            nameLocation: "middle",
             nameGap: 28,
             nameTextStyle: {
               color: themeStyles.subtext,
               fontSize: 10,
               fontWeight: 500,
-              fontFamily: 'system-ui, -apple-system, sans-serif',
+              fontFamily: "system-ui, -apple-system, sans-serif",
               padding: [10, 0, 0, 0],
             },
             ...defaultAxisOptions,
             axisLabel: {
               ...defaultAxisOptions.axisLabel,
               formatter:
-                chart.x_scale === 'datetime'
+                chart.x_scale === "datetime"
                   ? (value: number) => {
                       const date = new Date(value);
-                      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                      return date.toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      });
                     }
                   : undefined,
-              interval: isMobile ? 'auto' : 0,
-              align: 'center',
+              interval: isMobile ? "auto" : 0,
+              align: "center",
             },
           },
           yAxis: {
-            type: 'value',
-            name: isMobile ? '' : chart.y_label,
-            nameLocation: 'middle',
+            type: "value",
+            name: isMobile ? "" : chart.y_label,
+            nameLocation: "middle",
             nameGap: isMobile ? 20 : 25,
             nameTextStyle: {
               color: themeStyles.subtext,
               fontSize: 10,
               fontWeight: 500,
-              fontFamily: 'system-ui, -apple-system, sans-serif',
+              fontFamily: "system-ui, -apple-system, sans-serif",
               padding: [0, 0, 0, 0],
             },
             ...defaultAxisOptions,
             axisLabel: {
               ...defaultAxisOptions.axisLabel,
               formatter: (value: number) => {
-                if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
-                if (value >= 1000) return (value / 1000).toFixed(0) + 'K';
+                if (value >= 1_000_000)
+                  return (value / 1_000_000).toFixed(1) + "M";
+                if (value >= 1000) return (value / 1000).toFixed(0) + "K";
                 return value.toFixed(0);
               },
             },
@@ -350,80 +361,89 @@ const InteractiveChart = React.memo(
         };
       }
 
-      if (chart.type === 'bar') {
-        const data = chart.elements.reduce((acc: Record<string, any[]>, item) => {
-          const key = item.group;
-          if (!acc[key]) acc[key] = [];
-          acc[key].push(item);
-          return acc;
-        }, {});
+      if (chart.type === "bar") {
+        const data = chart.elements.reduce(
+          (acc: Record<string, any[]>, item) => {
+            const key = item.group;
+            if (!acc[key]) acc[key] = [];
+            acc[key].push(item);
+            return acc;
+          },
+          {}
+        );
 
         const series = Object.entries(data).map(([group, elements], index) => {
-          const colorSet = Object.values(CHART_COLORS)[index % Object.keys(CHART_COLORS).length];
+          const colorSet =
+            Object.values(CHART_COLORS)[
+              index % Object.keys(CHART_COLORS).length
+            ];
           return {
             name: group,
-            type: 'bar',
-            stack: 'total',
+            type: "bar",
+            stack: "total",
             data: elements?.map((e) => [e.label, e.value]),
             itemStyle: {
               color: colorSet[0],
               borderRadius: [2, 2, 0, 0],
             },
             emphasis: {
-              focus: 'series',
+              focus: "series",
               itemStyle: {
                 color: colorSet[1],
               },
             },
             barMaxWidth: 30,
-            barGap: '20%',
+            barGap: "20%",
           };
         });
 
         return {
           ...sharedOptions,
           xAxis: {
-            type: 'category',
-            name: isMobile ? '' : chart.x_label,
-            nameLocation: 'middle',
+            type: "category",
+            name: isMobile ? "" : chart.x_label,
+            nameLocation: "middle",
             nameGap: 28,
             nameTextStyle: {
               color: themeStyles.subtext,
               fontSize: 10,
               fontWeight: 500,
-              fontFamily: 'system-ui, -apple-system, sans-serif',
+              fontFamily: "system-ui, -apple-system, sans-serif",
               padding: [10, 0, 0, 0],
             },
             ...defaultAxisOptions,
             axisLabel: {
               ...defaultAxisOptions.axisLabel,
-              rotate: Object.values(data)[0]?.length > (isMobile ? 3 : 5) ? 30 : 0,
+              rotate:
+                Object.values(data)[0]?.length > (isMobile ? 3 : 5) ? 30 : 0,
               interval: 0,
               formatter: (value: string) => {
-                if (isMobile && value.length > 6) return value.substring(0, 5) + '…';
-                if (value.length > 8) return value.substring(0, 7) + '…';
+                if (isMobile && value.length > 6)
+                  return value.substring(0, 5) + "…";
+                if (value.length > 8) return value.substring(0, 7) + "…";
                 return value;
               },
             },
           },
           yAxis: {
-            type: 'value',
-            name: isMobile ? '' : chart.y_label,
-            nameLocation: 'middle',
+            type: "value",
+            name: isMobile ? "" : chart.y_label,
+            nameLocation: "middle",
             nameGap: isMobile ? 20 : 25,
             nameTextStyle: {
               color: themeStyles.subtext,
               fontSize: 10,
               fontWeight: 500,
-              fontFamily: 'system-ui, -apple-system, sans-serif',
+              fontFamily: "system-ui, -apple-system, sans-serif",
               padding: [0, 0, 0, 0],
             },
             ...defaultAxisOptions,
             axisLabel: {
               ...defaultAxisOptions.axisLabel,
               formatter: (value: number) => {
-                if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
-                if (value >= 1000) return (value / 1000).toFixed(0) + 'K';
+                if (value >= 1_000_000)
+                  return (value / 1_000_000).toFixed(1) + "M";
+                if (value >= 1000) return (value / 1000).toFixed(0) + "K";
                 return value.toFixed(0);
               },
             },
@@ -437,31 +457,33 @@ const InteractiveChart = React.memo(
 
     return (
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2, ease: 'easeOut' }}
         className="w-full min-w-0 overflow-hidden"
+        initial={{ opacity: 0, y: 10 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
       >
-        <Card className="overflow-hidden bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
-          <CardHeader className="pt-3 pb-1 px-4">
-            <CardTitle className="p-0! m-0! text-xs sm:text-sm font-medium line-clamp-2">{chart.title}</CardTitle>
+        <Card className="overflow-hidden border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+          <CardHeader className="px-4 pt-3 pb-1">
+            <CardTitle className="m-0! line-clamp-2 p-0! font-medium text-xs sm:text-sm">
+              {chart.title}
+            </CardTitle>
           </CardHeader>
-          <div className="m-0 px-3 sm:px-4 pb-3">
-            <div className="w-full h-80">
+          <div className="m-0 px-3 pb-3 sm:px-4">
+            <div className="h-80 w-full">
               <ReactECharts
-                option={chartOptions}
-                style={{ height: '100%', width: '100%' }}
-                className="p-0! m-0! h-full w-full!"
-                theme={theme === 'dark' ? 'dark' : undefined}
+                className="m-0! h-full w-full! p-0!"
                 notMerge={true}
-                opts={{ renderer: 'canvas' }}
                 onEvents={{
                   resize: () => {
                     setTimeout(() => {
-                      window.dispatchEvent(new Event('resize'));
+                      window.dispatchEvent(new Event("resize"));
                     }, 200);
                   },
                 }}
+                option={chartOptions}
+                opts={{ renderer: "canvas" }}
+                style={{ height: "100%", width: "100%" }}
+                theme={theme === "dark" ? "dark" : undefined}
               />
             </div>
           </div>
@@ -479,7 +501,8 @@ const InteractiveChart = React.memo(
     if (prevProps.chart.elements === nextProps.chart.elements) return true;
 
     // If elements references are different but lengths are different, they're definitely different
-    if (prevProps.chart.elements.length !== nextProps.chart.elements.length) return false;
+    if (prevProps.chart.elements.length !== nextProps.chart.elements.length)
+      return false;
 
     // For streaming, consider charts equal if they have the same number of elements
     // and each element has the same label and value/points reference
@@ -491,7 +514,7 @@ const InteractiveChart = React.memo(
       if (prevElement.label !== nextElement.label) return false;
 
       // For pie charts, compare values directly
-      if (prevProps.chart.type === 'pie') {
+      if (prevProps.chart.type === "pie") {
         if (prevElement.value !== nextElement.value) return false;
         continue;
       }
@@ -501,15 +524,16 @@ const InteractiveChart = React.memo(
       if (prevElement.points === nextElement.points) continue;
 
       // If lengths are different, they're definitely different
-      if (prevElement.points?.length !== nextElement.points?.length) return false;
+      if (prevElement.points?.length !== nextElement.points?.length)
+        return false;
     }
 
     // If we reach here, consider them equal
     return true;
-  },
+  }
 );
 
 // Add display name to satisfy ESLint rule
-InteractiveChart.displayName = 'InteractiveChart';
+InteractiveChart.displayName = "InteractiveChart";
 
 export default InteractiveChart;

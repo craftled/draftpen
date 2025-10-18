@@ -1,17 +1,25 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useUserData } from '@/hooks/use-user-data';
-import { useLocalStorage } from '@/hooks/use-local-storage';
-import { type ComprehensiveUserData } from '@/lib/user-data';
-import { shouldBypassRateLimits } from '@/ai/providers';
+import { useEffect } from "react";
+import { shouldBypassRateLimits } from "@/ai/providers";
+import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useUserData } from "@/hooks/use-user-data";
+import type { ComprehensiveUserData } from "@/lib/user-data";
 
 export function useCachedUserData() {
   // Get fresh data from the existing hook
-  const { user: freshUser, isLoading: isFreshLoading, error, refetch, isRefetching, ...otherUserData } = useUserData();
+  const {
+    user: freshUser,
+    isLoading: isFreshLoading,
+    error,
+    refetch,
+    isRefetching,
+    ...otherUserData
+  } = useUserData();
 
   // Cache user data in localStorage
-  const [cachedUser, setCachedUser] = useLocalStorage<ComprehensiveUserData | null>('scira-user-data', null);
+  const [cachedUser, setCachedUser] =
+    useLocalStorage<ComprehensiveUserData | null>("scira-user-data", null);
 
   // Update cache when fresh data is available
   useEffect(() => {
@@ -22,7 +30,7 @@ export function useCachedUserData() {
 
   // Clear cache when user logs out (no fresh user and not loading)
   useEffect(() => {
-    if (!freshUser && !isFreshLoading && cachedUser) {
+    if (!(freshUser || isFreshLoading) && cachedUser) {
       setCachedUser(null);
     }
   }, [freshUser, isFreshLoading, cachedUser, setCachedUser]);
@@ -35,18 +43,17 @@ export function useCachedUserData() {
 
   // Recalculate derived properties based on current user data
   const isProUser = Boolean(user?.isProUser);
-  const proSource = user?.proSource || 'none';
-  const subscriptionStatus = user?.subscriptionStatus || 'none';
+  const proSource = user?.proSource || "none";
+  const subscriptionStatus = user?.subscriptionStatus || "none";
 
   // Helper function to check if user should have unlimited access for specific models
-  const shouldBypassLimitsForModel = (selectedModel: string) => {
-    return shouldBypassRateLimits(selectedModel, user);
-  };
+  const shouldBypassLimitsForModel = (selectedModel: string) =>
+    shouldBypassRateLimits(selectedModel, user);
 
   return {
     // Spread all fields from useUserData to include trial fields
     ...otherUserData,
-    
+
     // Core user data
     user,
     isLoading,
@@ -68,10 +75,10 @@ export function useCachedUserData() {
     shouldBypassLimitsForModel,
 
     // Subscription status checks
-    hasActiveSubscription: user?.subscriptionStatus === 'active',
-    isSubscriptionCanceled: user?.subscriptionStatus === 'canceled',
-    isSubscriptionExpired: user?.subscriptionStatus === 'expired',
-    hasNoSubscription: user?.subscriptionStatus === 'none',
+    hasActiveSubscription: user?.subscriptionStatus === "active",
+    isSubscriptionCanceled: user?.subscriptionStatus === "canceled",
+    isSubscriptionExpired: user?.subscriptionStatus === "expired",
+    hasNoSubscription: user?.subscriptionStatus === "none",
 
     // Legacy compatibility helpers
     subscriptionData: user?.polarSubscription
