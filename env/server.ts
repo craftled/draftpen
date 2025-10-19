@@ -4,9 +4,9 @@ import { z } from "zod";
 
 export const serverEnv = createEnv({
   server: {
-    OPENAI_API_KEY: z.string().min(1),
-    ANTHROPIC_API_KEY: z.string().min(1),
-    AI_GATEWAY_API_KEY: z.string().min(1).optional(),
+    OPENAI_API_KEY: z.string().min(1).optional(),
+    ANTHROPIC_API_KEY: z.string().min(1).optional(),
+    AI_GATEWAY_API_KEY: z.string().min(1),
 
     DATABASE_URL: z.string().min(1),
     BETTER_AUTH_SECRET: z.string().min(1),

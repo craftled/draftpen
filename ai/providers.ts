@@ -1,5 +1,3 @@
-import { createAnthropic } from "@ai-sdk/anthropic";
-
 import { customProvider, extractReasoningMiddleware, gateway } from "ai";
 
 const _middleware = extractReasoningMiddleware({
@@ -9,12 +7,6 @@ const _middleware = extractReasoningMiddleware({
 const _middlewareWithStartWithReasoning = extractReasoningMiddleware({
   tagName: "think",
   startWithReasoning: true,
-});
-
-const anthropic = createAnthropic({
-  headers: {
-    "anthropic-beta": "context-1m-2025-08-07",
-  },
 });
 
 const DEFAULT_MAX_OUTPUT_TOKENS = 8000 as const;
@@ -29,9 +21,9 @@ export const modelProvider = customProvider({
     // Utility/aux models (not shown in UI)
     "gpt4-1-nano": gateway("openai/gpt-4.1-nano"),
 
-    // Anthropic
-    "claude-3-5-haiku": anthropic("claude-3-5-haiku-20241022"),
-    "claude-4-5-sonnet": anthropic("claude-sonnet-4-5-20250929"),
+    // Anthropic (routed via AI Gateway)
+    "claude-3-5-haiku": gateway("anthropic/claude-3-5-haiku-20241022"),
+    "claude-4-5-sonnet": gateway("anthropic/claude-sonnet-4-5-20250929"),
   },
 });
 

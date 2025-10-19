@@ -35,9 +35,16 @@ export async function POST(request: NextRequest) {
       headers: request.headers,
     });
     isAuthenticated = !!session;
-  } catch (error) {
-    console.warn("Error checking authentication:", error);
+  } catch (_error) {
     // Continue as unauthenticated
+  }
+
+  const contentType = request.headers.get("content-type") ?? "";
+  if (!contentType.includes("multipart/form-data")) {
+    return NextResponse.json(
+      { error: "Expected multipart/form-data" },
+      { status: 400 }
+    );
   }
 
   const formData = await request.formData();
@@ -75,8 +82,7 @@ export async function POST(request: NextRequest) {
       size: file.size,
       authenticated: isAuthenticated,
     });
-  } catch (error) {
-    console.error("Error uploading file:", error);
+  } catch (_error) {
     return NextResponse.json(
       { error: "Failed to upload file" },
       { status: 500 }

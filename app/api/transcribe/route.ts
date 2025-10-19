@@ -1,12 +1,24 @@
 import { createOpenAI } from "@ai-sdk/openai";
 import { experimental_transcribe as transcribe } from "ai";
 import { type NextRequest, NextResponse } from "next/server";
+import { serverEnv } from "@/env/server";
 
-const openai = createOpenAI();
+const openai = createOpenAI({
+  apiKey: serverEnv.AI_GATEWAY_API_KEY,
+  baseURL: "https://ai-gateway.vercel.sh/v1",
+});
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
+    const contentType = request.headers.get("content-type") ?? "";
+    if (!contentType.includes("multipart/form-data")) {
+      return NextResponse.json(
+        { error: "Expected multipart/form-data" },
+        { status: 400 }
+      );
+    }
+
     const audio = formData.get("audio");
 
     if (!(audio && audio instanceof Blob)) {
