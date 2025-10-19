@@ -18,7 +18,8 @@ const nextConfig: NextConfig = {
         : false,
   },
   experimental: {
-    useCache: true,
+    // Enable Turbopack filesystem caching for faster builds (Next.js 16 beta)
+    turbopackFileSystemCacheForDev: true,
     optimizePackageImports: [
       "@phosphor-icons/react",
       "lucide-react",
@@ -37,8 +38,8 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "20mb",
     },
     staleTimes: {
-      dynamic: 10,
-      static: 30,
+      dynamic: 30,
+      static: 180,
     },
   },
   serverExternalPackages: ["@aws-sdk/client-s3", "@aws-sdk/lib-storage"],
@@ -148,7 +149,8 @@ const nextConfig: NextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     formats: ["image/webp"],
-    minimumCacheTTL: 60,
+    // Next.js 16 default is 14400s (4 hours) - align with new defaults
+    minimumCacheTTL: 14_400,
     unoptimized: false,
   },
 };
