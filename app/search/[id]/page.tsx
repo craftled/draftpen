@@ -98,7 +98,7 @@ export async function generateMetadata({
   } as Metadata;
 }
 
-export function convertToUIMessages(messages: Message[]): ChatMessage[] {
+function convertToUIMessages(messages: Message[]): ChatMessage[] {
   console.log("Messages: ", messages);
 
   return messages.map((message) => {

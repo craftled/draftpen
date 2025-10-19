@@ -1,6 +1,12 @@
 {
   "installCommand": "bun install",
   "buildCommand": "bun run build",
+  "framework": "nextjs",
+  "functions": {
+    "app/api/**/*.ts": {
+      "maxDuration": 60
+    }
+  },
   "crons": [
     {
       "path": "/api/clean_images",

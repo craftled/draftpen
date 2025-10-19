@@ -26,6 +26,12 @@ const nextConfig: NextConfig = {
       "@hugeicons/core-free-icons",
       "date-fns",
       "recharts",
+      "@radix-ui/react-icons",
+      "@radix-ui/react-avatar",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-dropdown-menu",
+      "@radix-ui/react-tooltip",
+      "framer-motion",
     ],
     serverActions: {
       bodySizeLimit: "20mb",
@@ -35,7 +41,7 @@ const nextConfig: NextConfig = {
       static: 30,
     },
   },
-  serverExternalPackages: ["@aws-sdk/client-s3"],
+  serverExternalPackages: ["@aws-sdk/client-s3", "@aws-sdk/lib-storage"],
   transpilePackages: [
     "geist",
     "shiki",
@@ -43,6 +49,9 @@ const nextConfig: NextConfig = {
     "@t3-oss/env-nextjs",
     "@t3-oss/env-core",
   ],
+  // Optimize production builds
+  productionBrowserSourceMaps: false,
+  poweredByHeader: false,
 
   async headers() {
     return [
