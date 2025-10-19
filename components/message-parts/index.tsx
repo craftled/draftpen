@@ -854,7 +854,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
               case "output-available":
                 return (
                   <CodeContextTool
-                    args={part.input}
+                    args={part.input as CodeContextToolInput}
                     key={`${messageIndex}-${partIndex}-tool`}
                     result={part.output}
                   />
@@ -1886,10 +1886,7 @@ interface CodeContextToolProps {
   result: CodeContextToolOutput | string | null | undefined;
 }
 
-const CodeContextTool: React.FC<CodeContextToolProps> = ({
-  args,
-  result,
-}) => {
+const CodeContextTool: React.FC<CodeContextToolProps> = ({ args, result }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (!result) {
@@ -1908,9 +1905,9 @@ const CodeContextTool: React.FC<CodeContextToolProps> = ({
   }
 
   const responseText =
-    typeof result === "string" ? result : result?.response ?? "";
+    typeof result === "string" ? result : (result?.response ?? "");
   const normalizedResult =
-    typeof result === "string" ? undefined : result ?? undefined;
+    typeof result === "string" ? undefined : (result ?? undefined);
   const shouldShowAccordion = responseText && responseText.length > 500;
   const previewText = shouldShowAccordion
     ? responseText.slice(0, 400) + "..."
@@ -2015,9 +2012,8 @@ const CodeContextTool: React.FC<CodeContextToolProps> = ({
                 <div className="flex items-center gap-2 border-neutral-200/30 border-t pt-2 dark:border-neutral-700/30">
                   <Clock className="h-3 w-3 text-neutral-400" />
                   <span className="text-neutral-500 text-xs dark:text-neutral-400">
-                    Search completed in {(
-                      normalizedResult.searchTime / 1000
-                    ).toFixed(2)}s
+                    Search completed in{" "}
+                    {(normalizedResult.searchTime / 1000).toFixed(2)}s
                   </span>
                 </div>
               )}

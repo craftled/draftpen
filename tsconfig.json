@@ -28,7 +28,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "next.config.mjs",
+    "next.config.ts",
     "app/pricing/page.tsx"
   ],
   "exclude": ["node_modules"]

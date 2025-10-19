@@ -34,8 +34,6 @@ const nextConfig: NextConfig = {
       dynamic: 10,
       static: 30,
     },
-    turbopackFileSystemCacheForDev: true,
-    turbopackFileSystemCacheForBuild: true,
   },
   serverExternalPackages: ["@aws-sdk/client-s3"],
   transpilePackages: [
@@ -45,7 +43,7 @@ const nextConfig: NextConfig = {
     "@t3-oss/env-nextjs",
     "@t3-oss/env-core",
   ],
-  devIndicators: false,
+
   async headers() {
     return [
       {
@@ -87,7 +85,6 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
-    qualities: [75, 100],
     dangerouslyAllowSVG: true,
     remotePatterns: [
       {

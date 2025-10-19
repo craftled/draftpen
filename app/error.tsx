@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export default function GlobalError({
-  _error,
+  error,
   reset,
 }: {
   error: Error & { digest?: string };
