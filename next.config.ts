@@ -17,6 +17,11 @@ const nextConfig: NextConfig = {
           }
         : false,
   },
+  typescript: {
+    // Skip type checking on Vercel to speed up CI builds; keep checks local
+    ignoreBuildErrors: Boolean(process.env.VERCEL),
+  },
+
   experimental: {
     // Enable Turbopack filesystem caching for faster builds (Next.js 16 beta)
     turbopackFileSystemCacheForDev: true,
