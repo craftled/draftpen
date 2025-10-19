@@ -4,7 +4,7 @@ import { type NextRequest, NextResponse } from "next/server";
 const authRoutes = ["/sign-in", "/sign-up"];
 const protectedRoutes = ["/lookout", "/xql", "/settings"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname === "/api/search") return NextResponse.next();
