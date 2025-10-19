@@ -9,7 +9,6 @@ import { Polar } from "@polar-sh/sdk";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
-import { config } from "dotenv";
 import { eq } from "drizzle-orm";
 import { serverEnv } from "@/env/server";
 import { db, maindb } from "@/lib/db";
@@ -29,10 +28,6 @@ import {
 } from "@/lib/db/schema";
 import { invalidateUserCaches } from "./performance-cache";
 import { clearUserDataCache } from "./user-data-server";
-
-config({
-  path: ".env.local",
-});
 
 // Utility function to safely parse dates
 function safeParseDate(value: string | Date | null | undefined): Date | null {

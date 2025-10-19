@@ -35,11 +35,10 @@ To the open-source community and [Scira]([https://draftpen.com](https://github.c
 - **Usage awareness**: Automatic model switching, daily usage tracking, and toast reminders make it hard to run past plan limits.
 
 ### Integrations & extensions
+
 - **Connector APIs**: Endpoints for manual sync, uploads, transcription, and health checks power integrations beyond the web app.
 
 ## LLM Models Supported
-
-
 
 - **Anthropic**: Claude 4 Sonnet
 - **OpenAI**: GPT-4o, o4-mini, o3 (with reasoning capabilities)
@@ -101,8 +100,7 @@ To the open-source community and [Scira]([https://draftpen.com](https://github.c
 
 - [Vercel Analytics](https://vercel.com/docs/analytics) and [Vercel Speed Insights](https://vercel.com/docs/speed-insights)
 - [Cron-parser](https://www.npmjs.com/package/cron-parser) for scheduled tasks
-- [Prettier](https://prettier.io/), [ESLint](https://eslint.org/), [Knip](https://github.com/webpro/knip) for static analysis
-
+- Ultracite (Biome) for static analysis and formatting
 
 ### Local development (Bun)
 
@@ -149,7 +147,6 @@ DATAFORSEO_PASSWORD=your-api-password
 # License
 
 This project is licensed under the AGPLv3 License - see the [LICENSE](LICENSE) file for details.
-
 
 ## Pricing
 

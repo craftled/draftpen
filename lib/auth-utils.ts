@@ -1,4 +1,3 @@
-import { config } from "dotenv";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import type { User } from "./db/schema";
@@ -7,10 +6,6 @@ import {
   extractSessionToken,
   sessionCache,
 } from "./performance-cache";
-
-config({
-  path: ".env.local",
-});
 
 export const getSession = async () => {
   const requestHeaders = await headers();

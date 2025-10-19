@@ -18,7 +18,7 @@ yarn-error.log*
 pnpm-debug.log*
 
 # Caches / coverage
-.eslintcache
+
 coverage/
 
 # OS / editor

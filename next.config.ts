@@ -35,7 +35,7 @@ const nextConfig: NextConfig = {
       static: 30,
     },
   },
-  serverExternalPackages: ["@aws-sdk/client-s3", "prettier"],
+  serverExternalPackages: ["@aws-sdk/client-s3"],
   transpilePackages: [
     "geist",
     "shiki",
@@ -43,7 +43,6 @@ const nextConfig: NextConfig = {
     "@t3-oss/env-nextjs",
     "@t3-oss/env-core",
   ],
-  output: "standalone",
   devIndicators: false,
   async headers() {
     return [
