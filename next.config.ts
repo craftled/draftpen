@@ -96,18 +96,6 @@ const nextConfig: NextConfig = {
   images: {
     dangerouslyAllowSVG: true,
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "**",
-        port: "",
-        pathname: "**",
-      },
-      {
-        protocol: "http",
-        hostname: "**",
-        port: "",
-        pathname: "**",
-      },
       // Google Favicon Service - comprehensive patterns
       {
         protocol: "https",

@@ -1,9 +1,8 @@
 {
-  "installCommand": "bun install",
   "buildCommand": "bun run build",
   "framework": "nextjs",
   "functions": {
-    "app/api/**/*.ts": {
+    "app/api/**": {
       "maxDuration": 60
     }
   },
