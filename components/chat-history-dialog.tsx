@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
 import { SearchList02Icon } from "@hugeicons/core-free-icons";

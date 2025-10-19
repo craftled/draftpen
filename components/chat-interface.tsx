@@ -1,7 +1,5 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
-
 // Third-party library imports
 import { useChat } from "@ai-sdk/react";
 import { Crown02Icon } from "@hugeicons/core-free-icons";

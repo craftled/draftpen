@@ -12,6 +12,7 @@ import {
   YoutubeIcon,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import React, { useMemo, useState } from "react";
 import {
   Accordion,
@@ -191,12 +192,16 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
         target="_blank"
       >
         {video.details?.thumbnail_url ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            alt=""
-            aria-hidden="true"
-            className="h-full w-full object-cover"
+          <Image
+            alt={
+              video.details.title
+                ? `${video.details.title} thumbnail`
+                : "YouTube video thumbnail"
+            }
+            className="object-cover"
+            fill
             loading="lazy"
+            sizes="280px"
             src={video.details.thumbnail_url}
           />
         ) : (

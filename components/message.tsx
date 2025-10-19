@@ -1,4 +1,4 @@
-/* eslint-disable @next/next/no-img-element */
+"use client";
 
 import type { UseChatHelpers } from "@ai-sdk/react";
 import {
@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import Image from "next/image";
 import { deleteTrailingMessages } from "@/app/actions";
 import { ChatTextHighlighter } from "@/components/chat-text-highlighter";
 import { MarkdownRenderer } from "@/components/markdown";
@@ -1310,7 +1311,7 @@ export const EditableAttachmentsBadge = ({
                   setIsOpen(true);
                 }}
               >
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-background dark:bg-background">
+                <div className="relative flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-background dark:bg-background">
                   {isPdf(attachment) ? (
                     <svg
                       className="text-red-500 dark:text-red-400"
@@ -1330,9 +1331,11 @@ export const EditableAttachmentsBadge = ({
                       <path d="M12 18v-5" />
                     </svg>
                   ) : isImage ? (
-                    <img
+                    <Image
                       alt={fileName}
-                      className="h-full w-full object-cover"
+                      className="object-cover"
+                      fill
+                      sizes="24px"
                       src={attachment.url}
                     />
                   ) : (
@@ -1482,14 +1485,18 @@ export const EditableAttachmentsBadge = ({
                   </div>
                 ) : (
                   <div className="flex h-[60vh] items-center justify-center">
-                    <img
-                      alt={
-                        fileAttachments[selectedIndex].name ||
-                        `Image ${selectedIndex + 1}`
-                      }
-                      className="mx-auto max-h-[60vh] max-w-full rounded-md object-contain"
-                      src={fileAttachments[selectedIndex].url}
-                    />
+                    <div className="relative h-full w-full">
+                      <Image
+                        alt={
+                          fileAttachments[selectedIndex].name ||
+                          `Image ${selectedIndex + 1}`
+                        }
+                        className="rounded-md object-contain"
+                        fill
+                        sizes="100vw"
+                        src={fileAttachments[selectedIndex].url}
+                      />
+                    </div>
                   </div>
                 )}
 
@@ -1556,9 +1563,15 @@ export const EditableAttachmentsBadge = ({
                           </svg>
                         </div>
                       ) : (
-                        <img
-                          alt={attachment.name || `Thumbnail ${idx + 1}`}
-                          className="h-full w-full object-cover"
+                        <Image
+                          alt={
+                            attachment.name?.trim().length
+                              ? attachment.name
+                              : `Thumbnail ${idx + 1}`
+                          }
+                          className="object-cover"
+                          fill
+                          sizes="40px"
                           src={attachment.url}
                         />
                       )}
@@ -1632,7 +1645,7 @@ export const AttachmentsBadge = ({
                 setIsOpen(true);
               }}
             >
-              <div className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-background dark:bg-background">
+              <div className="relative flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full bg-background dark:bg-background">
                 {isPdf(attachment) ? (
                   <svg
                     className="text-red-500 dark:text-red-400"
@@ -1652,9 +1665,11 @@ export const AttachmentsBadge = ({
                     <path d="M12 18v-5" />
                   </svg>
                 ) : isImage ? (
-                  <img
+                  <Image
                     alt={fileName}
-                    className="h-full w-full object-cover"
+                    className="object-cover"
+                    fill
+                    sizes="24px"
                     src={attachment.url}
                   />
                 ) : (
@@ -1798,14 +1813,18 @@ export const AttachmentsBadge = ({
                   </div>
                 ) : (
                   <div className="flex h-[60vh] items-center justify-center">
-                    <img
-                      alt={
-                        fileAttachments[selectedIndex].name ||
-                        `Image ${selectedIndex + 1}`
-                      }
-                      className="mx-auto max-h-[60vh] max-w-full rounded-md object-contain"
-                      src={fileAttachments[selectedIndex].url}
-                    />
+                    <div className="relative h-full w-full">
+                      <Image
+                        alt={
+                          fileAttachments[selectedIndex].name ||
+                          `Image ${selectedIndex + 1}`
+                        }
+                        className="rounded-md object-contain"
+                        fill
+                        sizes="100vw"
+                        src={fileAttachments[selectedIndex].url}
+                      />
+                    </div>
                   </div>
                 )}
 
@@ -1872,9 +1891,15 @@ export const AttachmentsBadge = ({
                           </svg>
                         </div>
                       ) : (
-                        <img
-                          alt={attachment.name || `Thumbnail ${idx + 1}`}
-                          className="h-full w-full object-cover"
+                        <Image
+                          alt={
+                            attachment.name?.trim().length
+                              ? attachment.name
+                              : `Thumbnail ${idx + 1}`
+                          }
+                          className="object-cover"
+                          fill
+                          sizes="40px"
                           src={attachment.url}
                         />
                       )}

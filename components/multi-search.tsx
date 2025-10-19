@@ -12,7 +12,7 @@ import {
   X,
 } from "lucide-react";
 // /components/multi-search.tsx
-/* eslint-disable @next/next/no-img-element */
+import Image from "next/image";
 import React from "react";
 import PlaceholderImage from "@/components/placeholder-image";
 import {
@@ -90,7 +90,20 @@ const SourceCard: React.FC<{ result: SearchResult; onClick?: () => void }> = ({
 }) => {
   const [imageLoaded, setImageLoaded] = React.useState(false);
   const faviconUrl = getFaviconUrl(result.url);
+  const [faviconSrc, setFaviconSrc] = React.useState<string | null>(
+    faviconUrl
+  );
   const hostname = new URL(result.url).hostname.replace("www.", "");
+
+  React.useEffect(() => {
+    if (faviconUrl) {
+      setImageLoaded(false);
+      setFaviconSrc(faviconUrl);
+      return;
+    }
+    setFaviconSrc(null);
+    setImageLoaded(true);
+  }, [faviconUrl]);
 
   return (
     <div
@@ -107,17 +120,17 @@ const SourceCard: React.FC<{ result: SearchResult; onClick?: () => void }> = ({
       <div className="mb-3 flex items-start gap-3">
         <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800">
           {!imageLoaded && <div className="absolute inset-0 animate-pulse" />}
-          {faviconUrl ? (
-            <img
-              alt=""
+          {faviconSrc ? (
+            <Image
+              alt={`${hostname} icon`}
               className={cn("object-contain", !imageLoaded && "opacity-0")}
               height={24}
-              onError={(e) => {
+              onError={() => {
+                setFaviconSrc(null);
                 setImageLoaded(true);
-                e.currentTarget.style.display = "none";
               }}
-              onLoad={() => setImageLoaded(true)}
-              src={faviconUrl}
+              onLoadingComplete={() => setImageLoaded(true)}
+              src={faviconSrc}
               width={24}
             />
           ) : (
@@ -342,10 +355,16 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
                 variant="compact"
               />
             ) : (
-              <img
-                alt={image.description || ""}
-                className="absolute inset-0 h-full w-full object-cover"
+              <Image
+                alt={
+                  image.description?.trim().length
+                    ? image.description
+                    : `Search image ${index + 1}`
+                }
+                className="object-cover"
+                fill
                 onError={() => handleImageError(image.url)}
+                sizes="(max-width: 768px) 50vw, 25vw"
                 src={image.url}
               />
             )}
@@ -402,10 +421,16 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
                     variant="default"
                   />
                 ) : (
-                  <img
-                    alt={currentImage.description || ""}
-                    className="h-full w-full rounded-lg object-contain"
+                  <Image
+                    alt={
+                      currentImage.description?.trim().length
+                        ? currentImage.description
+                        : "Selected search image"
+                    }
+                    className="rounded-lg object-contain"
+                    fill
                     onError={() => handleImageError(currentImage.url)}
+                    sizes="100vw"
                     src={currentImage.url}
                   />
                 )}

@@ -1,3 +1,8 @@
+import {
+  DEFAULT_FAVICON_FALLBACK,
+  InlineFavicon,
+} from "@/components/ui/inline-favicon";
+
 interface SerpResult {
   title: string;
   link: string;
@@ -39,7 +44,15 @@ function hostFromUrl(url: string): string {
 function Favicon({ url, alt }: { url: string; alt: string }) {
   const host = hostFromUrl(url);
   const src = `https://www.google.com/s2/favicons?sz=16&domain=${host}`;
-  return <img alt={alt} className="size-3 shrink-0 rounded-sm" src={src} />;
+  return (
+    <InlineFavicon
+      alt={`${alt} favicon`}
+      className="size-3 shrink-0 rounded-sm"
+      fallbackSrc={DEFAULT_FAVICON_FALLBACK}
+      size={16}
+      src={src}
+    />
+  );
 }
 
 function SerpListRow({ r }: { r: SerpResult }) {

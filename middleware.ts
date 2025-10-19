@@ -6,7 +6,7 @@ const protectedRoutes = ["/lookout", "/xql", "/settings"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  console.log("Pathname: ", pathname);
+
   if (pathname === "/api/search") return NextResponse.next();
   if (pathname.startsWith("/new") || pathname.startsWith("/api/search")) {
     return NextResponse.next();
@@ -42,8 +42,6 @@ export async function middleware(request: NextRequest) {
 
   // If user is authenticated but trying to access auth routes
   if (sessionCookie && authRoutes.some((route) => pathname.startsWith(route))) {
-    console.log("Redirecting to home");
-    console.log("Session cookie: ", sessionCookie);
     return NextResponse.redirect(new URL("/", request.url));
   }
 

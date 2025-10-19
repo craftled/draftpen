@@ -1,5 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
-
 import { format } from "date-fns";
 import fs from "fs";
 import { ImageResponse } from "next/og";
@@ -246,16 +244,18 @@ export async function GET(
             {/* Right: author and date */}
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               {chatWithUser.userImage ? (
-                <img
-                  alt={chatWithUser.userName || "User"}
-                  height={36}
-                  src={chatWithUser.userImage}
+                <div
+                  aria-label={chatWithUser.userName || "User avatar"}
+                  role="img"
                   style={{
+                    width: 36,
+                    height: 36,
                     borderRadius: "50%",
-                    objectFit: "cover",
+                    backgroundImage: `url(${chatWithUser.userImage})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
                     border: "1px solid rgba(255,255,255,0.35)",
                   }}
-                  width={36}
                 />
               ) : (
                 <div

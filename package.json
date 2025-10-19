@@ -7,8 +7,8 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "ultracite lint",
-    "format": "ultracite format",
+    "check": "ultracite check",
+    "fix": "ultracite fix",
     "doctor": "ultracite doctor",
     "migrate": "drizzle-kit migrate"
   },
@@ -144,7 +144,7 @@
     "tailwindcss": "^4.1.14",
     "tw-animate-css": "^1.4.0",
     "typescript": "^5.9.3",
-    "ultracite": "5.6.4"
+    "ultracite": "^5.6.4"
   },
   "overrides": {
     "react-is": "^19.0.0-rc-69d4b800-20241021"

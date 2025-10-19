@@ -34,6 +34,8 @@ const nextConfig: NextConfig = {
       dynamic: 10,
       static: 30,
     },
+    turbopackFileSystemCacheForDev: true,
+    turbopackFileSystemCacheForBuild: true,
   },
   serverExternalPackages: ["@aws-sdk/client-s3"],
   transpilePackages: [

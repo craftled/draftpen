@@ -4,7 +4,6 @@ import { GlobeHemisphereWestIcon, PlusIcon } from "@phosphor-icons/react";
 import { Clock } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-/* eslint-disable @next/next/no-img-element */
 import { memo, useEffect, useMemo, useState } from "react";
 import { ChatHistoryButton } from "@/components/chat-history-dialog";
 import { ShareButton } from "@/components/share";

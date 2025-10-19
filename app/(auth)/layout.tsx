@@ -51,7 +51,9 @@ export default function AuthLayout({
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
-    if (!api) return;
+    if (!api) {
+      return;
+    }
 
     setCurrent(api.selectedScrollSnap());
 
@@ -99,11 +101,12 @@ export default function AuthLayout({
                 setApi={setApi}
               >
                 <CarouselContent>
-                  {testimonials.map((testimonial, index) => (
-                    <CarouselItem key={index}>
+                  {testimonials.map((testimonial, _index) => (
+                    <CarouselItem key={testimonial.link}>
                       <Link
                         className="group block h-full"
                         href={testimonial.link}
+                        rel="noopener"
                         target="_blank"
                       >
                         <blockquote className="relative flex h-full flex-col rounded-lg border border-border/50 bg-background/50 p-6 backdrop-blur-sm transition-all duration-200 hover:bg-background/70">
@@ -126,7 +129,7 @@ export default function AuthLayout({
                   ))}
                 </CarouselContent>
                 <div className="mt-4 flex items-center justify-center gap-1">
-                  {testimonials.map((_, index) => (
+                  {testimonials.map((testimonial, index) => (
                     <button
                       aria-label={`Go to testimonial ${index + 1}`}
                       className={`h-1.5 w-1.5 rounded-full transition-colors ${
@@ -134,8 +137,9 @@ export default function AuthLayout({
                           ? "bg-foreground"
                           : "bg-muted-foreground/30"
                       }`}
-                      key={index}
+                      key={testimonial.link}
                       onClick={() => api?.scrollTo(index)}
+                      type="button"
                     />
                   ))}
                 </div>

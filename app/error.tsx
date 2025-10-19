@@ -4,21 +4,15 @@ import { motion } from "framer-motion";
 import { ArrowLeft, RefreshCw } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
-export default function Error({
-  error,
+export default function GlobalError({
+  _error,
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  useEffect(() => {
-    // Log the error to an error reporting service
-    console.error(error);
-  }, [error]);
-
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4 font-sans text-foreground">
       <motion.div

@@ -1,5 +1,4 @@
 // /components/reddit-search.tsx
-/* eslint-disable @next/next/no-img-element */
 
 import { RedditLogoIcon } from "@phosphor-icons/react";
 import {
@@ -80,7 +79,7 @@ const RedditSourceCard: React.FC<{
         <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-orange-50 dark:bg-orange-900/20">
           {!imageLoaded && <div className="absolute inset-0 animate-pulse" />}
           <Image
-            alt=""
+            alt={`${subreddit} subreddit icon`}
             className={cn("object-contain", !imageLoaded && "opacity-0")}
             height={24}
             onError={(e) => {

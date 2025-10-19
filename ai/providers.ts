@@ -2,11 +2,11 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 
 import { customProvider, extractReasoningMiddleware, gateway } from "ai";
 
-const middleware = extractReasoningMiddleware({
+const _middleware = extractReasoningMiddleware({
   tagName: "think",
 });
 
-const middlewareWithStartWithReasoning = extractReasoningMiddleware({
+const _middlewareWithStartWithReasoning = extractReasoningMiddleware({
   tagName: "think",
   startWithReasoning: true,
 });
@@ -16,6 +16,8 @@ const anthropic = createAnthropic({
     "anthropic-beta": "context-1m-2025-08-07",
   },
 });
+
+const DEFAULT_MAX_OUTPUT_TOKENS = 8000 as const;
 
 export const modelProvider = customProvider({
   languageModels: {
@@ -33,15 +35,15 @@ export const modelProvider = customProvider({
   },
 });
 
-interface ModelParameters {
+export type ModelParameters = {
   temperature?: number;
   topP?: number;
   topK?: number;
   minP?: number;
   frequencyPenalty?: number;
-}
+};
 
-interface Model {
+export type Model = {
   value: string;
   label: string;
   description: string;
@@ -58,7 +60,7 @@ interface Model {
   fast?: boolean;
   isNew?: boolean;
   parameters?: ModelParameters;
-}
+};
 
 const defaultModelEntry: Model = {
   value: "gpt5-mini",
@@ -172,7 +174,7 @@ export function requiresAuthentication(modelValue: string): boolean {
   return model?.requiresAuth ?? false;
 }
 
-export function requiresProSubscription(modelValue: string): boolean {
+export function requiresProSubscription(_modelValue: string): boolean {
   // PRO-ONLY MODE: All models require subscription, but this function is kept for backwards compatibility
   // Always return false since subscription check happens at API route level
   return false;
@@ -205,7 +207,7 @@ export function isExperimentalModel(modelValue: string): boolean {
 
 export function getMaxOutputTokens(modelValue: string): number {
   const model = getModelConfig(modelValue);
-  return model?.maxOutputTokens || 8000;
+  return model?.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS;
 }
 
 export function getModelParameters(modelValue: string): ModelParameters {
@@ -216,7 +218,7 @@ export function getModelParameters(modelValue: string): ModelParameters {
 // Access control helper
 export function canUseModel(
   modelValue: string,
-  user: any,
+  user: unknown,
   isProUser: boolean
 ): { canUse: boolean; reason?: string } {
   const model = getModelConfig(modelValue);
@@ -238,7 +240,10 @@ export function canUseModel(
 }
 
 // Helper to check if user should bypass rate limits
-export function shouldBypassRateLimits(modelValue: string, user: any): boolean {
+export function shouldBypassRateLimits(
+  modelValue: string,
+  user: unknown
+): boolean {
   const model = getModelConfig(modelValue);
   return Boolean(user && model?.freeUnlimited);
 }
@@ -246,7 +251,7 @@ export function shouldBypassRateLimits(modelValue: string, user: any): boolean {
 // Get acceptable file types for a model
 export function getAcceptedFileTypes(
   modelValue: string,
-  isProUser: boolean
+  _isProUser: boolean
 ): string {
   const model = getModelConfig(modelValue);
   // PRO-ONLY MODE: All subscribers get PDF support if model supports it

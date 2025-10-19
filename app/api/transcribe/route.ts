@@ -21,11 +21,8 @@ export async function POST(request: NextRequest) {
       audio: await audio.arrayBuffer(),
     });
 
-    console.log(result);
-
     return NextResponse.json({ text: result.text });
-  } catch (error) {
-    console.error("Error processing transcription request:", error);
+  } catch (_error) {
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

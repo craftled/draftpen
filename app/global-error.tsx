@@ -49,9 +49,20 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
 
   useEffect(() => {
     // Central place to hook real error reporting (Sentry, PostHog, etc.)
-    // e.g. reportError(error);
-    // eslint-disable-next-line no-console
-    console.error("[GlobalErrorBoundary]", error);
+    if (typeof window !== "undefined") {
+      const reporter = window as typeof window & {
+        reportError?: (error: unknown) => void;
+      };
+
+      if (reporter.reportError) {
+        reporter.reportError(error);
+        return;
+      }
+    }
+
+    if (process.env.NODE_ENV !== "production") {
+      globalThis.console?.error?.("[GlobalErrorBoundary]", error);
+    }
   }, [error]);
 
   const details = [

@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { XLogoIcon } from "@phosphor-icons/react/dist/ssr";
@@ -17,6 +16,7 @@ import {
   Target,
   Zap,
 } from "lucide-react";
+import Image from "next/image";
 import { useTheme } from "next-themes";
 import React, { memo, useEffect, useMemo, useRef, useState } from "react";
 import { TextShimmer } from "@/components/core/text-shimmer";
@@ -26,6 +26,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DEFAULT_FAVICON_FALLBACK,
+  InlineFavicon,
+} from "@/components/ui/inline-favicon";
 import XSearch from "@/components/x-search";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useOptimizedScroll } from "@/hooks/use-optimized-scroll";
@@ -880,6 +884,7 @@ const getFaviconUrl = (url: string) => {
   }
 };
 
+
 // Source Card Component for Extreme Search (matching multi-search design)
 const ExtremeSourceCard: React.FC<{
   source: ExtremeSearchSource;
@@ -887,6 +892,19 @@ const ExtremeSourceCard: React.FC<{
 }> = ({ source, onClick }) => {
   const [imageLoaded, setImageLoaded] = React.useState(false);
   const faviconUrl = source.favicon || getFaviconUrl(source.url);
+  const [faviconSrc, setFaviconSrc] = React.useState<string | null>(
+    faviconUrl ?? null
+  );
+
+  React.useEffect(() => {
+    if (faviconUrl) {
+      setImageLoaded(false);
+      setFaviconSrc(faviconUrl);
+      return;
+    }
+    setFaviconSrc(null);
+    setImageLoaded(true);
+  }, [faviconUrl]);
 
   let hostname = "";
   try {
@@ -910,17 +928,21 @@ const ExtremeSourceCard: React.FC<{
       <div className="mb-3 flex items-start gap-3">
         <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800">
           {!imageLoaded && <div className="absolute inset-0 animate-pulse" />}
-          {faviconUrl ? (
-            <img
-              alt=""
+          {faviconSrc ? (
+            <Image
+              alt={
+                hostname
+                  ? `${hostname} icon`
+                  : source.title || "External source icon"
+              }
               className={cn("object-contain", !imageLoaded && "opacity-0")}
               height={24}
-              onError={(e) => {
+              onError={() => {
+                setFaviconSrc(null);
                 setImageLoaded(true);
-                e.currentTarget.style.display = "none";
               }}
-              onLoad={() => setImageLoaded(true)}
-              src={faviconUrl}
+              onLoadingComplete={() => setImageLoaded(true)}
+              src={faviconSrc}
               width={24}
             />
           ) : (
@@ -1847,39 +1869,52 @@ const ExtremeSearchComponent = ({
                             initial={{ opacity: 0 }}
                             transition={{ duration: 0.15 }}
                           >
-                            {query.sources.map((source: any, index: number) => (
-                              <motion.a
-                                animate={{ opacity: 1 }}
-                                className="flex items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-xs transition-colors hover:bg-muted/80"
-                                href={source.url}
-                                initial={{ opacity: 0 }}
-                                key={index}
-                                target="_blank"
-                                transition={{
-                                  duration: 0.15,
-                                  delay: index * 0.02,
-                                }}
-                              >
-                                <img
-                                  alt=""
-                                  className="h-3 w-3 rounded-full"
-                                  onError={(e) => {
-                                    (e.currentTarget as HTMLImageElement).src =
-                                      "https://www.google.com/s2/favicons?sz=128&domain=example.com";
-                                    (
-                                      e.currentTarget as HTMLImageElement
-                                    ).style.filter = "grayscale(100%)";
+                            {query.sources.map((source: any, index: number) => {
+                              const fallbackIcon =
+                                (typeof source.url === "string"
+                                  ? getFaviconUrl(source.url)
+                                  : null) ?? DEFAULT_FAVICON_FALLBACK;
+                              const sourceLabel =
+                                (typeof source.title === "string" &&
+                                  source.title.length > 0 &&
+                                  source.title) ||
+                                (typeof source.url === "string"
+                                  ? source.url
+                                  : "source");
+
+                              return (
+                                <motion.a
+                                  animate={{ opacity: 1 }}
+                                  className="flex items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-xs transition-colors hover:bg-muted/80"
+                                  href={source.url}
+                                  initial={{ opacity: 0 }}
+                                  key={index}
+                                  target="_blank"
+                                  transition={{
+                                    duration: 0.15,
+                                    delay: index * 0.02,
                                   }}
-                                  src={source.favicon}
-                                />
-                                <span
-                                  className="max-w-[100px] truncate text-muted-foreground"
-                                  title={source.title || "source"}
                                 >
-                                  {source.title || "source"}
-                                </span>
-                              </motion.a>
-                            ))}
+                                  <InlineFavicon
+                                    alt={sourceLabel}
+                                    className="h-3 w-3 rounded-full"
+                                    fallbackSrc={fallbackIcon}
+                                    size={12}
+                                    src={
+                                      typeof source.favicon === "string"
+                                        ? source.favicon
+                                        : null
+                                    }
+                                  />
+                                  <span
+                                    className="max-w-[100px] truncate text-muted-foreground"
+                                    title={sourceLabel}
+                                  >
+                                    {sourceLabel}
+                                  </span>
+                                </motion.a>
+                              );
+                            })}
                           </motion.div>
                         )}
 

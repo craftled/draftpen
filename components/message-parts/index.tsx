@@ -75,6 +75,8 @@ import {
 } from "@/components/ui/tooltip";
 import type {
   ChatMessage,
+  CodeContextToolInput,
+  CodeContextToolOutput,
   CustomUIDataTypes,
   DataExtremeSearchPart,
   DataQueryCompletionPart,
@@ -1879,7 +1881,12 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
 );
 
 // Code Context tool component
-const CodeContextTool: React.FC<{ args: any; result: any }> = ({
+interface CodeContextToolProps {
+  args: CodeContextToolInput | null | undefined;
+  result: CodeContextToolOutput | string | null | undefined;
+}
+
+const CodeContextTool: React.FC<CodeContextToolProps> = ({
   args,
   result,
 }) => {
@@ -1900,7 +1907,10 @@ const CodeContextTool: React.FC<{ args: any; result: any }> = ({
     );
   }
 
-  const responseText = result?.response || result;
+  const responseText =
+    typeof result === "string" ? result : result?.response ?? "";
+  const normalizedResult =
+    typeof result === "string" ? undefined : result ?? undefined;
   const shouldShowAccordion = responseText && responseText.length > 500;
   const previewText = shouldShowAccordion
     ? responseText.slice(0, 400) + "..."
@@ -1948,20 +1958,20 @@ const CodeContextTool: React.FC<{ args: any; result: any }> = ({
                 </Button>
 
                 {/* Metadata badges */}
-                {result?.resultsCount !== undefined && (
+                {normalizedResult?.resultsCount !== undefined && (
                   <div className="flex items-center gap-2">
                     <Badge
                       className="rounded-md border-0 bg-blue-50 px-2 py-0.5 text-blue-600 text-xs hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
                       variant="secondary"
                     >
-                      {result.resultsCount} results
+                      {normalizedResult?.resultsCount} results
                     </Badge>
-                    {result.outputTokens && (
+                    {normalizedResult?.outputTokens && (
                       <Badge
                         className="rounded-md border-0 bg-emerald-50 px-2 py-0.5 text-emerald-600 text-xs hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
                         variant="secondary"
                       >
-                        {result.outputTokens} tokens
+                        {normalizedResult.outputTokens} tokens
                       </Badge>
                     )}
                   </div>
@@ -2001,11 +2011,13 @@ const CodeContextTool: React.FC<{ args: any; result: any }> = ({
               )}
 
               {/* Footer metadata */}
-              {result?.searchTime && (
+              {normalizedResult?.searchTime && (
                 <div className="flex items-center gap-2 border-neutral-200/30 border-t pt-2 dark:border-neutral-700/30">
                   <Clock className="h-3 w-3 text-neutral-400" />
                   <span className="text-neutral-500 text-xs dark:text-neutral-400">
-                    Search completed in {(result.searchTime / 1000).toFixed(2)}s
+                    Search completed in {(
+                      normalizedResult.searchTime / 1000
+                    ).toFixed(2)}s
                   </span>
                 </div>
               )}

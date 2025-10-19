@@ -107,8 +107,21 @@ type createMemoryTools = InferUITool<SearchMemoryTool>;
 type addMemoryTools = InferUITool<AddMemoryTool>;
 // Kept for backward-compatibility of old messages referencing code_context
 // No runtime tool implementation remains; this is a loose UI-only placeholder type
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type codeContextTool = any;
+export interface CodeContextToolInput {
+  query?: string;
+}
+
+export interface CodeContextToolOutput {
+  response?: string;
+  resultsCount?: number;
+  outputTokens?: number;
+  searchTime?: number;
+}
+
+type codeContextTool = {
+  input: CodeContextToolInput;
+  output: CodeContextToolOutput | undefined;
+};
 type keywordResearch = InferUITool<
   typeof import("@/lib/tools")["keywordResearchTool"]
 >;
@@ -143,6 +156,8 @@ export type ChatTools = {
   code_context: codeContextTool;
   keyword_research: keywordResearch;
 };
+
+export type CodeContextToolDefinition = codeContextTool;
 
 export type CustomUIDataTypes = {
   appendMessage: string;

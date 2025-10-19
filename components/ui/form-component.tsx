@@ -1,4 +1,4 @@
-/* eslint-disable @next/next/no-img-element */
+"use client";
 // /components/ui/form-component.tsx
 
 import type { UseChatHelpers } from "@ai-sdk/react";
@@ -14,6 +14,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Brain, Eye, FilePdf, LockIcon } from "@phosphor-icons/react";
 import { useQuery } from "@tanstack/react-query";
 import { track } from "@vercel/analytics";
+import Image from "next/image";
 import {
   ArrowUpRight,
   Check,
@@ -1596,7 +1597,7 @@ const AttachmentPreview: React.FC<{
           </div>
         </div>
       ) : (
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted ring-1 ring-border">
+        <div className="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted ring-1 ring-border">
           {isPdf(attachment) ? (
             <svg
               className="text-red-500"
@@ -1616,9 +1617,11 @@ const AttachmentPreview: React.FC<{
               <path d="M12 18v-5" />
             </svg>
           ) : (
-            <img
+            <Image
               alt={`Preview of ${attachment.name}`}
-              className="h-full w-full object-cover"
+              className="object-cover"
+              fill
+              sizes="32px"
               src={(attachment as Attachment).url}
             />
           )}
