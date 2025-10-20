@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import type React from "react";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://draftpen.com"
+  ),
+
   title: "Scira Lookout - Automated Search Monitoring",
   description:
     "Schedule automated searches and get notified when they complete. Monitor trends, track developments, and stay informed with intelligent lookouts.",

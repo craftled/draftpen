@@ -66,6 +66,10 @@ export async function generateMetadata({
     title = chat.title;
   }
   return {
+    metadataBase: new URL(
+      process.env.NEXT_PUBLIC_SITE_URL ?? "https://draftpen.com"
+    ),
+
     title,
     description: "A search in Draftpen",
     openGraph: {

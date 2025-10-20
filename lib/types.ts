@@ -47,22 +47,6 @@ export type DataExtremeSearchPart = {
         status: "running" | "completed" | "error";
         result?: string;
         charts?: any[];
-      }
-    | {
-        kind: "x_search";
-        xSearchId: string;
-        query: string;
-        startDate: string;
-        endDate: string;
-        handles?: string[];
-        status: "started" | "completed" | "error";
-        result?: {
-          content: string;
-          citations: any[];
-          sources: Array<{ text: string; link: string; title?: string }>;
-          dateRange: string;
-          handles: string[];
-        };
       };
 };
 
@@ -86,7 +70,6 @@ type retrieve = InferUITool<typeof import("@/lib/tools")["retrieveTool"]>;
 type textTranslate = InferUITool<
   typeof import("@/lib/tools")["textTranslateTool"]
 >;
-type xSearch = InferUITool<typeof import("@/lib/tools")["xSearchTool"]>;
 type greeting = InferUITool<
   ReturnType<typeof import("@/lib/tools")["greetingTool"]>
 >;
@@ -132,7 +115,6 @@ export type ChatTools = {
   // Crypto/finance removed
 
   // Search & Content Tools
-  x_search: xSearch;
   web_search: webSearch;
   academic_search: academicSearch;
   youtube_search: youtubeSearch;

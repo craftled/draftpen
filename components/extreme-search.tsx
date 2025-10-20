@@ -1,6 +1,5 @@
 "use client";
 
-import { XLogoIcon } from "@phosphor-icons/react/dist/ssr";
 import type { UIToolInvocation } from "ai";
 import type { EChartsOption } from "echarts";
 import ReactECharts from "echarts-for-react";
@@ -30,7 +29,6 @@ import {
 } from "@/components/ui/inline-favicon";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import XSearch from "@/components/x-search";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useOptimizedScroll } from "@/hooks/use-optimized-scroll";
 import type { extremeSearchTool, Research } from "@/lib/tools/extreme-search";
@@ -1037,22 +1035,6 @@ type CodeExecution = {
   charts?: any[];
 };
 
-type XSearchExecution = {
-  id: string;
-  query: string;
-  startDate: string;
-  endDate: string;
-  handles?: string[];
-  status: "started" | "completed" | "error";
-  result?: {
-    content: string;
-    citations: any[];
-    sources: Array<{ text: string; link: string; title?: string }>;
-    dateRange: string;
-    handles: string[];
-  };
-};
-
 const ExtremeSearchComponent = ({
   toolInvocation,
   annotations,
@@ -1130,13 +1112,11 @@ const ExtremeSearchComponent = ({
         ? latestPlan.data.plan
         : null;
 
-    // Derive dynamic status from current tool states (query, x_search, code)
+    // Derive dynamic status from current tool states (query, code)
     const toolAnnotations = annotations.filter(
       (ann) =>
         ann.type === "data-extreme_search" &&
-        (ann.data.kind === "query" ||
-          ann.data.kind === "x_search" ||
-          ann.data.kind === "code")
+        (ann.data.kind === "query" || ann.data.kind === "code")
     );
 
     let dynamicStatus = "Processing research...";
@@ -1165,23 +1145,6 @@ const ExtremeSearchComponent = ({
             break;
           default:
             dynamicStatus = "Processing research...";
-        }
-      } else if (data.kind === "x_search") {
-        const xSearchStatus = data.status;
-        const queryText = data.query;
-
-        switch (xSearchStatus) {
-          case "started":
-            dynamicStatus = `Searching X posts: "${queryText}"`;
-            break;
-          case "completed":
-            dynamicStatus = "Analyzing X search results...";
-            break;
-          case "error":
-            dynamicStatus = "X search encountered an error";
-            break;
-          default:
-            dynamicStatus = "Processing X search...";
         }
       } else if (data.kind === "code") {
         const codeStatus = data.status;
@@ -1327,72 +1290,6 @@ const ExtremeSearchComponent = ({
     return [];
   }, [toolInvocation, annotations]);
 
-  // Extract X search executions from the ACTUAL tool invocation structure
-  const xSearchExecutions = useMemo(() => {
-    // Check if we have results in the completed tool
-    if ("output" in toolInvocation) {
-      const { output } = toolInvocation;
-      const researchData = output as { research?: Research } | null;
-
-      if (researchData?.research?.toolResults) {
-        const xSearchResults = researchData.research.toolResults.filter(
-          (result) => result.toolName === "xSearch"
-        );
-
-        return xSearchResults.map((result, index) => {
-          const query =
-            result.args?.query ||
-            result.input?.query ||
-            `X Search ${index + 1}`;
-          const startDate =
-            result.args?.startDate || result.input?.startDate || "";
-          const endDate = result.args?.endDate || result.input?.endDate || "";
-          const handles = result.args?.xHandles || result.input?.xHandles || [];
-          const resultData = result.result || result.output || null;
-
-          return {
-            id: result.toolCallId || `x-search-${index}`,
-            query,
-            startDate,
-            endDate,
-            handles,
-            status: "completed" as const,
-            result: resultData,
-          };
-        });
-      }
-    }
-
-    // For in-progress, try to extract from annotations
-    if (annotations?.length) {
-      const xSearchMap = new Map<string, XSearchExecution>();
-
-      annotations.forEach((ann) => {
-        if (
-          ann.type !== "data-extreme_search" ||
-          ann.data.kind !== "x_search"
-        ) {
-          return;
-        }
-
-        const { data } = ann;
-        xSearchMap.set(data.xSearchId, {
-          id: data.xSearchId,
-          query: data.query,
-          startDate: data.startDate,
-          endDate: data.endDate,
-          handles: data.handles,
-          status: data.status,
-          result: data.result,
-        });
-      });
-
-      return Array.from(xSearchMap.values());
-    }
-
-    return [];
-  }, [toolInvocation, annotations]);
-
   // Extract code executions from the ACTUAL tool invocation structure
   const codeExecutions = useMemo(() => {
     // Check if we have results in the completed tool
@@ -1454,7 +1351,6 @@ const ExtremeSearchComponent = ({
   // Build a single chronological list for the timeline
   type TimelineItem =
     | { kind: "query"; item: SearchQuery }
-    | { kind: "x_search"; item: XSearchExecution }
     | { kind: "code"; item: CodeExecution };
 
   const combinedTimelineItems = useMemo<TimelineItem[]>(() => {
@@ -1488,18 +1384,6 @@ const ExtremeSearchComponent = ({
             };
             return { kind: "query", item: query };
           }
-          if (tr.toolName === "xSearch") {
-            const xItem: XSearchExecution = {
-              id: tr.toolCallId || `x-${Math.random().toString(36).slice(2)}`,
-              query: tr.args?.query || tr.input?.query || "X search",
-              startDate: tr.args?.startDate || tr.input?.startDate || "",
-              endDate: tr.args?.endDate || tr.input?.endDate || "",
-              handles: tr.args?.xHandles || tr.input?.xHandles || [],
-              status: "completed",
-              result: tr.result || tr.output || undefined,
-            };
-            return { kind: "x_search", item: xItem };
-          }
           if (tr.toolName === "codeRunner") {
             const codeItem: CodeExecution = {
               id:
@@ -1532,12 +1416,6 @@ const ExtremeSearchComponent = ({
             items.push({ kind: "query", item: q });
             seen[`q:${q.id}`] = true;
           }
-        } else if (d.kind === "x_search") {
-          const x = xSearchExecutions.find((xe) => xe.id === d.xSearchId);
-          if (x && !seen[`x:${x.id}`]) {
-            items.push({ kind: "x_search", item: x });
-            seen[`x:${x.id}`] = true;
-          }
         } else if (d.kind === "code") {
           const c = codeExecutions.find((ce) => ce.id === d.codeId);
           if (c && !seen[`c:${c.id}`]) {
@@ -1551,9 +1429,6 @@ const ExtremeSearchComponent = ({
           ...searchQueries.map(
             (q) => ({ kind: "query", item: q }) as TimelineItem
           ),
-          ...xSearchExecutions.map(
-            (x) => ({ kind: "x_search", item: x }) as TimelineItem
-          ),
           ...codeExecutions.map(
             (c) => ({ kind: "code", item: c }) as TimelineItem
           ),
@@ -1564,19 +1439,9 @@ const ExtremeSearchComponent = ({
 
     return [
       ...searchQueries.map((q) => ({ kind: "query", item: q }) as TimelineItem),
-      ...xSearchExecutions.map(
-        (x) => ({ kind: "x_search", item: x }) as TimelineItem
-      ),
       ...codeExecutions.map((c) => ({ kind: "code", item: c }) as TimelineItem),
     ];
-  }, [
-    isCompleted,
-    toolInvocation,
-    annotations,
-    searchQueries,
-    xSearchExecutions,
-    codeExecutions,
-  ]);
+  }, [isCompleted, toolInvocation, annotations, searchQueries, codeExecutions]);
 
   // Auto-scroll effects
   useEffect(() => {
@@ -1714,36 +1579,9 @@ const ExtremeSearchComponent = ({
         }
       });
 
-      xSearchExecutions.forEach((xSearch) => {
-        const isActive = xSearch.status === "started";
-        const wasUserControlled = userExpandedItems[xSearch.id];
-
-        // Auto-expand active X search executions (unless user manually controlled)
-        if (isActive && !prevExpanded[xSearch.id] && !wasUserControlled) {
-          newExpanded[xSearch.id] = true;
-          shouldUpdate = true;
-        }
-
-        // Auto-collapse completed X search that was auto-expanded (not user-controlled)
-        if (
-          xSearch.status === "completed" &&
-          prevExpanded[xSearch.id] &&
-          !wasUserControlled
-        ) {
-          newExpanded[xSearch.id] = false;
-          shouldUpdate = true;
-        }
-      });
-
       return shouldUpdate ? newExpanded : prevExpanded;
     });
-  }, [
-    searchQueries,
-    codeExecutions,
-    xSearchExecutions,
-    userExpandedItems,
-    isCompleted,
-  ]);
+  }, [searchQueries, codeExecutions, userExpandedItems, isCompleted]);
 
   const renderTimeline = () => (
     <div className="relative mb-2 ml-4 space-y-1">
@@ -1951,207 +1789,6 @@ const ExtremeSearchComponent = ({
                           }
                           return null;
                         })()}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-            );
-          }
-
-          if (timelineItem.kind === "x_search") {
-            const xSearch = timelineItem.item as XSearchExecution;
-            const _isActive =
-              state === "input-streaming" || state === "input-available";
-            const isLoading = xSearch.status === "started";
-            const hasResults =
-              xSearch.result && xSearch.result.citations.length > 0;
-
-            const bulletColor = isLoading
-              ? "bg-primary/80 animate-[pulse_0.8s_ease-in-out_infinite]!"
-              : hasResults
-                ? "bg-primary"
-                : "bg-yellow-500";
-
-            return (
-              <motion.div
-                animate={{ opacity: 1, y: 0 }}
-                className="relative space-y-0"
-                exit={{ opacity: 0 }}
-                initial={{ opacity: 0, y: 2 }}
-                key={xSearch.id}
-                transition={{ duration: 0.1, delay: itemIndex * 0.01 }}
-              >
-                <div
-                  className="absolute z-5 h-1.5 w-1.5 rounded-full bg-background"
-                  style={{
-                    left: "-0.6rem",
-                    top: "5px",
-                    transform: "translateX(-50%)",
-                  }}
-                />
-
-                <div
-                  className={`absolute rounded-full ${bulletColor} z-10 transition-colors duration-300`}
-                  style={{
-                    left: "-0.6rem",
-                    top: "6px",
-                    width: "8px",
-                    height: "8px",
-                    transform: "translateX(-50%)",
-                  }}
-                  title={`Status: ${xSearch.status}`}
-                />
-
-                {itemIndex > 0 && (
-                  <div
-                    className="absolute bg-neutral-300 dark:bg-neutral-700"
-                    style={{
-                      left: "-0.6rem",
-                      top: "-6px",
-                      width: "2px",
-                      height: "14px",
-                      transform: "translateX(-50%)",
-                    }}
-                  />
-                )}
-
-                <div
-                  className="absolute bg-neutral-300 dark:bg-neutral-700"
-                  style={{
-                    left: "-0.6rem",
-                    top: "7px",
-                    width: "2px",
-                    height: expandedItems[xSearch.id]
-                      ? itemIndex === combinedTimelineItems.length - 1
-                        ? "calc(100% - 9px)"
-                        : "100%"
-                      : itemIndex === combinedTimelineItems.length - 1
-                        ? "9px"
-                        : "16px",
-                    transform: "translateX(-50%)",
-                  }}
-                />
-
-                <div
-                  className="relative flex min-h-[18px] cursor-pointer items-center gap-1 rounded-sm px-1 py-0.5 hover:bg-muted"
-                  onClick={() => toggleItemExpansion(xSearch.id)}
-                >
-                  <div className="flex-shrink-0 rounded bg-black p-0.5 dark:bg-white">
-                    <XLogoIcon className="size-2.5 text-white dark:text-black" />
-                  </div>
-                  <span className="min-w-0 flex-1 text-foreground text-xs">
-                    {isLoading && !isCompleted ? (
-                      <TextShimmer
-                        className="w-full"
-                        duration={1.5}
-                      >{`X search: ${xSearch.query}`}</TextShimmer>
-                    ) : (
-                      `X search: ${xSearch.query}`
-                    )}
-                  </span>
-                  {xSearch.handles && xSearch.handles.length > 0 && (
-                    <Badge
-                      className="h-4 rounded-full px-1.5 py-0 text-[10px]"
-                      variant="secondary"
-                    >
-                      {xSearch.handles.length} handles
-                    </Badge>
-                  )}
-                  {expandedItems[xSearch.id] ? (
-                    <ChevronDown className="ml-auto h-2.5 w-2.5 flex-shrink-0 text-muted-foreground" />
-                  ) : (
-                    <ChevronRight className="ml-auto h-2.5 w-2.5 flex-shrink-0 text-muted-foreground" />
-                  )}
-                </div>
-
-                <AnimatePresence>
-                  {expandedItems[xSearch.id] && (
-                    <motion.div
-                      animate={{ height: "auto", opacity: 1 }}
-                      className="overflow-hidden dark:border-neutral-700"
-                      exit={{ height: 0, opacity: 0 }}
-                      initial={{ height: 0, opacity: 0 }}
-                      key="content"
-                      transition={{
-                        height: { duration: 0.2, ease: "easeOut" },
-                        opacity: { duration: 0.15 },
-                      }}
-                    >
-                      <div className="py-0.5 pl-0.5">
-                        <div className="mb-1 text-[10px] text-muted-foreground">
-                          {xSearch.startDate} to {xSearch.endDate}
-                        </div>
-                        {xSearch.result &&
-                          xSearch.result.citations.length > 0 && (
-                            <motion.div
-                              animate={{ opacity: 1 }}
-                              className="flex flex-wrap gap-1 py-0.5"
-                              initial={{ opacity: 0 }}
-                              transition={{ duration: 0.15 }}
-                            >
-                              {xSearch.result.citations.map(
-                                (citation: any, index: number) => {
-                                  const url =
-                                    typeof citation === "string"
-                                      ? citation
-                                      : citation.url;
-                                  let title =
-                                    typeof citation === "object"
-                                      ? citation.title
-                                      : "";
-                                  if (!title && xSearch.result?.sources) {
-                                    const matchingSource =
-                                      xSearch.result.sources.find(
-                                        (source: any) => source.link === url
-                                      );
-                                    title = matchingSource?.title || "X post";
-                                  }
-                                  return (
-                                    <motion.a
-                                      animate={{ opacity: 1 }}
-                                      className="flex items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-xs transition-colors hover:bg-muted/80"
-                                      href={url}
-                                      initial={{ opacity: 0 }}
-                                      key={index}
-                                      target="_blank"
-                                      transition={{
-                                        duration: 0.15,
-                                        delay: index * 0.02,
-                                      }}
-                                    >
-                                      <div className="flex-shrink-0 rounded bg-black p-0.5 dark:bg-white">
-                                        <XLogoIcon className="size-2.5 text-white dark:text-black" />
-                                      </div>
-                                      <span
-                                        className="max-w-[140px] truncate text-muted-foreground"
-                                        title={title}
-                                      >
-                                        {title}
-                                      </span>
-                                    </motion.a>
-                                  );
-                                }
-                              )}
-                            </motion.div>
-                          )}
-
-                        {isLoading && !isCompleted && (
-                          <TextShimmer
-                            className="py-0.5 text-xs"
-                            duration={2.5}
-                          >
-                            Searching X posts...
-                          </TextShimmer>
-                        )}
-
-                        {xSearch.status === "completed" &&
-                          (!xSearch.result ||
-                            xSearch.result.citations.length === 0) && (
-                            <p className="mt-1 py-1 text-muted-foreground text-xs">
-                              No X posts found for this query.
-                            </p>
-                          )}
                       </div>
                     </motion.div>
                   )}
@@ -2539,39 +2176,6 @@ const ExtremeSearchComponent = ({
           </Card>
         )}
 
-        {/* X Search Results (combined) */}
-        {(() => {
-          const completedX = xSearchExecutions.filter(
-            (x) => x.status === "completed" && x.result
-          );
-          if (completedX.length === 0) {
-            return null;
-          }
-          const combined = {
-            content: completedX.map((x) => x.result?.content).join("\n\n"),
-            citations: completedX.flatMap((x) => x.result?.citations || []),
-            sources: completedX.flatMap((x) => x.result?.sources || []),
-            query: completedX.map((x) => x.query).join(" | "),
-            dateRange: `${completedX[0]?.startDate || ""} to ${completedX.at(-1)?.endDate || ""}`,
-            handles: Array.from(
-              new Set(completedX.flatMap((x) => x.handles || []))
-            ),
-          };
-          const combinedArgs = {
-            query: combined.query,
-            startDate: completedX[0]?.startDate,
-            endDate: completedX.at(-1)?.endDate,
-            xHandles: Array.from(
-              new Set(completedX.flatMap((x) => x.handles || []))
-            ),
-          };
-          return (
-            <div className="space-y-3">
-              <XSearch args={combinedArgs} result={combined as any} />
-            </div>
-          );
-        })()}
-
         {/* Sources */}
         {allSources.length > 0 && renderSources(allSources)}
 
@@ -2603,8 +2207,7 @@ const ExtremeSearchComponent = ({
         {/* Show plan if available and no timeline items yet */}
         {planData &&
           searchQueries.length === 0 &&
-          codeExecutions.length === 0 &&
-          xSearchExecutions.length === 0 && (
+          codeExecutions.length === 0 && (
             <motion.div
               animate={{ opacity: 1 }}
               className="mb-3"
@@ -2689,8 +2292,7 @@ const ExtremeSearchComponent = ({
         {/* Show loading skeletons when no plan and no items */}
         {!planData &&
           searchQueries.length === 0 &&
-          codeExecutions.length === 0 &&
-          xSearchExecutions.length === 0 && (
+          codeExecutions.length === 0 && (
             <div className="mb-3">
               <div className="mb-2 flex items-center gap-1.5">
                 <Target className="h-3.5 w-3.5 text-primary/50" />
@@ -2760,9 +2362,7 @@ const ExtremeSearchComponent = ({
           )}
 
         {/* Show timeline when items are available */}
-        {(searchQueries.length > 0 ||
-          codeExecutions.length > 0 ||
-          xSearchExecutions.length > 0) && (
+        {(searchQueries.length > 0 || codeExecutions.length > 0) && (
           <div
             className="scrollbar-thin scrollbar-thumb-neutral-200 hover:scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700 dark:hover:scrollbar-thumb-neutral-600 scrollbar-track-transparent max-h-[300px] overflow-y-auto pr-1"
             onScroll={markManualScroll}

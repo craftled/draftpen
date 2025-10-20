@@ -288,7 +288,7 @@ const groupTools = {
   reddit: ["reddit_search", "datetime"] as const,
   chat: [] as const,
   extreme: ["extreme_search"] as const,
-  x: ["x_search"] as const,
+
   memory: ["datetime", "search_memories", "add_memory"] as const,
   connectors: ["connectors_search", "datetime"] as const,
   keywords: ["keyword_research", "datetime"] as const,
@@ -631,12 +631,6 @@ code_example()
   The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
 
   ### Tool Guidelines:
-  #### X Search Tool:
-  - ⚠️ URGENT: Run x_search tool INSTANTLY when user sends ANY message - NO EXCEPTIONS
-  - DO NOT WRITE A SINGLE WORD before running the tool
-  - Run the tool with the exact user query immediately on receiving it
-  - Run the tool only once and then write the response! REMEMBER THIS IS MANDATORY
-  - For xHandles parameter(Optional until provided): Extract X handles (usernames) from the query when explicitly mentioned (e.g., "search @elonmusk tweets" or "posts from @openai"). Remove the @ symbol when passing to the tool.
   - For date parameters(Optional until asked): Use appropriate date ranges - default to today unless user specifies otherwise don't use it if the user has not mentioned it.
   - For maxResults: Default to 15 to 20 unless user requests more
   - Query is mandatory and should be the same as the user's message

@@ -6,7 +6,7 @@ AI-first content writing software for researching and drafting human-level conte
 
 ## Special Thanks
 
-To the open-source community and [Scira]([https://draftpen.com](https://github.com/zaidmukaddam/scira) for providing strong foundations for this project.
+To the open-source community and [Scira](https://github.com/zaidmukaddam/scira) for providing strong foundations for this project.
 
 ## Features
 
@@ -94,7 +94,7 @@ To the open-source community and [Scira]([https://draftpen.com](https://github.c
 - [cmdk](https://cmdk.paco.me/) command menu, [sonner](https://sonner.emilkowal.ski/) toasts
 - [Embla Carousel](https://www.embla-carousel.com/) (core, react, autoplay)
 - [Recharts](https://recharts.org/) & [Apache ECharts](https://echarts.apache.org/en/index.html)
-- [YouTube caption extractor](https://www.npmjs.com/package/youtube-caption-extractor) and `react-tweet` embeds
+- [YouTube caption extractor](https://www.npmjs.com/package/youtube-caption-extractor)
 
 ### Observability & deployment
 

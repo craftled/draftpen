@@ -9,7 +9,6 @@ import {
   ClockIcon as PhosphorClockIcon,
   RedditLogoIcon,
   SigmaIcon,
-  XLogoIcon,
 } from "@phosphor-icons/react";
 import {
   type DataUIPart,
@@ -89,7 +88,6 @@ const InteractiveChart = lazy(() => import("@/components/interactive-charts"));
 const MultiSearch = lazy(() => import("@/components/multi-search"));
 const AcademicPapersCard = lazy(() => import("@/components/academic-papers"));
 const RedditSearch = lazy(() => import("@/components/reddit-search"));
-const XSearch = lazy(() => import("@/components/x-search"));
 const ExtremeSearch = lazy(() =>
   import("@/components/extreme-search").then((module) => ({
     default: module.ExtremeSearch,
@@ -940,67 +938,6 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                         timeRange: (part.input as any)?.timeRange || "week",
                       }}
                       result={part.output}
-                    />
-                  </Suspense>
-                );
-            }
-            break;
-
-          case "tool-x_search":
-            switch (part.state) {
-              case "input-streaming":
-                return (
-                  <div
-                    className="text-neutral-500 text-sm"
-                    key={`${messageIndex}-${partIndex}-tool`}
-                  >
-                    Preparing X search...
-                  </div>
-                );
-              case "input-available":
-                return (
-                  <SearchLoadingState
-                    color="gray"
-                    icon={XLogoIcon}
-                    key={`${messageIndex}-${partIndex}-tool`}
-                    text="Searching X (Twitter)..."
-                  />
-                );
-              case "output-available":
-                return (
-                  <Suspense
-                    fallback={<ComponentLoader />}
-                    key={`${messageIndex}-${partIndex}-tool`}
-                  >
-                    <XSearch
-                      args={{
-                        query: (part.input as any)?.query || "",
-                        startDate: (part.input as any)?.startDate || "",
-                        endDate: (part.input as any)?.endDate || "",
-                        includeXHandles:
-                          (part.input as any)?.includeXHandles || [],
-                        excludeXHandles:
-                          (part.input as any)?.excludeXHandles || [],
-                        postFavoritesCount:
-                          (part.input as any)?.postFavoritesCount || 0,
-                        postViewCount: (part.input as any)?.postViewCount || 0,
-                        maxResults: (part.input as any)?.maxResults || 20,
-                      }}
-                      result={{
-                        ...part.output,
-                        query: part.output.query || "",
-                        citations:
-                          part.output.citations?.map((citation: any) => ({
-                            ...citation,
-                            title:
-                              citation.title ||
-                              ("url" in citation
-                                ? citation.url
-                                : citation.id) ||
-                              "Citation",
-                            url: "url" in citation ? citation.url : citation.id,
-                          })) || [],
-                      }}
                     />
                   </Suspense>
                 );
