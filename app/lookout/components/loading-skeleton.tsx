@@ -1,12 +1,13 @@
 "use client";
 
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
-interface LoadingSkeletonProps {
+type LoadingSkeletonProps = {
   count?: number;
   showActions?: boolean;
-}
+};
 
 export function LookoutSkeleton({
   showActions = true,
@@ -40,12 +41,19 @@ export function LookoutSkeleton({
   );
 }
 
+const DEFAULT_SKELETON_COUNT = 3 as const;
+
 export function LoadingSkeletons({
-  count = 3,
+  count = DEFAULT_SKELETON_COUNT,
   showActions = true,
 }: LoadingSkeletonProps) {
   // Ensure count is a positive number to prevent rendering issues
-  const validCount = Math.max(0, count || 3);
+  const validCount = Math.max(0, count || DEFAULT_SKELETON_COUNT);
+
+  const ids = useMemo(
+    () => Array.from({ length: validCount }, (_, i) => `skeleton-${i}`),
+    [validCount]
+  );
 
   if (validCount === 0) {
     return null;
@@ -53,8 +61,8 @@ export function LoadingSkeletons({
 
   return (
     <div className="space-y-3">
-      {Array.from({ length: validCount }).map((_, index) => (
-        <LookoutSkeleton key={index} showActions={showActions} />
+      {ids.map((id) => (
+        <LookoutSkeleton key={id} showActions={showActions} />
       ))}
     </div>
   );

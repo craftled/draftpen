@@ -140,7 +140,7 @@ const ComponentLoader = () => (
   </div>
 );
 
-interface MessagePartRendererProps {
+type MessagePartRendererProps = {
   part: ChatMessage["parts"][number];
   messageIndex: number;
   partIndex: number;
@@ -167,7 +167,7 @@ interface MessagePartRendererProps {
   regenerate: UseChatHelpers<ChatMessage>["regenerate"];
   onHighlight?: (text: string) => void;
   annotations?: DataUIPart<CustomUIDataTypes>[];
-}
+};
 
 export const MessagePartRenderer = memo<MessagePartRendererProps>(
   ({
@@ -288,7 +288,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                               const lastUserMessage = messages.findLast(
                                 (m) => m.role === "user"
                               );
-                              if (!lastUserMessage) return;
+                              if (!lastUserMessage) {
+                                return;
+                              }
 
                               // Step 1: Delete trailing messages if user is authenticated
                               if (user && lastUserMessage.id) {
@@ -313,9 +315,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
 
                               // Step 4: Reload
                               await regenerate();
-                            } catch (error) {
-                              console.error("Error in reload:", error);
-                            }
+                            } catch (_error) {}
                           }}
                           size="icon"
                           variant="ghost"
@@ -1475,8 +1475,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   (part.output &&
                     "error" in part.output &&
                     part.output.error) ||
-                  (part.output.results &&
-                    part.output.results[0] &&
+                  (part.output.results?.[0] &&
                     "error" in part.output.results[0] &&
                     part.output.results[0].error)
                 ) {
@@ -1484,8 +1483,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     (part.output &&
                       "error" in part.output &&
                       part.output.error) ||
-                      (part.output.results &&
-                        part.output.results[0] &&
+                      (part.output.results?.[0] &&
                         "error" in part.output.results[0] &&
                         part.output.results[0].error)
                   );
@@ -1817,8 +1815,6 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
           }
         }
       } else {
-        // Legacy tool invocation without state - show as loading or fallback
-        console.warn("Legacy tool part without state:", part);
         return (
           <div
             className="my-4 rounded-lg bg-neutral-50 p-4 dark:bg-neutral-900"
@@ -1832,15 +1828,6 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
         );
       }
     }
-
-    // Log unhandled part types for debugging
-    console.log(
-      "Unhandled part type:",
-      typeof part === "object" && part !== null && "type" in part
-        ? part.type
-        : "unknown",
-      part
-    );
 
     return null;
   },
@@ -1873,7 +1860,6 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
 
     // Debug logging
     if (!areEqual) {
-      console.log("MessagePartRenderer re-rendering");
     }
 
     return areEqual;
@@ -1881,10 +1867,10 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
 );
 
 // Code Context tool component
-interface CodeContextToolProps {
+type CodeContextToolProps = {
   args: CodeContextToolInput | null | undefined;
   result: CodeContextToolOutput | string | null | undefined;
-}
+};
 
 const CodeContextTool: React.FC<CodeContextToolProps> = ({ args, result }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -1910,7 +1896,7 @@ const CodeContextTool: React.FC<CodeContextToolProps> = ({ args, result }) => {
     typeof result === "string" ? undefined : (result ?? undefined);
   const shouldShowAccordion = responseText && responseText.length > 500;
   const previewText = shouldShowAccordion
-    ? responseText.slice(0, 400) + "..."
+    ? `${responseText.slice(0, 400)}...`
     : responseText;
 
   return (
@@ -2074,8 +2060,7 @@ const TranslationTool: React.FC<{ args: any; result: any }> = ({
             setIsPlaying(true);
           }
         }, 100);
-      } catch (error) {
-        console.error("Error generating speech:", error);
+      } catch (_error) {
         setIsGeneratingAudio(false);
       }
     } else if (audioRef.current) {

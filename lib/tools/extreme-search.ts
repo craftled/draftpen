@@ -46,7 +46,6 @@ const searchWeb = async (
   category?: SearchCategory,
   include_domains?: string[]
 ) => {
-  console.log(`searchWeb called with query: "${query}", category: ${category}`);
   try {
     const { results } = await exa.searchAndContents(query, {
       numResults: 8,
@@ -62,7 +61,6 @@ const searchWeb = async (
           }
         : {}),
     });
-    console.log(`searchWeb received ${results.length} results from Exa API`);
 
     const mappedResults = results.map((r) => ({
       title: r.title,
@@ -71,17 +69,13 @@ const searchWeb = async (
       publishedDate: r.publishedDate,
       favicon: r.favicon,
     })) as SearchResult[];
-
-    console.log(`searchWeb returning ${mappedResults.length} results`);
     return mappedResults;
-  } catch (error) {
-    console.error("Error in searchWeb:", error);
+  } catch (_error) {
     return [];
   }
 };
 
 const getContents = async (links: string[]) => {
-  console.log(`getContents called with ${links.length} URLs:`, links);
   const results: SearchResult[] = [];
   const failedUrls: string[] = [];
 
@@ -94,13 +88,10 @@ const getContents = async (links: string[]) => {
       },
       livecrawl: "preferred",
     });
-    console.log(
-      `getContents received ${result.results.length} results from Exa API`
-    );
 
     // Process Exa results
     for (const r of result.results) {
-      if (r.text && r.text.trim()) {
+      if (r.text?.trim()) {
         results.push({
           title: r.title || r.url.split("/").pop() || "Retrieved Content",
           url: r.url,
@@ -120,19 +111,12 @@ const getContents = async (links: string[]) => {
     const exaUrls = result.results.map((r) => r.url);
     const missingUrls = links.filter((url) => !exaUrls.includes(url));
     failedUrls.push(...missingUrls);
-  } catch (error) {
-    console.error("Exa API error:", error);
-    console.log("Adding all URLs to Firecrawl fallback list");
+  } catch (_error) {
     failedUrls.push(...links);
   }
 
   // Use Firecrawl as fallback for failed URLs
   if (failedUrls.length > 0) {
-    console.log(
-      `Using Firecrawl fallback for ${failedUrls.length} URLs:`,
-      failedUrls
-    );
-
     for (const url of failedUrls) {
       try {
         const scrapeResponse = await firecrawl.scrape(url, {
@@ -143,8 +127,6 @@ const getContents = async (links: string[]) => {
         });
 
         if (scrapeResponse.markdown) {
-          console.log(`Firecrawl successfully scraped ${url}`);
-
           results.push({
             title:
               scrapeResponse.metadata?.title ||
@@ -157,17 +139,10 @@ const getContents = async (links: string[]) => {
             favicon: `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=128`,
           });
         } else {
-          console.error(`Firecrawl failed for ${url}:`, scrapeResponse);
         }
-      } catch (firecrawlError) {
-        console.error(`Firecrawl error for ${url}:`, firecrawlError);
-      }
+      } catch (_firecrawlError) {}
     }
   }
-
-  console.log(
-    `getContents returning ${results.length} total results (${results.length - failedUrls.length + results.filter((r) => failedUrls.includes(r.url)).length} from Exa, ${results.filter((r) => failedUrls.includes(r.url)).length} from Firecrawl)`
-  );
   return results;
 };
 
@@ -230,13 +205,10 @@ Plan Guidelines:
 - Make the plan technical and specific to the topic`,
   });
 
-  console.log(result.plan);
-
   const plan = result.plan;
 
   // calculate the total number of todos
   const totalTodos = plan.reduce((acc, curr) => acc + curr.todos.length, 0);
-  console.log(`Total todos: ${totalTodos}`);
 
   if (dataStream) {
     dataStream.write({
@@ -353,9 +325,6 @@ ${JSON.stringify(plan)}
           { query, category, includeDomains },
           { toolCallId }
         ) => {
-          console.log("Web search query:", query);
-          console.log("Category:", category);
-
           if (dataStream) {
             dataStream.write({
               type: "data-extreme_search",
@@ -369,7 +338,6 @@ ${JSON.stringify(plan)}
           }
           // Query annotation already sent above
           let results = await searchWeb(query, category, includeDomains);
-          console.log(`Found ${results.length} results for query "${query}"`);
 
           // Add these sources to our total collection
           allSources.push(...results);
@@ -424,7 +392,7 @@ ${JSON.stringify(plan)}
                         content: {
                           title: content.title || "",
                           url: content.url,
-                          text: (content.content || "").slice(0, 500) + "...", // Truncate for annotation
+                          text: `${(content.content || "").slice(0, 500)}...`, // Truncate for annotation
                           favicon: content.favicon || "",
                         },
                       },
@@ -448,14 +416,8 @@ ${JSON.stringify(plan)}
                   };
                 }) as SearchResult[];
               } else {
-                console.log(
-                  "getContents returned no results, using original search results"
-                );
               }
-            } catch (error) {
-              console.error("Error fetching content:", error);
-              console.log("Using original search results due to error");
-            }
+            } catch (_error) {}
           }
 
           // Mark query as completed
@@ -514,13 +476,6 @@ ${JSON.stringify(plan)}
           { toolCallId }
         ) => {
           throw new Error("X search is disabled");
-          console.log("X search query:", query);
-          console.log("X search parameters:", {
-            startDate,
-            endDate,
-            xHandles,
-            maxResults,
-          });
 
           if (dataStream) {
             dataStream?.write({
@@ -572,10 +527,14 @@ ${JSON.stringify(plan)}
                       tweetUrl.match(/\/status\/(\d+)/)?.[1] || "";
 
                     const tweetData = await getTweet(tweetId);
-                    if (!tweetData) return null;
+                    if (!tweetData) {
+                      return null;
+                    }
 
                     const text = tweetData.text;
-                    if (!text) return null;
+                    if (!text) {
+                      return null;
+                    }
 
                     // Generate a better title with user handle and text preview
                     const userHandle =
@@ -591,11 +550,7 @@ ${JSON.stringify(plan)}
                       link: tweetUrl,
                       title: generatedTitle,
                     };
-                  } catch (error) {
-                    console.error(
-                      `Error fetching tweet data for ${link.sourceType === "url" ? link.url : ""}:`,
-                      error
-                    );
+                  } catch (_error) {
                     return null;
                   }
                 });
@@ -632,8 +587,6 @@ ${JSON.stringify(plan)}
 
             return result;
           } catch (error) {
-            console.error("X search error:", error);
-
             if (dataStream) {
               dataStream?.write({
                 type: "data-extreme_search",
@@ -659,10 +612,7 @@ ${JSON.stringify(plan)}
       },
     },
     onStepFinish: (step) => {
-      console.log("Step finished:", step.finishReason);
-      console.log("Step:", step);
       if (step.toolResults) {
-        console.log("Tool results:", step.toolResults);
         toolResults.push(...step.toolResults);
       }
     },
@@ -686,15 +636,9 @@ ${JSON.stringify(plan)}
       "charts" in result.result
   );
 
-  console.log("Chart results:", chartResults);
-
   const charts = chartResults.flatMap(
     (result) => (result.result as any).charts || []
   );
-
-  console.log("Tool results:", toolResults);
-  console.log("Charts:", charts);
-  console.log("Source 2:", allSources[2]);
 
   return {
     text,
@@ -703,7 +647,7 @@ ${JSON.stringify(plan)}
       new Map(
         allSources.map((s) => [
           s.url,
-          { ...s, content: s.content.slice(0, 3000) + "..." },
+          { ...s, content: `${s.content.slice(0, 3000)}...` },
         ])
       ).values()
     ),
@@ -724,8 +668,6 @@ export function extremeSearchTool(
         ),
     }),
     execute: async ({ prompt }) => {
-      console.log({ prompt });
-
       const research = await extremeSearch(prompt, dataStream);
 
       return {

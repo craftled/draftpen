@@ -20,10 +20,10 @@ import {
 import { cn } from "@/lib/utils";
 import { timezoneOptions } from "../constants";
 
-interface TimezoneSelectorProps {
+type TimezoneSelectorProps = {
   value: string;
   onChange: (value: string) => void;
-}
+};
 
 export function TimezoneSelector({ value, onChange }: TimezoneSelectorProps) {
   const [open, setOpen] = React.useState(false);
@@ -31,6 +31,18 @@ export function TimezoneSelector({ value, onChange }: TimezoneSelectorProps) {
   const selectedTimezone = timezoneOptions.find(
     (option) => option.value === value
   );
+
+  const MAX_LABEL_LENGTH = 30 as const;
+  let displayLabel: string;
+  if (!selectedTimezone) {
+    displayLabel = "Select timezone";
+  } else if (selectedTimezone.label.length > MAX_LABEL_LENGTH) {
+    displayLabel = `${selectedTimezone.label.substring(0, MAX_LABEL_LENGTH)}...`;
+  } else {
+    displayLabel = selectedTimezone.label;
+  }
+
+  const SCROLL_STEP_PX = 40 as const;
 
   return (
     <Popover onOpenChange={setOpen} open={open}>
@@ -41,11 +53,7 @@ export function TimezoneSelector({ value, onChange }: TimezoneSelectorProps) {
           role="combobox"
           variant="outline"
         >
-          {selectedTimezone
-            ? selectedTimezone.label.length > 30
-              ? `${selectedTimezone.label.substring(0, 30)}...`
-              : selectedTimezone.label
-            : "Select timezone"}
+          {displayLabel}
           <HugeiconsIcon
             className="shrink-0 opacity-50"
             color="currentColor"
@@ -72,7 +80,8 @@ export function TimezoneSelector({ value, onChange }: TimezoneSelectorProps) {
               if (e.key === "ArrowDown" || e.key === "ArrowUp") {
                 e.preventDefault();
                 const target = e.currentTarget;
-                target.scrollTop += e.key === "ArrowDown" ? 40 : -40;
+                target.scrollTop +=
+                  e.key === "ArrowDown" ? SCROLL_STEP_PX : -SCROLL_STEP_PX;
               }
             }}
             onWheel={(e) => {

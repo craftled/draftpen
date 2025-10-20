@@ -107,7 +107,7 @@ import {
 import { cn } from "@/lib/utils";
 import { SciraLogo } from "./logos/scira-logo";
 
-interface SettingsDialogProps {
+type SettingsDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   user: any;
@@ -119,7 +119,7 @@ interface SettingsDialogProps {
     value: boolean | ((val: boolean) => boolean)
   ) => void;
   initialTab?: string;
-}
+};
 
 // Component for Profile Information
 function ProfileSection({
@@ -315,7 +315,7 @@ function SearchProviderSelector({
   disabled?: boolean;
   className?: string;
 }) {
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const _isMobile = useMediaQuery("(max-width: 768px)");
   const currentProvider = searchProviders.find(
     (provider) => provider.value === value
   );
@@ -457,7 +457,7 @@ function PreferencesSection({
       } else {
         toast.error(result.error || "Failed to save instructions");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to save instructions");
     } finally {
       setIsSaving(false);
@@ -475,7 +475,7 @@ function PreferencesSection({
       } else {
         toast.error(result.error || "Failed to delete instructions");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to delete instructions");
     } finally {
       setIsSaving(false);
@@ -709,7 +709,9 @@ function UsageSection({ user }: any) {
 
   // Generate loading stars data that matches real data structure
   const loadingStars = useMemo(() => {
-    if (!historicalLoading) return [];
+    if (!historicalLoading) {
+      return [];
+    }
 
     const months = 9;
     const totalDays = months * 30;
@@ -735,11 +737,17 @@ function UsageSection({ user }: any) {
       const count = shouldLight ? Math.floor(Math.random() * 10) + 1 : 0;
 
       let level: 0 | 1 | 2 | 3 | 4;
-      if (count === 0) level = 0;
-      else if (count <= 3) level = 1;
-      else if (count <= 7) level = 2;
-      else if (count <= 12) level = 3;
-      else level = 4;
+      if (count === 0) {
+        level = 0;
+      } else if (count <= 3) {
+        level = 1;
+      } else if (count <= 7) {
+        level = 2;
+      } else if (count <= 12) {
+        level = 3;
+      } else {
+        level = 4;
+      }
 
       completeData.push({
         date: dateKey,
@@ -756,7 +764,7 @@ function UsageSection({ user }: any) {
       setIsRefreshing(true);
       await Promise.all([refetchUsageData(), refetchHistoricalData()]);
       toast.success("Usage data refreshed");
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to refresh usage data");
     } finally {
       setIsRefreshing(false);
@@ -1236,8 +1244,7 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
           .catch(() => ({ data: null }));
 
         setOrders(ordersResponse.data);
-      } catch (error) {
-        console.log("Failed to fetch Polar orders:", error);
+      } catch (_error) {
         setOrders(null);
       } finally {
         setOrdersLoading(false);
@@ -1250,10 +1257,8 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
   const handleManageSubscription = async () => {
     try {
       setIsManagingSubscription(true);
-      console.log("Opening Polar portal");
       await authClient.customer.portal();
-    } catch (error) {
-      console.error("Subscription management error:", error);
+    } catch (_error) {
       toast.error("Failed to open subscription management");
     } finally {
       setIsManagingSubscription(false);
@@ -1457,66 +1462,64 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
         ) : (
           <div className="space-y-2">
             {/* Show Polar orders */}
-            {orders?.result?.items && orders.result.items.length > 0 && (
-              <>
-                {orders.result.items.slice(0, 3).map((order: any) => (
-                  <div
-                    className={cn(
-                      "rounded-lg bg-muted/30",
-                      isMobile ? "p-2.5" : "p-3"
-                    )}
-                    key={order.id}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="min-w-0 flex-1">
+            {orders?.result?.items &&
+              orders.result.items.length > 0 &&
+              orders.result.items.slice(0, 3).map((order: any) => (
+                <div
+                  className={cn(
+                    "rounded-lg bg-muted/30",
+                    isMobile ? "p-2.5" : "p-3"
+                  )}
+                  key={order.id}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className={cn(
+                          "truncate font-medium",
+                          isMobile ? "text-xs" : "text-sm"
+                        )}
+                      >
+                        {order.product?.name || "Subscription"}
+                      </p>
+                      <div className="flex items-center gap-2">
                         <p
                           className={cn(
-                            "truncate font-medium",
-                            isMobile ? "text-xs" : "text-sm"
-                          )}
-                        >
-                          {order.product?.name || "Subscription"}
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <p
-                            className={cn(
-                              "text-muted-foreground",
-                              isMobile ? "text-[10px]" : "text-xs"
-                            )}
-                          >
-                            {new Date(order.createdAt).toLocaleDateString()}
-                          </p>
-                          <Badge
-                            className="px-1 py-0 text-[8px]"
-                            variant="secondary"
-                          >
-                            🌍 USD
-                          </Badge>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <span
-                          className={cn(
-                            "block font-semibold",
-                            isMobile ? "text-xs" : "text-sm"
-                          )}
-                        >
-                          ${(order.totalAmount / 100).toFixed(2)}
-                        </span>
-                        <span
-                          className={cn(
                             "text-muted-foreground",
-                            isMobile ? "text-[9px]" : "text-xs"
+                            isMobile ? "text-[10px]" : "text-xs"
                           )}
                         >
-                          recurring
-                        </span>
+                          {new Date(order.createdAt).toLocaleDateString()}
+                        </p>
+                        <Badge
+                          className="px-1 py-0 text-[8px]"
+                          variant="secondary"
+                        >
+                          🌍 USD
+                        </Badge>
                       </div>
                     </div>
+                    <div className="text-right">
+                      <span
+                        className={cn(
+                          "block font-semibold",
+                          isMobile ? "text-xs" : "text-sm"
+                        )}
+                      >
+                        ${(order.totalAmount / 100).toFixed(2)}
+                      </span>
+                      <span
+                        className={cn(
+                          "text-muted-foreground",
+                          isMobile ? "text-[9px]" : "text-xs"
+                        )}
+                      >
+                        recurring
+                      </span>
+                    </div>
                   </div>
-                ))}
-              </>
-            )}
+                </div>
+              ))}
 
             {/* Show message if no billing history */}
             {(!orders?.result?.items || orders.result.items.length === 0) && (
@@ -1546,7 +1549,7 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
 // Component for Memories
 function MemoriesSection() {
   const queryClient = useQueryClient();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, _setSearchQuery] = useState("");
   const [deletingMemoryIds, setDeletingMemoryIds] = useState<Set<string>>(
     new Set()
   );
@@ -1566,9 +1569,7 @@ function MemoriesSection() {
     initialPageParam: 1,
     getNextPageParam: (lastPage) => {
       const hasMore = lastPage.memories.length >= 20;
-      return hasMore
-        ? Number(lastPage.memories[lastPage.memories.length - 1]?.id)
-        : undefined;
+      return hasMore ? Number(lastPage.memories.at(-1)?.id) : undefined;
     },
     staleTime: 1000 * 60 * 5,
   });
@@ -1610,10 +1611,18 @@ function MemoriesSection() {
   };
 
   const getMemoryContent = (memory: MemoryItem): string => {
-    if (memory.summary) return memory.summary;
-    if (memory.title) return memory.title;
-    if (memory.memory) return memory.memory;
-    if (memory.name) return memory.name;
+    if (memory.summary) {
+      return memory.summary;
+    }
+    if (memory.title) {
+      return memory.title;
+    }
+    if (memory.memory) {
+      return memory.memory;
+    }
+    if (memory.name) {
+      return memory.name;
+    }
     return "No content available";
   };
 
@@ -1767,7 +1776,9 @@ function ConnectorsSection({ user }: { user: any }) {
   const connectionStatusQueries = useQuery({
     queryKey: ["connectorsStatus", user?.id],
     queryFn: async () => {
-      if (!(user?.id && isProUser)) return {};
+      if (!(user?.id && isProUser)) {
+        return {};
+      }
 
       const statusPromises = Object.keys(CONNECTOR_CONFIGS).map(
         async (provider) => {
@@ -1776,8 +1787,7 @@ function ConnectorsSection({ user }: { user: any }) {
               provider as ConnectorProvider
             );
             return { provider, status: result };
-          } catch (error) {
-            console.error(`Failed to get status for ${provider}:`, error);
+          } catch (_error) {
             return { provider, status: null };
           }
         }
@@ -1805,7 +1815,7 @@ function ConnectorsSection({ user }: { user: any }) {
       } else {
         toast.error(result.error || "Failed to connect");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to connect");
     } finally {
       setConnectingProvider(null);
@@ -1826,7 +1836,7 @@ function ConnectorsSection({ user }: { user: any }) {
       } else {
         toast.error(result.error || "Failed to sync");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to sync");
     } finally {
       setSyncingProvider(null);
@@ -1845,7 +1855,7 @@ function ConnectorsSection({ user }: { user: any }) {
       } else {
         toast.error(result.error || "Failed to disconnect");
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("Failed to disconnect");
     } finally {
       setDeletingConnectionId(null);
@@ -1894,40 +1904,38 @@ function ConnectorsSection({ user }: { user: any }) {
       </Alert>
 
       {!isProUser && (
-        <>
-          <div className="rounded-lg border-2 border-primary/30 border-dashed bg-primary/5 p-6 text-center">
-            <div className="flex flex-col items-center space-y-4">
-              <div className="rounded-full bg-primary/10 p-3">
+        <div className="rounded-lg border-2 border-primary/30 border-dashed bg-primary/5 p-6 text-center">
+          <div className="flex flex-col items-center space-y-4">
+            <div className="rounded-full bg-primary/10 p-3">
+              <HugeiconsIcon
+                className="text-primary"
+                color="currentColor"
+                icon={Crown02Icon}
+                size={32}
+                strokeWidth={1.5}
+              />
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-semibold text-lg">Pro Feature</h4>
+              <p className="max-w-md text-muted-foreground text-sm">
+                Connectors are available for Pro users only. Upgrade to connect
+                your Google Drive, Notion, and OneDrive accounts.
+              </p>
+            </div>
+            <Button asChild className="mt-4">
+              <Link href="/pricing">
                 <HugeiconsIcon
-                  className="text-primary"
+                  className="mr-2"
                   color="currentColor"
                   icon={Crown02Icon}
-                  size={32}
+                  size={16}
                   strokeWidth={1.5}
                 />
-              </div>
-              <div className="space-y-2">
-                <h4 className="font-semibold text-lg">Pro Feature</h4>
-                <p className="max-w-md text-muted-foreground text-sm">
-                  Connectors are available for Pro users only. Upgrade to
-                  connect your Google Drive, Notion, and OneDrive accounts.
-                </p>
-              </div>
-              <Button asChild className="mt-4">
-                <Link href="/pricing">
-                  <HugeiconsIcon
-                    className="mr-2"
-                    color="currentColor"
-                    icon={Crown02Icon}
-                    size={16}
-                    strokeWidth={1.5}
-                  />
-                  Upgrade to Pro
-                </Link>
-              </Button>
-            </div>
+                Upgrade to Pro
+              </Link>
+            </Button>
           </div>
-        </>
+        </div>
       )}
 
       {isProUser && (

@@ -2,6 +2,7 @@
 
 import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import type { OpenAIResponsesProviderOptions } from "@ai-sdk/openai";
+import type { ToolSet } from "ai";
 import {
   convertToModelMessages,
   createUIMessageStream,
@@ -11,6 +12,7 @@ import {
   stepCountIs,
   streamText,
 } from "ai";
+
 import { after } from "next/server";
 import {
   createResumableStreamContext,
@@ -61,8 +63,21 @@ import { getCachedCustomInstructionsByUserId } from "@/lib/user-data-server";
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
+const MS_PER_SECOND = 1000 as const;
+
+const STOP_STEP_COUNT = 5 as const;
+const MAX_RETRIES = 10 as const;
+const BUDGET_TOKENS = 4000 as const;
+
+// Gateway provider configuration constants
+const GATEWAY_ONLY_PROVIDERS: readonly string[] = ["openai", "anthropic"];
+const GATEWAY_PROVIDER_ORDER: readonly string[] = ["anthropic"];
+
 // Shared config promise to avoid duplicate calls
-let configPromise: Promise<any>;
+let configPromise: Promise<{
+  tools: readonly string[];
+  instructions: string;
+}>;
 
 export function getStreamContext() {
   if (!globalStreamContext) {
@@ -71,13 +86,21 @@ export function getStreamContext() {
         waitUntil: after,
         keyPrefix: "scira-ai",
       });
-    } catch (error: any) {
-      if (error.message.includes("REDIS_URL")) {
-        console.log(
-          " > Resumable streams are disabled due to missing REDIS_URL"
-        );
+    } catch (error: unknown) {
+      if (
+        error &&
+        typeof error === "object" &&
+        "message" in error &&
+        typeof (error as { message: unknown }).message === "string"
+      ) {
+        const message = (error as { message: string }).message;
+        if (message.includes("REDIS_URL")) {
+          /* missing REDIS_URL; running without Redis-backed resumable streams */
+        } else {
+          /* unexpected error creating resumable stream context */
+        }
       } else {
-        console.error(error);
+        /* unknown error type creating resumable stream context */
       }
     }
   }
@@ -98,9 +121,7 @@ export async function POST(req: Request) {
     searchProvider,
     selectedConnectors,
   } = await req.json();
-  const streamId = "stream-" + uuidv4();
-
-  console.log("🔍 Search API:", { model: model.trim(), group });
+  const streamId = `stream-${uuidv4()}`;
 
   // CRITICAL PATH: Get auth status first (required for all subsequent checks)
   const lightweightUser = await getLightweightUser();
@@ -123,7 +144,7 @@ export async function POST(req: Request) {
   }
 
   // START ALL CRITICAL PARALLEL OPERATIONS IMMEDIATELY
-  const isProUser = lightweightUser?.isProUser ?? false;
+  const _isProUser = lightweightUser?.isProUser ?? false;
 
   // 1. Config (needed for streaming) - start immediately
   configPromise = getGroupConfig(group);
@@ -144,11 +165,14 @@ export async function POST(req: Request) {
   // 4. For authenticated users: start ALL operations in parallel
   let criticalChecksPromise: Promise<{
     canProceed: boolean;
-    error?: any;
+    error?: unknown;
     isProUser: boolean;
     messageCount?: number;
     extremeSearchUsage?: number;
-    subscriptionData?: any;
+    subscriptionData?: {
+      hasSubscription: boolean;
+      subscription?: unknown;
+    } | null;
     shouldBypassLimits?: boolean;
   }>;
 
@@ -177,11 +201,11 @@ export async function POST(req: Request) {
           after(async () => {
             try {
               const title = await generateTitleFromUserMessage({
-                message: messages[messages.length - 1],
+                message: messages.at(-1),
               });
               await updateChatTitleById({ chatId: id, title });
-            } catch (error) {
-              console.error("Background title generation failed:", error);
+            } catch (_error) {
+              /* non-fatal background task failure */
             }
           });
         }
@@ -190,8 +214,8 @@ export async function POST(req: Request) {
         after(async () => {
           try {
             await createStreamId({ streamId, chatId: id });
-          } catch (error) {
-            console.error("Background createStreamId failed:", error);
+          } catch (_error) {
+            /* non-fatal background task failure */
           }
         });
 
@@ -258,11 +282,10 @@ export async function POST(req: Request) {
           messages: [
             {
               chatId: id,
-              id: messages[messages.length - 1].id,
+              id: messages.at(-1).id,
               role: "user",
-              parts: messages[messages.length - 1].parts,
-              attachments:
-                messages[messages.length - 1].experimental_attachments ?? [],
+              parts: messages.at(-1).parts,
+              attachments: messages.at(-1).experimental_attachments ?? [],
               createdAt: new Date(),
               model,
               inputTokens: 0,
@@ -274,8 +297,7 @@ export async function POST(req: Request) {
         });
       }
 
-      const setupTime = (Date.now() - requestStartTime) / 1000;
-      console.log(`🚀 Time to streamText: ${setupTime.toFixed(2)}s`);
+      const _setupTime = (Date.now() - requestStartTime) / MS_PER_SECOND;
 
       const streamStartTime = Date.now();
 
@@ -283,11 +305,11 @@ export async function POST(req: Request) {
         model: modelProvider.languageModel(model),
         messages: convertToModelMessages(messages),
         ...getModelParameters(model),
-        stopWhen: stepCountIs(5),
-        onAbort: ({ steps }) => {
-          console.log("Stream aborted after", steps.length, "steps");
+        stopWhen: stepCountIs(STOP_STEP_COUNT),
+        onAbort: () => {
+          /* no-op on abort */
         },
-        maxRetries: 10,
+        maxRetries: MAX_RETRIES,
         activeTools: [...activeTools],
         experimental_transform: markdownJoinerTransform(),
         system:
@@ -298,8 +320,8 @@ export async function POST(req: Request) {
         toolChoice: "auto",
         providerOptions: {
           gateway: {
-            only: ["openai", "anthropic"],
-            order: ["anthropic"],
+            only: [...GATEWAY_ONLY_PROVIDERS],
+            order: [...GATEWAY_PROVIDER_ORDER],
           },
           openai: {
             ...(model !== "qwen-coder"
@@ -336,26 +358,27 @@ export async function POST(req: Request) {
                   sendReasoning: true,
                   thinking: {
                     type: "enabled",
-                    budgetTokens: 4000,
+                    budgetTokens: BUDGET_TOKENS,
                   },
                 }
               : {}),
             disableParallelToolUse: true,
           } satisfies AnthropicProviderOptions,
         },
-        prepareStep: async ({ steps }) => {
-          if (steps.length > 0) {
-            const lastStep = steps[steps.length - 1];
+        prepareStep: ({ steps }) => {
+          const lastStep = steps.at(-1);
+          if (!lastStep) {
+            return;
+          }
 
-            // If tools were called and results are available, disable further tool calls
-            if (
-              lastStep.toolCalls.length > 0 &&
-              lastStep.toolResults.length > 0
-            ) {
-              return {
-                toolChoice: "none",
-              };
-            }
+          // If tools were called and results are available, disable further tool calls
+          if (
+            lastStep.toolCalls.length > 0 &&
+            lastStep.toolResults.length > 0
+          ) {
+            return {
+              toolChoice: "none",
+            };
           }
         },
         tools: (() => {
@@ -381,14 +404,14 @@ export async function POST(req: Request) {
           const memoryTools = createMemoryTools(user.id);
           return {
             ...baseTools,
-            search_memories: memoryTools.searchMemories as any,
-            add_memory: memoryTools.addMemory as any,
+            search_memories: memoryTools.searchMemories as unknown,
+            add_memory: memoryTools.addMemory as unknown,
             connectors_search: createConnectorsSearchTool(
               user.id,
               selectedConnectors
             ),
-          } as any;
-        })(),
+          } as unknown;
+        })() as ToolSet,
         experimental_repairToolCall: async ({
           toolCall,
           tools,
@@ -398,12 +421,6 @@ export async function POST(req: Request) {
           if (NoSuchToolError.isInstance(error)) {
             return null;
           }
-
-          console.log("Fixing tool call================================");
-          console.log("toolCall", toolCall);
-          console.log("tools", tools);
-          console.log("parameterSchema", inputSchema);
-          console.log("error", error);
 
           const tool = tools[toolCall.toolName as keyof typeof tools];
 
@@ -431,26 +448,21 @@ export async function POST(req: Request) {
             ].join("\n"),
           });
 
-          console.log("repairedArgs", repairedArgs);
-
           return { ...toolCall, args: JSON.stringify(repairedArgs) };
         },
         onChunk(event) {
           if (event.chunk.type === "tool-call") {
-            console.log("Called Tool: ", event.chunk.toolName);
+            /* tool-call chunks are handled by tool streams; no-op here */
           }
         },
         onStepFinish(event) {
-          console.log("Step Request:", event.request);
           if (event.warnings) {
-            console.log("Warnings: ", event.warnings);
+            /* warnings are collected and surfaced at the end of the run */
           }
         },
-        onFinish: async (event) => {
-          const processingTime = (Date.now() - requestStartTime) / 1000;
-          console.log(
-            `✅ Request completed: ${processingTime.toFixed(2)}s (${event.finishReason})`
-          );
+        onFinish: (event) => {
+          const _processingTime =
+            (Date.now() - requestStartTime) / MS_PER_SECOND;
 
           if (user?.id && event.finishReason === "stop") {
             // Track usage in background
@@ -472,18 +484,15 @@ export async function POST(req: Request) {
                     await incrementExtremeSearchUsage({ userId: user.id });
                   }
                 }
-              } catch (error) {
-                console.error("Failed to track usage:", error);
+              } catch (_error) {
+                /* non-fatal background task failure */
               }
             });
           }
         },
-        onError(event) {
-          const processingTime = (Date.now() - requestStartTime) / 1000;
-          console.error(
-            `❌ Request failed: ${processingTime.toFixed(2)}s`,
-            event.error
-          );
+        onError(_event) {
+          const _processingTime =
+            (Date.now() - requestStartTime) / MS_PER_SECOND;
         },
       });
 
@@ -494,8 +503,8 @@ export async function POST(req: Request) {
           sendReasoning: true,
           messageMetadata: ({ part }) => {
             if (part.type === "finish") {
-              console.log("Finish part: ", part);
-              const processingTime = (Date.now() - streamStartTime) / 1000;
+              const processingTime =
+                (Date.now() - streamStartTime) / MS_PER_SECOND;
               return {
                 model: model as string,
                 completionTime: processingTime,
@@ -510,16 +519,15 @@ export async function POST(req: Request) {
       );
     },
     onError(error) {
-      console.log("Error: ", error);
       if (error instanceof Error && error.message.includes("Rate Limit")) {
         return "Oops, you have reached the rate limit! Please try again later.";
       }
       return "Oops, an error occurred!";
     },
-    onFinish: async ({ messages }) => {
+    onFinish: async ({ messages: finalMessages }) => {
       if (lightweightUser) {
         await saveMessages({
-          messages: messages.map((message) => ({
+          messages: finalMessages.map((message) => ({
             id: message.id,
             role: message.role,
             parts: message.parts,

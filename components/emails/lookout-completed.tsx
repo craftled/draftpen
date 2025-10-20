@@ -11,11 +11,11 @@ import {
   Text,
 } from "@react-email/components";
 
-interface SearchCompletedEmailProps {
+type SearchCompletedEmailProps = {
   chatTitle: string;
   assistantResponse: string;
   chatId: string;
-}
+};
 
 const SearchCompletedEmail = (props: SearchCompletedEmailProps) => (
   <Html dir="ltr" lang="en">

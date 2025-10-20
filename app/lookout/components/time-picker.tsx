@@ -13,13 +13,13 @@ import {
   formatTime12Hour,
 } from "../utils/time-utils";
 
-interface TimePickerProps {
+type TimePickerProps = {
   value: string;
   onChange: (value: string) => void;
   name: string;
   selectedDate?: Date;
   filterPastTimes?: boolean;
-}
+};
 
 export function TimePicker({
   value,
@@ -72,9 +72,11 @@ export function TimePicker({
   const getFilteredOptions = (amPeriod: string) => {
     const allOptions = generateHourMinuteOptions();
 
-    if (!shouldFilterPastTimes) return allOptions;
+    if (!shouldFilterPastTimes) {
+      return allOptions;
+    }
 
-    const currentHour12 = convertTo12Hour(currentHour);
+    const _currentHour12 = convertTo12Hour(currentHour);
     const currentAmPm = currentHour < 12 ? "AM" : "PM";
 
     // If current time is PM and we're showing AM options, all AM times are for tomorrow (valid)
@@ -91,8 +93,8 @@ export function TimePicker({
     // Same period, filter based on current time
     return allOptions.filter((option) => {
       const [hourStr, minuteStr] = option.value.split(":");
-      const optionHour12 = Number.parseInt(hourStr);
-      const optionMinute = Number.parseInt(minuteStr);
+      const optionHour12 = Number.parseInt(hourStr, 10);
+      const optionMinute = Number.parseInt(minuteStr, 10);
 
       // Convert option time to 24-hour format for proper comparison
       const optionHour24 = convertTo24Hour(optionHour12, amPeriod);
@@ -130,7 +132,7 @@ export function TimePicker({
     : availableAmPmOptions[0];
   const { hour12: correctedHour12, minute: correctedMinute } = formatTime12Hour(
     correctedAmPm !== ampm
-      ? `${convertTo24Hour(Number.parseInt(hour12), correctedAmPm).toString().padStart(2, "0")}:${minute}`
+      ? `${convertTo24Hour(Number.parseInt(hour12, 10), correctedAmPm).toString().padStart(2, "0")}:${minute}`
       : value || "09:00"
   );
 
@@ -139,13 +141,16 @@ export function TimePicker({
 
   const handleHourMinuteChange = (newHourMinute: string) => {
     const [newHour, newMinute] = newHourMinute.split(":");
-    const hour24 = convertTo24Hour(Number.parseInt(newHour), correctedAmPm);
+    const hour24 = convertTo24Hour(Number.parseInt(newHour, 10), correctedAmPm);
     const timeString = `${hour24.toString().padStart(2, "0")}:${newMinute}`;
     onChange(timeString);
   };
 
   const handleAmPmChange = (newAmPm: string) => {
-    const hour24 = convertTo24Hour(Number.parseInt(correctedHour12), newAmPm);
+    const hour24 = convertTo24Hour(
+      Number.parseInt(correctedHour12, 10),
+      newAmPm
+    );
     const timeString = `${hour24.toString().padStart(2, "0")}:${correctedMinute}`;
     onChange(timeString);
   };

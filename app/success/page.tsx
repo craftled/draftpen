@@ -26,7 +26,9 @@ export default function SuccessPage() {
     ];
 
     const frame = () => {
-      if (Date.now() > end) return;
+      if (Date.now() > end) {
+        return;
+      }
 
       confetti({
         particleCount: 2,

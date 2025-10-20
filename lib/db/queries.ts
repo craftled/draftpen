@@ -29,14 +29,14 @@ import {
 
 type VisibilityType = "public" | "private";
 
-export async function getUser(email: string): Promise<Array<User>> {
+export async function getUser(email: string): Promise<User[]> {
   try {
     return await db
       .select()
       .from(user)
       .where(eq(user.email, email))
       .$withCache();
-  } catch (error) {
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get user by email"
@@ -52,7 +52,7 @@ export async function getUserById(id: string): Promise<User | null> {
       .where(eq(user.id, id))
       .$withCache();
     return selectedUser || null;
-  } catch (error) {
+  } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to get user by id");
   }
 }
@@ -78,10 +78,9 @@ export async function saveChat({
       visibility,
     });
   } catch (error) {
-    console.error("Failed to save chat:", error);
     throw new ChatSDKError(
       "bad_request:database",
-      "Failed to save chat" + error
+      `Failed to save chat${error}`
     );
   }
 }
@@ -96,7 +95,7 @@ export async function deleteChatById({ id }: { id: string }) {
       .where(eq(chat.id, id))
       .returning();
     return chatsDeleted;
-  } catch (error) {
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to delete chat by id"
@@ -131,7 +130,7 @@ export async function getChatsByUserId({
         .orderBy(desc(chat.createdAt))
         .limit(extendedLimit);
 
-    let filteredChats: Array<Chat> = [];
+    let filteredChats: Chat[] = [];
 
     if (startingAfter) {
       const [selectedChat] = await maindb
@@ -173,7 +172,7 @@ export async function getChatsByUserId({
       chats: hasMore ? filteredChats.slice(0, limit) : filteredChats,
       hasMore,
     };
-  } catch (error) {
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get chats by user id"
@@ -189,7 +188,7 @@ export async function getChatById({ id }: { id: string }) {
       .from(chat)
       .where(eq(chat.id, id));
     return selectedChat;
-  } catch (error) {
+  } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to get chat by id");
   }
 }
@@ -213,18 +212,16 @@ export async function getChatWithUserById({ id }: { id: string }) {
       .where(eq(chat.id, id))
       .$withCache();
     return result;
-  } catch (error) {
-    console.log("Error getting chat with user by id", error);
+  } catch (_error) {
     return null;
   }
 }
 
-export async function saveMessages({ messages }: { messages: Array<Message> }) {
+export async function saveMessages({ messages }: { messages: Message[] }) {
   try {
     // Use maindb for writes to avoid replica lag
     return await maindb.insert(message).values(messages);
-  } catch (error) {
-    console.error("Failed to save messages:", error);
+  } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to save messages");
   }
 }
@@ -247,7 +244,7 @@ export async function getMessagesByChatId({
       .limit(limit)
       .offset(offset)
       .$withCache();
-  } catch (error) {
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get messages by chat id"
@@ -258,7 +255,7 @@ export async function getMessagesByChatId({
 export async function getMessageById({ id }: { id: string }) {
   try {
     return await db.select().from(message).where(eq(message.id, id));
-  } catch (error) {
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get message by id"
@@ -290,7 +287,7 @@ export async function deleteMessagesByChatIdAfterTimestamp({
           and(eq(message.chatId, chatId), inArray(message.id, messageIds))
         );
     }
-  } catch (error) {
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to delete messages by chat id after timestamp"
@@ -314,18 +311,11 @@ export async function updateChatVisibilityById({
   chatId: string;
   visibility: "private" | "public";
 }) {
-  console.log("🔄 updateChatVisibilityById called with:", {
-    chatId,
-    visibility,
-  });
-
   try {
-    console.log("📡 Executing database update for chat visibility");
     const result = await db
       .update(chat)
       .set({ visibility })
       .where(eq(chat.id, chatId));
-    console.log("✅ Database update successful, result:", result);
 
     // Return a consistent, serializable structure
     return {
@@ -334,13 +324,7 @@ export async function updateChatVisibilityById({
       chatId,
       visibility,
     };
-  } catch (error) {
-    console.error("❌ Database error in updateChatVisibilityById:", {
-      chatId,
-      visibility,
-      error: error instanceof Error ? error.message : error,
-      stack: error instanceof Error ? error.stack : undefined,
-    });
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to update chat visibility by id"
@@ -362,7 +346,7 @@ export async function updateChatTitleById({
       .where(eq(chat.id, chatId))
       .returning();
     return updatedChat;
-  } catch (error) {
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to update chat title by id"
@@ -373,7 +357,7 @@ export async function updateChatTitleById({
 export async function getMessageCountByUserId({ id }: { id: string }) {
   try {
     return await getMessageCount({ userId: id });
-  } catch (error) {
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get message count by user id"
@@ -392,7 +376,7 @@ export async function createStreamId({
     await db
       .insert(stream)
       .values({ id: streamId, chatId, createdAt: new Date() });
-  } catch (error) {
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to create stream id"
@@ -410,7 +394,7 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
       .execute();
 
     return streamIds.map(({ id }) => id);
-  } catch (error) {
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get stream ids by chat id"
@@ -446,7 +430,7 @@ export async function getExtremeSearchUsageByUserId({
       .limit(1);
 
     return usage;
-  } catch (error) {
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get extreme search usage"
@@ -490,7 +474,7 @@ export async function incrementExtremeSearchUsage({
       })
       .returning();
     return newUsage;
-  } catch (error) {
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to increment extreme search usage"
@@ -506,8 +490,7 @@ export async function getExtremeSearchCount({
   try {
     const usage = await getExtremeSearchUsageByUserId({ userId });
     return usage?.searchCount || 0;
-  } catch (error) {
-    console.error("Error getting extreme search count:", error);
+  } catch (_error) {
     return 0;
   }
 }
@@ -544,7 +527,7 @@ export async function getMessageUsageByUserId({ userId }: { userId: string }) {
       .limit(1);
 
     return usage;
-  } catch (error) {
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get message usage"
@@ -595,7 +578,7 @@ export async function incrementMessageUsage({ userId }: { userId: string }) {
       })
       .returning();
     return newUsage;
-  } catch (error) {
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to increment message usage"
@@ -611,8 +594,7 @@ export async function getMessageCount({
   try {
     const usage = await getMessageUsageByUserId({ userId });
     return usage?.messageCount || 0;
-  } catch (error) {
-    console.error("Error getting message count:", error);
+  } catch (_error) {
     return 0;
   }
 }
@@ -665,8 +647,7 @@ export async function getHistoricalUsageData({
     }));
 
     return result;
-  } catch (error) {
-    console.error("Error getting historical usage data:", error);
+  } catch (_error) {
     return [];
   }
 }
@@ -686,8 +667,7 @@ export async function getCustomInstructionsByUserId({
       .$withCache();
 
     return instructions;
-  } catch (error) {
-    console.error("Error getting custom instructions:", error);
+  } catch (_error) {
     return null;
   }
 }
@@ -709,7 +689,7 @@ export async function createCustomInstructions({
       .returning();
 
     return newInstructions;
-  } catch (error) {
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to create custom instructions"
@@ -735,7 +715,7 @@ export async function updateCustomInstructions({
       .returning();
 
     return updatedInstructions;
-  } catch (error) {
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to update custom instructions"
@@ -751,7 +731,7 @@ export async function deleteCustomInstructions({ userId }: { userId: string }) {
       .returning();
 
     return deletedInstructions;
-  } catch (error) {
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to delete custom instructions"
@@ -793,16 +773,8 @@ export async function createLookout({
         qstashScheduleId,
       })
       .returning();
-
-    console.log(
-      "✅ Created lookout with ID:",
-      newLookout.id,
-      "for user:",
-      userId
-    );
     return newLookout;
-  } catch (error) {
-    console.error("❌ Failed to create lookout:", error);
+  } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to create lookout");
   }
 }
@@ -814,7 +786,7 @@ export async function getLookoutsByUserId({ userId }: { userId: string }) {
       .from(lookout)
       .where(eq(lookout.userId, userId))
       .orderBy(desc(lookout.createdAt));
-  } catch (error) {
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get lookouts by user id"
@@ -824,25 +796,17 @@ export async function getLookoutsByUserId({ userId }: { userId: string }) {
 
 export async function getLookoutById({ id }: { id: string }) {
   try {
-    console.log("🔍 Looking up lookout with ID:", id);
     const [selectedLookout] = await db
       .select()
       .from(lookout)
       .where(eq(lookout.id, id));
 
     if (selectedLookout) {
-      console.log(
-        "✅ Found lookout:",
-        selectedLookout.id,
-        selectedLookout.title
-      );
     } else {
-      console.log("❌ No lookout found with ID:", id);
     }
 
     return selectedLookout;
-  } catch (error) {
-    console.error("❌ Error fetching lookout by ID:", id, error);
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get lookout by id"
@@ -871,14 +835,27 @@ export async function updateLookout({
 }) {
   try {
     const updateData: any = { updatedAt: new Date() };
-    if (title !== undefined) updateData.title = title;
-    if (prompt !== undefined) updateData.prompt = prompt;
-    if (frequency !== undefined) updateData.frequency = frequency;
-    if (cronSchedule !== undefined) updateData.cronSchedule = cronSchedule;
-    if (timezone !== undefined) updateData.timezone = timezone;
-    if (nextRunAt !== undefined) updateData.nextRunAt = nextRunAt;
-    if (qstashScheduleId !== undefined)
+    if (title !== undefined) {
+      updateData.title = title;
+    }
+    if (prompt !== undefined) {
+      updateData.prompt = prompt;
+    }
+    if (frequency !== undefined) {
+      updateData.frequency = frequency;
+    }
+    if (cronSchedule !== undefined) {
+      updateData.cronSchedule = cronSchedule;
+    }
+    if (timezone !== undefined) {
+      updateData.timezone = timezone;
+    }
+    if (nextRunAt !== undefined) {
+      updateData.nextRunAt = nextRunAt;
+    }
+    if (qstashScheduleId !== undefined) {
       updateData.qstashScheduleId = qstashScheduleId;
+    }
 
     const [updatedLookout] = await db
       .update(lookout)
@@ -887,7 +864,7 @@ export async function updateLookout({
       .returning();
 
     return updatedLookout;
-  } catch (error) {
+  } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to update lookout");
   }
 }
@@ -907,7 +884,7 @@ export async function updateLookoutStatus({
       .returning();
 
     return updatedLookout;
-  } catch (error) {
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to update lookout status"
@@ -965,7 +942,9 @@ export async function updateLookoutLastRun({
       runHistory: updatedHistory,
       updatedAt: new Date(),
     };
-    if (nextRunAt) updateData.nextRunAt = nextRunAt;
+    if (nextRunAt) {
+      updateData.nextRunAt = nextRunAt;
+    }
 
     const [updatedLookout] = await db
       .update(lookout)
@@ -974,7 +953,7 @@ export async function updateLookoutLastRun({
       .returning();
 
     return updatedLookout;
-  } catch (error) {
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to update lookout last run"
@@ -986,7 +965,9 @@ export async function updateLookoutLastRun({
 export async function getLookoutRunStats({ id }: { id: string }) {
   try {
     const lookout = await getLookoutById({ id });
-    if (!lookout) return null;
+    if (!lookout) {
+      return null;
+    }
 
     const runHistory = (lookout.runHistory as any[]) || [];
 
@@ -1003,8 +984,7 @@ export async function getLookoutRunStats({ id }: { id: string }) {
           new Date(run.runAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
       ).length,
     };
-  } catch (error) {
-    console.error("Error getting lookout run stats:", error);
+  } catch (_error) {
     return null;
   }
 }
@@ -1017,7 +997,7 @@ export async function deleteLookout({ id }: { id: string }) {
       .returning();
 
     return deletedLookout;
-  } catch (error) {
+  } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to delete lookout");
   }
 }

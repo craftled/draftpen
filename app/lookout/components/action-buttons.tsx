@@ -16,7 +16,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-interface ActionButtonsProps {
+type ActionButtonsProps = {
   lookoutId: string;
   status: "active" | "paused" | "running" | "archived";
   isMutating?: boolean;
@@ -26,7 +26,7 @@ interface ActionButtonsProps {
   ) => void;
   onDelete: (id: string) => void;
   onTest: (id: string) => void;
-}
+};
 
 export function ActionButtons({
   lookoutId,

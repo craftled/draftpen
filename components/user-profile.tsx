@@ -274,7 +274,7 @@ const UserProfile = memo(
     const settingsUser = user;
 
     // Use passed Pro status instead of calculating it
-    const hasActiveSubscription = isProUser;
+    const _hasActiveSubscription = isProUser;
 
     if (isPending && !user) {
       return (
@@ -286,7 +286,9 @@ const UserProfile = memo(
 
     // Function to format email for display
     const formatEmail = (email?: string | null) => {
-      if (!email) return "";
+      if (!email) {
+        return "";
+      }
 
       // If showing full email, don't truncate it
       if (showEmail) {
@@ -298,12 +300,12 @@ const UserProfile = memo(
       if (parts.length === 2) {
         const username = parts[0];
         const domain = parts[1];
-        const maskedUsername = username.slice(0, 3) + "•••";
+        const maskedUsername = `${username.slice(0, 3)}•••`;
         return `${maskedUsername}@${domain}`;
       }
 
       // Fallback for unusual email formats
-      return email.slice(0, 3) + "•••";
+      return `${email.slice(0, 3)}•••`;
     };
 
     return (
@@ -487,7 +489,9 @@ const UserProfile = memo(
         <SignInPromptDialog
           onOpenChange={(open) => {
             setSignInDialogOpen(open);
-            if (!open) setSigningIn(false);
+            if (!open) {
+              setSigningIn(false);
+            }
           }}
           open={signInDialogOpen}
         />

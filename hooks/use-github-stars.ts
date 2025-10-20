@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 
-interface GitHubRepo {
+type GitHubRepo = {
   stargazers_count: number;
   name: string;
   full_name: string;
-}
+};
 
 export function useGitHubStars() {
   return useQuery({
@@ -19,8 +19,7 @@ export function useGitHubStars() {
         }
         const data: GitHubRepo = await response.json();
         return data.stargazers_count;
-      } catch (error) {
-        console.error("Error fetching GitHub stars:", error);
+      } catch (_error) {
         return 9000;
       }
     },

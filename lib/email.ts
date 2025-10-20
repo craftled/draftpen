@@ -4,12 +4,12 @@ import { serverEnv } from "@/env/server";
 
 const resend = new Resend(serverEnv.RESEND_API_KEY);
 
-interface SendLookoutCompletionEmailParams {
+type SendLookoutCompletionEmailParams = {
   to: string;
   chatTitle: string;
   assistantResponse: string;
   chatId: string;
-}
+};
 
 export async function sendLookoutCompletionEmail({
   to,
@@ -28,14 +28,8 @@ export async function sendLookoutCompletionEmail({
         chatId,
       }),
     });
-
-    console.log(
-      "✅ Lookout completion email sent successfully:",
-      data.data?.id
-    );
     return { success: true, id: data.data?.id };
   } catch (error) {
-    console.error("❌ Failed to send lookout completion email:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",

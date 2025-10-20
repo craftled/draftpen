@@ -19,17 +19,17 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
-interface AcademicResult {
+type AcademicResult = {
   title: string;
   url: string;
   author?: string | null;
   publishedDate?: string;
   summary: string;
-}
+};
 
-interface AcademicPapersProps {
+type AcademicPapersProps = {
   results: AcademicResult[];
-}
+};
 
 // Academic Paper Source Card Component
 const AcademicSourceCard: React.FC<{
@@ -38,7 +38,9 @@ const AcademicSourceCard: React.FC<{
 }> = ({ paper, onClick }) => {
   // Format authors for display
   const formatAuthors = (author: string | null | undefined) => {
-    if (!author) return null;
+    if (!author) {
+      return null;
+    }
     const authors = author.split(";").slice(0, 2);
     return authors.join(", ") + (author.split(";").length > 2 ? " et al." : "");
   };
@@ -76,7 +78,7 @@ const AcademicSourceCard: React.FC<{
       {/* Content */}
       <p className="mb-3 line-clamp-2 text-neutral-600 text-sm leading-relaxed dark:text-neutral-400">
         {paper.summary.length > 150
-          ? paper.summary.substring(0, 150) + "..."
+          ? `${paper.summary.substring(0, 150)}...`
           : paper.summary}
       </p>
 
@@ -167,11 +169,15 @@ const AcademicPapersCard = ({ results }: AcademicPapersProps) => {
     const container = e.currentTarget;
 
     // Only handle vertical scrolling
-    if (e.deltaY === 0) return;
+    if (e.deltaY === 0) {
+      return;
+    }
 
     // Check if container can scroll horizontally
     const canScrollHorizontally = container.scrollWidth > container.clientWidth;
-    if (!canScrollHorizontally) return;
+    if (!canScrollHorizontally) {
+      return;
+    }
 
     // Always stop propagation first to prevent page scroll interference
     e.stopPropagation();

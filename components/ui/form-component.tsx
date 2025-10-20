@@ -14,7 +14,6 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Brain, Eye, FilePdf, LockIcon } from "@phosphor-icons/react";
 import { useQuery } from "@tanstack/react-query";
 import { track } from "@vercel/analytics";
-import Image from "next/image";
 import {
   ArrowUpRight,
   Check,
@@ -27,6 +26,7 @@ import {
   Zap,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import Image from "next/image";
 import React, {
   useCallback,
   useEffect,
@@ -116,17 +116,17 @@ const ProBadge = ({ className = "" }: { className?: string }) => (
   </span>
 );
 
-interface ModelSwitcherProps {
+type ModelSwitcherProps = {
   selectedModel: string;
   setSelectedModel: (value: string) => void;
   className?: string;
-  attachments: Array<Attachment>;
-  messages: Array<ChatMessage>;
+  attachments: Attachment[];
+  messages: ChatMessage[];
   status: UseChatHelpers<ChatMessage>["status"];
   onModelSelect?: (model: (typeof models)[0]) => void;
   subscriptionData?: any;
   user?: ComprehensiveUserData | null;
-}
+};
 
 const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
   ({
@@ -187,7 +187,9 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
     const tokenize = useCallback(
       (input: string): string[] => {
         const normalized = normalizeText(input);
-        if (!normalized) return [];
+        if (!normalized) {
+          return [];
+        }
         const tokens = normalized.split(/\s+/).filter(Boolean);
         return Array.from(new Set(tokens));
       },
@@ -230,9 +232,13 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
     const computeScore = useCallback(
       (modelValue: string, query: string): number => {
         const entry = searchIndex[modelValue];
-        if (!entry) return 0;
+        if (!entry) {
+          return 0;
+        }
         const tokens = tokenize(query);
-        if (tokens.length === 0) return 1;
+        if (tokens.length === 0) {
+          return 1;
+        }
         const filteredTokens = tokens.filter(
           (t) => t.length >= 2 || /^\d$/.test(t)
         );
@@ -240,7 +246,9 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
         let score = 0;
 
         for (const token of filteredTokens) {
-          if (!token) continue;
+          if (!token) {
+            continue;
+          }
 
           const inLabel = entry.labelNorm.includes(token);
           const inAll = entry.normalized.includes(token);
@@ -249,22 +257,36 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
             matchedCount += 1;
             score += inLabel ? 3 : 1;
 
-            if (new RegExp(`\\b${token}`).test(entry.labelNorm)) score += 2;
-            else if (new RegExp(`\\b${token}`).test(entry.normalized))
+            if (new RegExp(`\\b${token}`).test(entry.labelNorm)) {
+              score += 2;
+            } else if (new RegExp(`\\b${token}`).test(entry.normalized)) {
               score += 1;
+            }
           }
         }
 
         const phraseNoSpace = normalizeText(query).replace(/\s+/g, "");
         if (phraseNoSpace.length >= 2) {
-          if (entry.normalizedNoSpace.includes(phraseNoSpace)) score += 2;
-          if (entry.labelNoSpace.includes(phraseNoSpace)) score += 3;
-          if (entry.labelNoSpace.startsWith(phraseNoSpace)) score += 2;
+          if (entry.normalizedNoSpace.includes(phraseNoSpace)) {
+            score += 2;
+          }
+          if (entry.labelNoSpace.includes(phraseNoSpace)) {
+            score += 3;
+          }
+          if (entry.labelNoSpace.startsWith(phraseNoSpace)) {
+            score += 2;
+          }
         }
 
-        if (matchedCount === 0 && phraseNoSpace.length < 2) return 0;
-        if (matchedCount === filteredTokens.length && filteredTokens.length > 0)
+        if (matchedCount === 0 && phraseNoSpace.length < 2) {
+          return 0;
+        }
+        if (
+          matchedCount === filteredTokens.length &&
+          filteredTokens.length > 0
+        ) {
           score += 2;
+        }
 
         return score;
       },
@@ -290,7 +312,9 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
     const buildHighlightHtml = useCallback(
       (text: string): string => {
         const q = searchQuery.trim();
-        if (!q) return escapeHtml(text);
+        if (!q) {
+          return escapeHtml(text);
+        }
         const safeText = escapeHtml(text);
         const pattern = new RegExp(`(${escapeRegExp(q)})`, "gi");
         return safeText.replace(
@@ -358,22 +382,30 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
 
     const rankedModels = useMemo(() => {
       const query = searchQuery.trim();
-      if (!query) return null;
+      if (!query) {
+        return null;
+      }
       const scored = filteredModels
         .map((m) => ({ model: m, score: computeScore(m.value, query) }))
         .filter((x) => x.score > 0);
 
       const normQuery = normalizeText(query);
       scored.sort((a, b) => {
-        if (b.score !== a.score) return b.score - a.score;
+        if (b.score !== a.score) {
+          return b.score - a.score;
+        }
         const aLabel = normalizeText(a.model.label);
         const bLabel = normalizeText(b.model.label);
         const aExact = aLabel === normQuery ? 1 : 0;
         const bExact = bLabel === normQuery ? 1 : 0;
-        if (bExact !== aExact) return bExact - aExact;
+        if (bExact !== aExact) {
+          return bExact - aExact;
+        }
         const aStarts = aLabel.startsWith(normQuery) ? 1 : 0;
         const bStarts = bLabel.startsWith(normQuery) ? 1 : 0;
-        if (bStarts !== aStarts) return bStarts - aStarts;
+        if (bStarts !== aStarts) {
+          return bStarts - aStarts;
+        }
         return a.model.label.localeCompare(b.model.label);
       });
 
@@ -417,7 +449,9 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
 
     // Auto-switch away from pro models when user loses pro access
     useEffect(() => {
-      if (isSubscriptionLoading) return;
+      if (isSubscriptionLoading) {
+        return;
+      }
 
       const currentModelRequiresPro = requiresProSubscription(selectedModel);
       const currentModelExists = availableModels.find(
@@ -432,9 +466,6 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
         !isProUser &&
         selectedModel !== "gpt5-mini"
       ) {
-        console.log(
-          `Auto-switching from pro model '${selectedModel}' to 'gpt5-mini' - user lost pro access`
-        );
         setSelectedModel("gpt5-mini");
 
         // Show a toast notification to inform the user
@@ -453,7 +484,9 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
     const handleModelChange = useCallback(
       (value: string) => {
         const model = availableModels.find((m) => m.value === value);
-        if (!model) return;
+        if (!model) {
+          return;
+        }
 
         const requiresAuth = requiresAuthentication(model.value) && !user;
         const requiresPro = requiresProSubscription(model.value) && !isProUser;
@@ -473,8 +506,6 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
           setShowUpgradeDialog(true);
           return;
         }
-
-        console.log("Selected model:", model.value);
         setSelectedModel(model.value.trim());
 
         if (onModelSelect) {
@@ -1089,10 +1120,12 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
     );
 
     // Common trigger button component
-    const TriggerButton = React.forwardRef<
-      React.ElementRef<typeof Button>,
-      React.ComponentPropsWithoutRef<typeof Button>
-    >((props, ref) => (
+    const TriggerButton = ({
+      ref,
+      ...props
+    }: React.ComponentPropsWithoutRef<typeof Button> & {
+      ref?: React.RefObject<React.ElementRef<typeof Button> | null>;
+    }) => (
       <Button
         aria-expanded={open}
         className={cn(
@@ -1121,7 +1154,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
         </span>
         <ChevronsUpDown className="h-4 w-4 opacity-50" />
       </Button>
-    ));
+    );
 
     TriggerButton.displayName = "TriggerButton";
 
@@ -1181,17 +1214,15 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                   <DialogTitle className="flex items-start gap-3 text-white">
                     <div className="flex min-w-0 flex-1 flex-col gap-2">
                       {selectedProModel?.label ? (
-                        <>
-                          <div className="flex flex-col gap-1">
-                            <span className="truncate font-bold text-lg sm:text-xl">
-                              {selectedProModel.label}
-                            </span>
-                            <div className="flex flex-wrap items-center gap-1">
-                              <span className="text-white/80">requires</span>
-                              <ProBadge className="!text-white !bg-white/20 !ring-white/30 font-extralight" />
-                            </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="truncate font-bold text-lg sm:text-xl">
+                            {selectedProModel.label}
+                          </span>
+                          <div className="flex flex-wrap items-center gap-1">
+                            <span className="text-white/80">requires</span>
+                            <ProBadge className="!text-white !bg-white/20 !ring-white/30 font-extralight" />
                           </div>
-                        </>
+                        </div>
                       ) : (
                         <div className="flex flex-wrap items-center gap-3">
                           <span className="font-be-vietnam-pro text-xl sm:text-2xl">
@@ -1419,13 +1450,13 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
 
 ModelSwitcher.displayName = "ModelSwitcher";
 
-interface Attachment {
+type Attachment = {
   name: string;
   contentType?: string;
   mediaType?: string;
   url: string;
   size: number;
-}
+};
 
 const ArrowUpIcon = ({ size = 16 }: { size?: number }) => (
   <svg
@@ -1485,7 +1516,9 @@ const debounce = <T extends (...args: any[]) => any>(
 };
 
 const truncateFilename = (filename: string, maxLength = 20) => {
-  if (filename.length <= maxLength) return filename;
+  if (filename.length <= maxLength) {
+    return filename;
+  }
   const extension = filename.split(".").pop();
   const name = filename.substring(0, maxLength - 4);
   return `${name}...${extension}`;
@@ -1497,8 +1530,12 @@ const AttachmentPreview: React.FC<{
   isUploading: boolean;
 }> = React.memo(({ attachment, onRemove, isUploading }) => {
   const formatFileSize = useCallback((bytes: number): string => {
-    if (bytes < 1024) return bytes + " bytes";
-    if (bytes < 1_048_576) return (bytes / 1024).toFixed(1) + " KB";
+    if (bytes < 1024) {
+      return `${bytes} bytes`;
+    }
+    if (bytes < 1_048_576) {
+      return `${(bytes / 1024).toFixed(1)} KB`;
+    }
     return (
       (bytes / 1_048_576).toFixed(1) +
       " MB" +
@@ -1665,23 +1702,23 @@ const AttachmentPreview: React.FC<{
 
 AttachmentPreview.displayName = "AttachmentPreview";
 
-interface UploadingAttachment {
+type UploadingAttachment = {
   file: File;
   progress: number;
-}
+};
 
-interface FormComponentProps {
+type FormComponentProps = {
   input: string;
   setInput: (input: string) => void;
-  attachments: Array<Attachment>;
-  setAttachments: React.Dispatch<React.SetStateAction<Array<Attachment>>>;
+  attachments: Attachment[];
+  setAttachments: React.Dispatch<React.SetStateAction<Attachment[]>>;
   chatId: string;
   user: ComprehensiveUserData | null;
   subscriptionData?: any;
   fileInputRef: React.RefObject<HTMLInputElement>;
   inputRef: React.RefObject<HTMLTextAreaElement>;
   stop: () => void;
-  messages: Array<ChatMessage>;
+  messages: ChatMessage[];
   sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
   selectedModel: string;
   setSelectedModel: (value: string) => void;
@@ -1698,22 +1735,22 @@ interface FormComponentProps {
   setSelectedConnectors?: React.Dispatch<
     React.SetStateAction<ConnectorProvider[]>
   >;
-}
+};
 
-interface GroupSelectorProps {
+type GroupSelectorProps = {
   selectedGroup: SearchGroupId;
   onGroupSelect: (group: SearchGroup) => void;
   status: UseChatHelpers<ChatMessage>["status"];
   onOpenSettings?: (tab?: string) => void;
   isProUser?: boolean;
-}
+};
 
-interface ConnectorSelectorProps {
+type ConnectorSelectorProps = {
   selectedConnectors: ConnectorProvider[];
   onConnectorToggle: (provider: ConnectorProvider) => void;
   user: ComprehensiveUserData | null;
   isProUser?: boolean;
-}
+};
 
 // Connector Selector Component
 const ConnectorSelector: React.FC<ConnectorSelectorProps> = React.memo(
@@ -1753,9 +1790,11 @@ const ConnectorSelector: React.FC<ConnectorSelectorProps> = React.memo(
       return null;
     }
 
-    const handleSelectAll = () => {
+    const _handleSelectAll = () => {
       // Don't allow deselecting all if only one connector
-      if (isSingleConnector) return;
+      if (isSingleConnector) {
+        return;
+      }
 
       if (isAllSelected) {
         // Deselect all
@@ -1774,8 +1813,10 @@ const ConnectorSelector: React.FC<ConnectorSelectorProps> = React.memo(
       }
     };
 
-    const handleClearAll = () => {
-      if (isSingleConnector) return;
+    const _handleClearAll = () => {
+      if (isSingleConnector) {
+        return;
+      }
 
       selectedConnectors.forEach((provider) => {
         if (availableConnectors.some(([p]) => p === provider)) {
@@ -1931,11 +1972,16 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
     const visibleGroups = useMemo(
       () =>
         dynamicSearchGroups.filter((group) => {
-          if (!group.show) return false;
-          if ("requireAuth" in group && group.requireAuth && !session)
+          if (!group.show) {
             return false;
+          }
+          if ("requireAuth" in group && group.requireAuth && !session) {
+            return false;
+          }
           // Don't filter out Pro-only groups, show them with Pro indicator
-          if (group.id === "extreme") return false; // Exclude extreme from dropdown
+          if (group.id === "extreme") {
+            return false; // Exclude extreme from dropdown
+          }
           return true;
         }),
       [dynamicSearchGroups, session]
@@ -2010,8 +2056,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                 setOpen(false);
                 return;
               }
-            } catch (error) {
-              console.error("Error checking connectors:", error);
+            } catch (_error) {
               // If there's an error, still allow group selection
             }
           }
@@ -2062,7 +2107,9 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
         className="rounded-lg"
         filter={(value, search) => {
           const group = visibleGroups.find((g) => g.id === value);
-          if (!(group && search)) return 1;
+          if (!(group && search)) {
+            return 1;
+          }
 
           const searchTerm = search.toLowerCase();
           const searchableFields = [group.name, group.description, group.id]
@@ -2164,14 +2211,12 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                         </>
                       )}
                       {isExtreme && (
-                        <>
-                          <HugeiconsIcon
-                            color="currentColor"
-                            icon={GlobalSearchIcon}
-                            size={30}
-                            strokeWidth={2}
-                          />
-                        </>
+                        <HugeiconsIcon
+                          color="currentColor"
+                          icon={GlobalSearchIcon}
+                          size={30}
+                          strokeWidth={2}
+                        />
                       )}
                     </Button>
                   </DrawerTrigger>
@@ -2322,14 +2367,12 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                         </>
                       )}
                       {isExtreme && (
-                        <>
-                          <HugeiconsIcon
-                            color="currentColor"
-                            icon={GlobalSearchIcon}
-                            size={30}
-                            strokeWidth={2}
-                          />
-                        </>
+                        <HugeiconsIcon
+                          color="currentColor"
+                          icon={GlobalSearchIcon}
+                          size={30}
+                          strokeWidth={2}
+                        />
                       )}
                     </Button>
                   </PopoverTrigger>
@@ -2510,7 +2553,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
   selectedConnectors = [],
   setSelectedConnectors,
 }) => {
-  const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
+  const [uploadQueue, setUploadQueue] = useState<string[]>([]);
   const isMounted = useRef(true);
   const isCompositionActive = useRef(false);
   const postSubmitFileInputRef = useRef<HTMLInputElement>(null);
@@ -2647,7 +2690,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
   // Typewriter effect for enhanced text
   const typewriterText = useCallback(
     (text: string, speed = 5) => {
-      if (!inputRef.current) return;
+      if (!inputRef.current) {
+        return;
+      }
 
       setIsTypewriting(true);
       let currentIndex = 0;
@@ -2687,7 +2732,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
       toast.error("Please enter a prompt to enhance");
       return;
     }
-    if (isProcessing || isEnhancing) return;
+    if (isProcessing || isEnhancing) {
+      return;
+    }
 
     const originalInput = input;
 
@@ -2714,7 +2761,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
         });
         setIsEnhancing(false);
       }
-    } catch (e) {
+    } catch (_e) {
       setInput(originalInput);
       toast.error("Failed to enhance prompt", { id: "enhance-prompt" });
       setIsEnhancing(false);
@@ -2727,7 +2774,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
     inputRef,
     typewriterText,
     isEnhancing,
-    setShowUpgradeDialog,
   ]);
 
   const handleRecord = useCallback(async () => {
@@ -2788,7 +2834,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
           recorder = selectedMimeType
             ? new MediaRecorder(stream, { mimeType: selectedMimeType })
             : new MediaRecorder(stream);
-        } catch (e) {
+        } catch (_e) {
           // Fallback: try without options
           recorder = new MediaRecorder(stream);
         }
@@ -2802,9 +2848,15 @@ const FormComponent: React.FC<FormComponentProps> = ({
               const formData = new FormData();
               const extension = (() => {
                 const type = (audioBlob?.type || "").toLowerCase();
-                if (type.includes("mp4")) return "mp4";
-                if (type.includes("ogg")) return "ogg";
-                if (type.includes("mpeg")) return "mp3";
+                if (type.includes("mp4")) {
+                  return "mp4";
+                }
+                if (type.includes("ogg")) {
+                  return "ogg";
+                }
+                if (type.includes("mpeg")) {
+                  return "mp3";
+                }
                 return "webm";
               })();
               formData.append("audio", audioBlob, `recording.${extension}`);
@@ -2822,13 +2874,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
               if (data.text) {
                 setInput(data.text);
               } else {
-                console.error(
-                  "Transcription response did not contain text:",
-                  data
-                );
               }
-            } catch (error) {
-              console.error("Error during transcription request:", error);
+            } catch (_error) {
               toast.error("Failed to transcribe audio. Please try again.");
             } finally {
               cleanupMediaRecorder();
@@ -2836,8 +2883,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
           }
         });
 
-        recorder.addEventListener("error", (e) => {
-          console.error("MediaRecorder error:", e);
+        recorder.addEventListener("error", (_e) => {
           toast.error("Recording failed. Please try again or switch browser.");
           cleanupMediaRecorder();
         });
@@ -2848,8 +2894,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
         recorder.start();
         setIsRecording(true);
-      } catch (error) {
-        console.error("Error accessing microphone:", error);
+      } catch (_error) {
         toast.error(
           "Could not access microphone. Please allow mic permission."
         );
@@ -2887,7 +2932,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
   const handleConnectorToggle = useCallback(
     (provider: ConnectorProvider) => {
-      if (!setSelectedConnectors) return;
+      if (!setSelectedConnectors) {
+        return;
+      }
 
       setSelectedConnectors((prev) => {
         if (prev.includes(provider)) {
@@ -2904,7 +2951,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
     formData.append("file", file);
 
     try {
-      console.log("Uploading file:", file.name, file.type, file.size);
       const response = await fetch("/api/upload", {
         method: "POST",
         body: formData,
@@ -2912,14 +2958,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
       if (response.ok) {
         const data = await response.json();
-        console.log("Upload successful:", data);
         return data;
       }
       const errorText = await response.text();
-      console.error("Upload failed with status:", response.status, errorText);
       throw new Error(`Failed to upload file: ${response.status} ${errorText}`);
     } catch (error) {
-      console.error("Error uploading file:", error);
       toast.error(
         `Failed to upload ${file.name}: ${error instanceof Error ? error.message : "Unknown error"}`
       );
@@ -2931,14 +2974,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(event.target.files || []);
       if (files.length === 0) {
-        console.log("No files selected in file input");
         return;
       }
-
-      console.log(
-        "Files selected:",
-        files.map((f) => `${f.name} (${f.type})`)
-      );
 
       const imageFiles: File[] = [];
       const pdfFiles: File[] = [];
@@ -2966,20 +3003,12 @@ const FormComponent: React.FC<FormComponentProps> = ({
       });
 
       if (unsupportedFiles.length > 0) {
-        console.log(
-          "Unsupported files:",
-          unsupportedFiles.map((f) => `${f.name} (${f.type})`)
-        );
         toast.error(
           `Some files are not supported: ${unsupportedFiles.map((f) => f.name).join(", ")}`
         );
       }
 
       if (blockedPdfFiles.length > 0) {
-        console.log(
-          "Blocked PDF files for non-Pro user:",
-          blockedPdfFiles.map((f) => f.name)
-        );
         toast.error(
           "PDF uploads require Pro subscription. Upgrade to access PDF analysis.",
           {
@@ -2992,22 +3021,17 @@ const FormComponent: React.FC<FormComponentProps> = ({
       }
 
       if (imageFiles.length === 0 && pdfFiles.length === 0) {
-        console.log("No supported files found");
         event.target.value = "";
         return;
       }
 
       const currentModelData = models.find((m) => m.value === selectedModel);
-      if (pdfFiles.length > 0 && !(currentModelData && currentModelData.pdf)) {
-        console.log("PDFs detected, switching to compatible model");
-
+      if (pdfFiles.length > 0 && !currentModelData?.pdf) {
         const compatibleModel = models.find((m) => m.pdf && m.vision);
 
         if (compatibleModel) {
-          console.log("Switching to compatible model:", compatibleModel.value);
           setSelectedModel(compatibleModel.value);
         } else {
-          console.warn("No PDF-compatible model found");
           toast.error("PDFs are only supported by Claude models");
 
           if (imageFiles.length === 0) {
@@ -3022,11 +3046,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
         validFiles = [...validFiles, ...pdfFiles];
       }
 
-      console.log(
-        "Valid files for upload:",
-        validFiles.map((f) => f.name)
-      );
-
       const totalAttachments = attachments.length + validFiles.length;
       if (totalAttachments > MAX_FILES) {
         toast.error(`You can only attach up to ${MAX_FILES} files.`);
@@ -3035,18 +3054,12 @@ const FormComponent: React.FC<FormComponentProps> = ({
       }
 
       if (validFiles.length === 0) {
-        console.error("No valid files to upload");
         event.target.value = "";
         return;
       }
 
       if (imageFiles.length > 0) {
         try {
-          console.log(
-            "Checking image moderation for",
-            imageFiles.length,
-            "images"
-          );
           toast.info("Checking images for safety...");
 
           const imageDataURLs = await Promise.all(
@@ -3054,12 +3067,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
           );
 
           const moderationResult = await checkImageModeration(imageDataURLs);
-          console.log("Moderation result:", moderationResult);
 
           if (moderationResult !== "safe") {
             const [status, category] = moderationResult.split("\n");
             if (status === "unsafe") {
-              console.warn("Unsafe image detected, category:", category);
               toast.error(
                 `Image content violates safety guidelines (${category}). Please choose different images.`
               );
@@ -3067,10 +3078,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
               return;
             }
           }
-
-          console.log("Images passed moderation check");
-        } catch (error) {
-          console.error("Error during image moderation:", error);
+        } catch (_error) {
           toast.error("Unable to verify image safety. Please try again.");
           event.target.value = "";
           return;
@@ -3080,25 +3088,13 @@ const FormComponent: React.FC<FormComponentProps> = ({
       setUploadQueue(validFiles.map((file) => file.name));
 
       try {
-        console.log("Starting upload of", validFiles.length, "files");
-
         const uploadedAttachments: Attachment[] = [];
         for (const file of validFiles) {
           try {
-            console.log(`Uploading file: ${file.name} (${file.type})`);
             const attachment = await uploadFile(file);
             uploadedAttachments.push(attachment);
-            console.log(`Successfully uploaded: ${file.name}`);
-          } catch (err) {
-            console.error(`Failed to upload ${file.name}:`, err);
-          }
+          } catch (_err) {}
         }
-
-        console.log(
-          "Upload completed for",
-          uploadedAttachments.length,
-          "files"
-        );
 
         if (uploadedAttachments.length > 0) {
           setAttachments((currentAttachments) => [
@@ -3112,8 +3108,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
         } else {
           toast.error("No files were successfully uploaded");
         }
-      } catch (error) {
-        console.error("Error uploading files!", error);
+      } catch (_error) {
         toast.error("Failed to upload one or more files. Please try again.");
       } finally {
         setUploadQueue([]);
@@ -3142,7 +3137,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
       e.preventDefault();
       e.stopPropagation();
 
-      if (attachments.length >= MAX_FILES) return;
+      if (attachments.length >= MAX_FILES) {
+        return;
+      }
 
       if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
         const hasFile = Array.from(e.dataTransfer.items).some(
@@ -3174,10 +3171,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
       setIsDragging(false);
 
       const allFiles = Array.from(e.dataTransfer.files);
-      console.log(
-        "Raw files dropped:",
-        allFiles.map((f) => `${f.name} (${f.type})`)
-      );
 
       if (allFiles.length === 0) {
         toast.error("No files detected in drop");
@@ -3193,8 +3186,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
       const blockedPdfFiles: File[] = [];
 
       allFiles.forEach((file) => {
-        console.log(`Processing file: ${file.name} (${file.type})`);
-
         if (file.size > MAX_FILE_SIZE) {
           oversizedFiles.push(file);
           return;
@@ -3213,35 +3204,19 @@ const FormComponent: React.FC<FormComponentProps> = ({
         }
       });
 
-      console.log(
-        `Images: ${imageFiles.length}, PDFs: ${pdfFiles.length}, Unsupported: ${unsupportedFiles.length}, Oversized: ${oversizedFiles.length}`
-      );
-
       if (unsupportedFiles.length > 0) {
-        console.log(
-          "Unsupported files:",
-          unsupportedFiles.map((f) => `${f.name} (${f.type})`)
-        );
         toast.error(
           `Some files not supported: ${unsupportedFiles.map((f) => f.name).join(", ")}`
         );
       }
 
       if (oversizedFiles.length > 0) {
-        console.log(
-          "Oversized files:",
-          oversizedFiles.map((f) => `${f.name} (${f.size} bytes)`)
-        );
         toast.error(
           `Some files exceed the 5MB limit: ${oversizedFiles.map((f) => f.name).join(", ")}`
         );
       }
 
       if (blockedPdfFiles.length > 0) {
-        console.log(
-          "Blocked PDF files for non-Pro user:",
-          blockedPdfFiles.map((f) => f.name)
-        );
         toast.error(
           "PDF uploads require Pro subscription. Upgrade to access PDF analysis.",
           {
@@ -3259,21 +3234,19 @@ const FormComponent: React.FC<FormComponentProps> = ({
       }
 
       const currentModelData = models.find((m) => m.value === selectedModel);
-      if (pdfFiles.length > 0 && !(currentModelData && currentModelData.pdf)) {
-        console.log("PDFs detected, switching to compatible model");
-
+      if (pdfFiles.length > 0 && !currentModelData?.pdf) {
         const compatibleModel = models.find((m) => m.pdf && m.vision);
 
         if (compatibleModel) {
-          console.log("Switching to compatible model:", compatibleModel.value);
           setSelectedModel(compatibleModel.value);
           toast.info(
             `Switching to ${compatibleModel.label} to support PDF files`
           );
         } else {
-          console.warn("No PDF-compatible model found");
           toast.error("PDFs are only supported by Claude models");
-          if (imageFiles.length === 0) return;
+          if (imageFiles.length === 0) {
+            return;
+          }
         }
       }
 
@@ -3282,11 +3255,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
         validFiles = [...validFiles, ...pdfFiles];
       }
 
-      console.log(
-        "Files to upload:",
-        validFiles.map((f) => `${f.name} (${f.type})`)
-      );
-
       const totalAttachments = attachments.length + validFiles.length;
       if (totalAttachments > MAX_FILES) {
         toast.error(`You can only attach up to ${MAX_FILES} files.`);
@@ -3294,18 +3262,12 @@ const FormComponent: React.FC<FormComponentProps> = ({
       }
 
       if (validFiles.length === 0) {
-        console.error("No valid files to upload after filtering");
         toast.error("No valid files to upload");
         return;
       }
 
       if (imageFiles.length > 0) {
         try {
-          console.log(
-            "Checking image moderation for",
-            imageFiles.length,
-            "images"
-          );
           toast.info("Checking images for safety...");
 
           const imageDataURLs = await Promise.all(
@@ -3313,22 +3275,17 @@ const FormComponent: React.FC<FormComponentProps> = ({
           );
 
           const moderationResult = await checkImageModeration(imageDataURLs);
-          console.log("Moderation result:", moderationResult);
 
           if (moderationResult !== "safe") {
             const [status, category] = moderationResult.split("\n");
             if (status === "unsafe") {
-              console.warn("Unsafe image detected, category:", category);
               toast.error(
                 `Image content violates safety guidelines (${category}). Please choose different images.`
               );
               return;
             }
           }
-
-          console.log("Images passed moderation check");
-        } catch (error) {
-          console.error("Error during image moderation:", error);
+        } catch (_error) {
           toast.error("Unable to verify image safety. Please try again.");
           return;
         }
@@ -3347,8 +3304,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
         } else {
           visionModel = getFirstVisionModel();
         }
-
-        console.log("Switching to vision model:", visionModel);
         setSelectedModel(visionModel);
       }
 
@@ -3357,25 +3312,13 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
       setTimeout(async () => {
         try {
-          console.log("Beginning upload of", validFiles.length, "files");
-
           const uploadedAttachments: Attachment[] = [];
           for (const file of validFiles) {
             try {
-              console.log(`Uploading file: ${file.name} (${file.type})`);
               const attachment = await uploadFile(file);
               uploadedAttachments.push(attachment);
-              console.log(`Successfully uploaded: ${file.name}`);
-            } catch (err) {
-              console.error(`Failed to upload ${file.name}:`, err);
-            }
+            } catch (_err) {}
           }
-
-          console.log(
-            "Upload completed for",
-            uploadedAttachments.length,
-            "files"
-          );
 
           if (uploadedAttachments.length > 0) {
             setAttachments((currentAttachments) => [
@@ -3389,8 +3332,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
           } else {
             toast.error("No files were successfully uploaded");
           }
-        } catch (error) {
-          console.error("Error during file upload:", error);
+        } catch (_error) {
           toast.error("Upload failed. Please check console for details.");
         } finally {
           setUploadQueue([]);
@@ -3413,7 +3355,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
       const items = Array.from(e.clipboardData.items);
       const imageItems = items.filter((item) => item.type.startsWith("image/"));
 
-      if (imageItems.length === 0) return;
+      if (imageItems.length === 0) {
+        return;
+      }
 
       e.preventDefault();
 
@@ -3429,16 +3373,14 @@ const FormComponent: React.FC<FormComponentProps> = ({
       const oversizedFiles = files.filter((file) => file.size > MAX_FILE_SIZE);
 
       if (oversizedFiles.length > 0) {
-        console.log(
-          "Oversized files:",
-          oversizedFiles.map((f) => `${f.name} (${f.size} bytes)`)
-        );
         toast.error(
           `Some files exceed the 5MB limit: ${oversizedFiles.map((f) => f.name || "unnamed").join(", ")}`
         );
 
         const validFiles = files.filter((file) => file.size <= MAX_FILE_SIZE);
-        if (validFiles.length === 0) return;
+        if (validFiles.length === 0) {
+          return;
+        }
       }
 
       const currentModel = models.find((m) => m.value === selectedModel);
@@ -3454,11 +3396,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
       if (filesToUpload.length > 0) {
         try {
-          console.log(
-            "Checking image moderation for",
-            filesToUpload.length,
-            "pasted images"
-          );
           toast.info("Checking pasted images for safety...");
 
           const imageDataURLs = await Promise.all(
@@ -3466,22 +3403,17 @@ const FormComponent: React.FC<FormComponentProps> = ({
           );
 
           const moderationResult = await checkImageModeration(imageDataURLs);
-          console.log("Moderation result:", moderationResult);
 
           if (moderationResult !== "safe") {
             const [status, category] = moderationResult.split("\n");
             if (status === "unsafe") {
-              console.warn("Unsafe pasted image detected, category:", category);
               toast.error(
                 `Pasted image content violates safety guidelines (${category}). Please choose different images.`
               );
               return;
             }
           }
-
-          console.log("Pasted images passed moderation check");
-        } catch (error) {
-          console.error("Error during pasted image moderation:", error);
+        } catch (_error) {
           toast.error(
             "Unable to verify pasted image safety. Please try again."
           );
@@ -3503,8 +3435,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
         ]);
 
         toast.success("Image pasted successfully");
-      } catch (error) {
-        console.error("Error uploading pasted files!", error);
+      } catch (_error) {
         toast.error("Failed to upload pasted image. Please try again.");
       } finally {
         setUploadQueue([]);
@@ -3727,7 +3658,9 @@ const FormComponent: React.FC<FormComponentProps> = ({
   );
 
   const resizeTextarea = useCallback(() => {
-    if (!inputRef.current) return;
+    if (!inputRef.current) {
+      return;
+    }
 
     const target = inputRef.current;
 
@@ -3754,7 +3687,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
   // Resize textarea when input value changes
   useEffect(() => {
     debouncedResize();
-  }, [input, debouncedResize]);
+  }, [debouncedResize]);
 
   return (
     <div className={cn("mx-auto flex w-full max-w-2xl flex-col")}>

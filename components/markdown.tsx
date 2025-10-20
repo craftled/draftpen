@@ -6,7 +6,6 @@ import { Geist_Mono } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
 import React, {
-  Fragment,
   lazy,
   Suspense,
   useCallback,
@@ -39,15 +38,15 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-interface MarkdownRendererProps {
+type MarkdownRendererProps = {
   content: string;
   isUserMessage?: boolean;
-}
+};
 
-interface CitationLink {
+type CitationLink = {
   text: string;
   link: string;
-}
+};
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
@@ -56,7 +55,7 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
-const isValidUrl = (str: string) => {
+const _isValidUrl = (str: string) => {
   try {
     new URL(str);
     return true;
@@ -65,11 +64,11 @@ const isValidUrl = (str: string) => {
   }
 };
 
-interface CodeBlockProps {
+type CodeBlockProps = {
   language: string | undefined;
   children: string;
   elementKey: string;
-}
+};
 
 // Lazy-loaded CodeBlock component for large blocks
 const LazyCodeBlockComponent: React.FC<CodeBlockProps> = ({
@@ -85,8 +84,7 @@ const LazyCodeBlockComponent: React.FC<CodeBlockProps> = ({
   const highlightedCode = useMemo(() => {
     try {
       return children.length < 10_000 ? highlight(children) : children;
-    } catch (error) {
-      console.warn("Syntax highlighting failed, using plain text:", error);
+    } catch (_error) {
       return children;
     }
   }, [children]);
@@ -97,8 +95,7 @@ const LazyCodeBlockComponent: React.FC<CodeBlockProps> = ({
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
       toast.success("Code copied to clipboard");
-    } catch (error) {
-      console.error("Failed to copy code:", error);
+    } catch (_error) {
       toast.error("Failed to copy code");
     }
   }, [children]);
@@ -189,8 +186,7 @@ const SyncCodeBlock: React.FC<CodeBlockProps> = ({
   const highlightedCode = useMemo(() => {
     try {
       return highlight(children);
-    } catch (error) {
-      console.warn("Syntax highlighting failed, using plain text:", error);
+    } catch (_error) {
       return children;
     }
   }, [children]);
@@ -201,8 +197,7 @@ const SyncCodeBlock: React.FC<CodeBlockProps> = ({
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
       toast.success("Code copied to clipboard");
-    } catch (error) {
-      console.error("Failed to copy code:", error);
+    } catch (_error) {
       toast.error("Failed to copy code");
     }
   }, [children]);
@@ -502,8 +497,7 @@ const useProcessedContent = (content: string) => {
         latexBlocks,
         isProcessing: false,
       };
-    } catch (error) {
-      console.error("Error processing content:", error);
+    } catch (_error) {
       return {
         processedContent: content,
         citations: [],
@@ -524,8 +518,7 @@ const InlineCode: React.FC<{ code: string; elementKey: string }> = React.memo(
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 1500);
         toast.success("Code copied to clipboard");
-      } catch (error) {
-        console.error("Failed to copy code:", error);
+      } catch (_error) {
         toast.error("Failed to copy code");
       }
     }, [code]);
@@ -599,11 +592,13 @@ const MarkdownTableWithActions: React.FC<{ children: React.ReactNode }> =
       const tableEl = containerRef.current?.querySelector(
         '[data-slot="table"]'
       ) as HTMLTableElement | null;
-      if (!tableEl) return;
+      if (!tableEl) {
+        return;
+      }
 
       try {
         const csv = csvUtils.buildCsvFromTable(tableEl);
-        const blob = new Blob(["\uFEFF" + csv], {
+        const blob = new Blob([`\uFEFF${csv}`], {
           type: "text/csv;charset=utf-8;",
         });
         const url = URL.createObjectURL(blob);
@@ -619,9 +614,7 @@ const MarkdownTableWithActions: React.FC<{ children: React.ReactNode }> =
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-      } catch (error) {
-        console.error("Failed to download CSV:", error);
-      }
+      } catch (_error) {}
     }, [csvUtils]);
 
     return (
@@ -674,7 +667,9 @@ const LinkPreview = React.memo(
       }
     }, [href]);
 
-    if (!domain) return null;
+    if (!domain) {
+      return null;
+    }
 
     return (
       <div className="m-0 flex flex-col bg-accent text-xs">
@@ -720,7 +715,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(
       for (let i = 0; i < str.length; i++) {
         const char = str.charCodeAt(i);
         hash = (hash << 5) - hash + char;
-        hash = hash & hash;
+        hash &= hash;
       }
       return Math.abs(hash).toString(36);
     }, [content]);
@@ -885,11 +880,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(
             components.push(<span key={key}>{textContent}</span>);
           }
 
-          return components.length === 1 ? (
-            components[0]
-          ) : (
-            <Fragment>{components}</Fragment>
-          );
+          return components.length === 1 ? components[0] : components;
         },
         hr() {
           return <></>;
@@ -903,7 +894,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(
               const latexBlock = latexBlocks.find(
                 (block) => block.id === children
               );
-              if (latexBlock && latexBlock.isBlock) {
+              if (latexBlock?.isBlock) {
                 return (
                   <div className="my-6 text-center" key={key}>
                     <Latex
@@ -1164,7 +1155,9 @@ const VirtualMarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(
     }, [content]);
 
     const handleScroll = useCallback(() => {
-      if (!containerRef.current) return;
+      if (!containerRef.current) {
+        return;
+      }
 
       const { scrollTop, clientHeight } = containerRef.current;
       const lineHeight = 24; // Approximate line height
@@ -1237,21 +1230,18 @@ export const CopyButton = React.memo(({ text }: { text: string }) => {
 CopyButton.displayName = "CopyButton";
 
 // Performance monitoring hook
-const usePerformanceMonitor = (content: string) => {
+const usePerformanceMonitor = (_content: string) => {
   const renderStartTime = useRef<number>(0);
 
   useEffect(() => {
     renderStartTime.current = performance.now();
-  }, [content]);
+  }, []);
 
   useEffect(() => {
     const renderTime = performance.now() - renderStartTime.current;
     if (renderTime > 100) {
-      console.warn(
-        `Markdown render took ${renderTime.toFixed(2)}ms for ${content.length} characters`
-      );
     }
-  }, [content.length]);
+  }, []);
 };
 
 // Main optimized markdown component with automatic optimization selection

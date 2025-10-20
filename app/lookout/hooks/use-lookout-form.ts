@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { DEFAULT_FORM_VALUES } from "../constants";
 import { isTimeInPast } from "../utils/time-utils";
 
-export interface LookoutFormData {
+export type LookoutFormData = {
   title: string;
   prompt: string;
   frequency: "once" | "daily" | "weekly" | "monthly";
@@ -13,9 +13,9 @@ export interface LookoutFormData {
   timezone: string;
   date?: string;
   dayOfWeek?: string;
-}
+};
 
-export interface LookoutFormHookReturn {
+export type LookoutFormHookReturn = {
   // Form state
   selectedFrequency: string;
   selectedTime: string;
@@ -48,13 +48,11 @@ export interface LookoutFormHookReturn {
 
   // Validation
   validateForm: (formData: FormData) => boolean;
-}
+};
 
 export function useLookoutForm(
   detectedTimezone: string = DEFAULT_FORM_VALUES.TIMEZONE
 ): LookoutFormHookReturn {
-  console.log("🎯 Form hook received detectedTimezone:", detectedTimezone);
-
   // Form state
   const [selectedFrequency, setSelectedFrequency] = React.useState<string>(
     DEFAULT_FORM_VALUES.FREQUENCY
@@ -64,7 +62,6 @@ export function useLookoutForm(
   );
   const [selectedTimezone, setSelectedTimezone] =
     React.useState<string>(detectedTimezone);
-  console.log("🔧 Initial selectedTimezone state:", detectedTimezone);
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>();
   const [selectedDayOfWeek, setSelectedDayOfWeek] = React.useState<string>(
     DEFAULT_FORM_VALUES.DAY_OF_WEEK
@@ -77,14 +74,7 @@ export function useLookoutForm(
 
   // Update timezone when detected timezone changes
   React.useEffect(() => {
-    console.log(
-      "⚡ useEffect triggered - detectedTimezone:",
-      detectedTimezone,
-      "editingLookout:",
-      !!editingLookout
-    );
     if (!editingLookout) {
-      console.log("📝 Setting selectedTimezone to:", detectedTimezone);
       setSelectedTimezone(detectedTimezone);
     }
   }, [detectedTimezone, editingLookout]);
@@ -199,7 +189,9 @@ export function useLookoutForm(
   // Create lookout from form data
   const createLookoutFromForm = React.useCallback(
     (formData: FormData, createLookout: any) => {
-      if (!validateForm(formData)) return;
+      if (!validateForm(formData)) {
+        return;
+      }
 
       const title = formData.get("title") as string;
       const prompt = formData.get("prompt") as string;
@@ -232,7 +224,9 @@ export function useLookoutForm(
   // Update lookout from form data
   const updateLookoutFromForm = React.useCallback(
     (formData: FormData, updateLookout: any) => {
-      if (!(editingLookout && validateForm(formData))) return;
+      if (!(editingLookout && validateForm(formData))) {
+        return;
+      }
 
       const title = formData.get("title") as string;
       const prompt = formData.get("prompt") as string;

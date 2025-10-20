@@ -12,6 +12,8 @@ import {
   type ConnectorProvider,
 } from "@/lib/connectors";
 
+const CALLBACK_DELAY_MS = 2000 as const;
+
 export default function ConnectorCallbackPage() {
   const router = useRouter();
   const params = useParams();
@@ -44,7 +46,7 @@ export default function ConnectorCallbackPage() {
 
         // Check if connection was successful by querying the connection status
         // The OAuth flow should have completed by now
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, CALLBACK_DELAY_MS));
 
         setStatus("success");
         setMessage(`${providerConfig.name} connected successfully!`);
@@ -52,9 +54,8 @@ export default function ConnectorCallbackPage() {
         // Redirect to settings connectors tab after a short delay
         setTimeout(() => {
           router.push("/?tab=connectors#settings");
-        }, 2000);
-      } catch (error) {
-        console.error("Callback processing error:", error);
+        }, CALLBACK_DELAY_MS);
+      } catch (_error) {
         setStatus("error");
         setMessage("Failed to process authorization");
       }

@@ -2,13 +2,13 @@ import { tool } from "ai";
 import { z } from "zod";
 import { serverEnv } from "@/env/server";
 
-interface DFSKeywordItem {
+type DFSKeywordItem = {
   keyword: string;
   search_volume?: number;
   cpc?: number;
   competition?: number;
   difficulty?: number; // convenience alias (maps to competition when available)
-}
+};
 
 export const keywordResearchTool = tool({
   description:
@@ -92,8 +92,7 @@ export const keywordResearchTool = tool({
       );
     }
 
-    const authHeader =
-      "Basic " + Buffer.from(`${login}:${password}`).toString("base64");
+    const authHeader = `Basic ${Buffer.from(`${login}:${password}`).toString("base64")}`;
 
     const payload = [
       {

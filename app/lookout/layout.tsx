@@ -21,15 +21,15 @@ export const metadata: Metadata = {
   },
 };
 
-interface LookoutLayoutProps {
+type LookoutLayoutProps = {
   children: React.ReactNode;
-}
+};
 
 export default function LookoutLayout({ children }: LookoutLayoutProps) {
   return (
     <div className="min-h-screen bg-background">
       <div className="flex min-h-screen flex-col">
-        <main aria-label="Lookout management" className="flex-1" role="main">
+        <main aria-label="Lookout management" className="flex-1">
           {children}
         </main>
       </div>

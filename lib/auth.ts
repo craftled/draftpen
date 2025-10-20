@@ -31,8 +31,12 @@ import { clearUserDataCache } from "./user-data-server";
 
 // Utility function to safely parse dates
 function safeParseDate(value: string | Date | null | undefined): Date | null {
-  if (!value) return null;
-  if (value instanceof Date) return value;
+  if (!value) {
+    return null;
+  }
+  if (value instanceof Date) {
+    return value;
+  }
   return new Date(value);
 }
 
@@ -53,10 +57,7 @@ export const auth = betterAuth({
   onAPIError: {
     throw: true,
     errorURL: "/auth/error",
-    onError: (error) => {
-      // Avoid leaking multi-line messages into headers; log succinctly
-      console.error("[Better Auth]:", (error as any)?.message ?? error);
-    },
+    onError: (_error) => {},
   },
   database: drizzleAdapter(maindb, {
     provider: "pg",
@@ -103,11 +104,6 @@ export const auth = betterAuth({
             createCustomerOnSignUp: true,
             enableCustomerPortal: true,
             getCustomerCreateParams: async ({ user: newUser }) => {
-              console.log(
-                "🚀 getCustomerCreateParams called for user:",
-                newUser.id
-              );
-
               try {
                 // Look for existing customer by email
                 const { result: existingCustomers } =
@@ -118,17 +114,9 @@ export const auth = betterAuth({
                 const existingCustomer = existingCustomers.items[0];
 
                 if (
-                  existingCustomer &&
-                  existingCustomer.externalId &&
+                  existingCustomer?.externalId &&
                   existingCustomer.externalId !== newUser.id
                 ) {
-                  console.log(
-                    `🔗 Found existing customer ${existingCustomer.id} with external ID ${existingCustomer.externalId}`
-                  );
-                  console.log(
-                    `🔄 Updating user ID from ${newUser.id} to ${existingCustomer.externalId}`
-                  );
-
                   // Update the user's ID in database to match the existing external ID
                   if (newUser.id) {
                     await db
@@ -136,19 +124,11 @@ export const auth = betterAuth({
                       .set({ id: existingCustomer.externalId })
                       .where(eq(user.id, newUser.id));
                   } else {
-                    console.error(
-                      "Missing newUser.id; skipping user ID update to existing external ID"
-                    );
                   }
-
-                  console.log(
-                    `✅ Updated user ID to match existing external ID: ${existingCustomer.externalId}`
-                  );
                 }
 
                 return {};
-              } catch (error) {
-                console.error("💥 Error in getCustomerCreateParams:", error);
+              } catch (_error) {
                 return {};
               }
             },
@@ -194,12 +174,6 @@ export const auth = betterAuth({
                     type === "subscription.uncanceled" ||
                     type === "subscription.updated"
                   ) {
-                    console.log("🎯 Processing subscription webhook:", type);
-                    console.log(
-                      "📦 Payload data:",
-                      JSON.stringify(data, null, 2)
-                    );
-
                     try {
                       // STEP 1: Extract user ID from customer data
                       const userId = data.customer?.externalId;
@@ -216,21 +190,9 @@ export const auth = betterAuth({
                           validUserId = userExists ? userId : null;
 
                           if (!userExists) {
-                            console.warn(
-                              `⚠️ User ${userId} not found, creating subscription without user link - will auto-link when user signs up`
-                            );
                           }
-                        } catch (error) {
-                          console.error(
-                            "Error checking user existence:",
-                            error
-                          );
-                        }
+                        } catch (_error) {}
                       } else {
-                        // No external ID in webhook - check if subscription already exists with a userId
-                        console.warn(
-                          "🚨 No external ID found in webhook, checking existing subscription"
-                        );
                         try {
                           const existing =
                             await db.query.subscription.findFirst({
@@ -238,17 +200,9 @@ export const auth = betterAuth({
                               columns: { userId: true },
                             });
                           if (existing?.userId) {
-                            console.log(
-                              `✅ Preserving existing userId: ${existing.userId}`
-                            );
                             validUserId = existing.userId;
                           }
-                        } catch (error) {
-                          console.error(
-                            "Error checking existing subscription:",
-                            error
-                          );
-                        }
+                        } catch (_error) {}
                       }
                       // STEP 1.6: Fallback linking by email if externalId did not resolve a local user
                       if (!validUserId) {
@@ -260,18 +214,10 @@ export const auth = betterAuth({
                               columns: { id: true },
                             });
                             if (userByEmail?.id) {
-                              console.log(
-                                `🔗 Fallback linking by email: ${customerEmail} -> ${userByEmail.id}`
-                              );
                               validUserId = userByEmail.id;
                             }
                           }
-                        } catch (e) {
-                          console.warn(
-                            "Email-based fallback linking failed:",
-                            e
-                          );
-                        }
+                        } catch (_e) {}
                       }
 
                       // STEP 2: Build subscription data
@@ -309,23 +255,6 @@ export const auth = betterAuth({
                           : null,
                         userId: validUserId,
                       };
-
-                      console.log("💾 Final subscription data:", {
-                        id: subscriptionData.id,
-                        status: subscriptionData.status,
-                        userId: subscriptionData.userId,
-                        trialStart: subscriptionData.trialStart,
-                        trialEnd: subscriptionData.trialEnd,
-                      });
-
-                      // Debug: Log raw data to see what Polar sends
-                      console.log("🔍 Raw webhook data (trial fields):", {
-                        trialStart: data.trialStart,
-                        trialEnd: data.trialEnd,
-                        trial_start: (data as any).trial_start,
-                        trial_end: (data as any).trial_end,
-                        amount: subscriptionData.amount,
-                      });
 
                       // STEP 3: Use Drizzle's onConflictDoUpdate for proper upsert
                       // IMPORTANT: Only update userId if we have a valid one (don't overwrite with NULL)
@@ -368,22 +297,12 @@ export const auth = betterAuth({
                           set: updateSet,
                         });
 
-                      console.log("✅ Upserted subscription:", data.id);
-
                       // Invalidate user caches when subscription changes
                       if (validUserId) {
                         invalidateUserCaches(validUserId);
                         clearUserDataCache(validUserId);
-                        console.log(
-                          "🗑️ Invalidated caches for user:",
-                          validUserId
-                        );
                       }
-                    } catch (error) {
-                      console.error(
-                        "💥 Error processing subscription webhook:",
-                        error
-                      );
+                    } catch (_error) {
                       // Don't throw - let webhook succeed to avoid retries
                     }
                   }

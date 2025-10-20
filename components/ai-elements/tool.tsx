@@ -147,7 +147,7 @@ export const ToolOutput = ({
 function safeJSONStringify(value: unknown) {
   try {
     return JSON.stringify(value, null, 2);
-  } catch (e) {
+  } catch (_e) {
     return String(value);
   }
 }

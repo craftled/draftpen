@@ -1,8 +1,12 @@
 // Helper functions for time conversion and formatting
 
 export const convertTo12Hour = (hour24: number): number => {
-  if (hour24 === 0) return 12;
-  if (hour24 > 12) return hour24 - 12;
+  if (hour24 === 0) {
+    return 12;
+  }
+  if (hour24 > 12) {
+    return hour24 - 12;
+  }
   return hour24;
 };
 
@@ -15,7 +19,7 @@ export const convertTo24Hour = (hour12: number, ampm: string): number => {
 
 export const formatTime12Hour = (time24: string) => {
   const [hour, minute] = time24.split(":");
-  const hour24 = Number.parseInt(hour);
+  const hour24 = Number.parseInt(hour, 10);
   const hour12 = convertTo12Hour(hour24);
   const ampm = hour24 < 12 ? "AM" : "PM";
   return { hour12: hour12.toString(), minute, ampm };
@@ -57,17 +61,26 @@ export const formatRelativeTime = (date: Date | string): string => {
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - dateObj.getTime()) / 1000);
 
-  if (diffInSeconds < 60) return "Just now";
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-  if (diffInSeconds < 86_400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-  if (diffInSeconds < 604_800)
+  if (diffInSeconds < 60) {
+    return "Just now";
+  }
+  if (diffInSeconds < 3600) {
+    return `${Math.floor(diffInSeconds / 60)}m ago`;
+  }
+  if (diffInSeconds < 86_400) {
+    return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  }
+  if (diffInSeconds < 604_800) {
     return `${Math.floor(diffInSeconds / 86_400)}d ago`;
+  }
 
   return dateObj.toLocaleDateString();
 };
 
 export const isTimeInPast = (time: string, selectedDate?: Date): boolean => {
-  if (!selectedDate) return false;
+  if (!selectedDate) {
+    return false;
+  }
 
   const [hours, minutes] = time.split(":").map(Number);
   const targetDateTime = new Date(selectedDate);

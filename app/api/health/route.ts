@@ -3,6 +3,9 @@ import { NextResponse } from "next/server";
 import { serverEnv } from "@/env/server";
 import { maindb } from "@/lib/db";
 
+const HTTP_OK = 200 as const;
+const HTTP_UNAVAILABLE = 503 as const;
+
 export async function GET() {
   const start = Date.now();
   let connected = false;
@@ -33,7 +36,7 @@ export async function GET() {
         }
       })
     );
-  } catch (e) {
+  } catch (_e) {
     connected = false;
   }
 
@@ -57,7 +60,7 @@ export async function GET() {
       elapsedMs: Date.now() - start,
     },
     {
-      status: ok ? 200 : 503,
+      status: ok ? HTTP_OK : HTTP_UNAVAILABLE,
       headers: {
         "Cache-Control": "no-store",
       },

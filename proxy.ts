@@ -4,10 +4,12 @@ import { type NextRequest, NextResponse } from "next/server";
 const authRoutes = ["/sign-in", "/sign-up"];
 const protectedRoutes = ["/lookout", "/xql", "/settings"];
 
-export async function proxy(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (pathname === "/api/search") return NextResponse.next();
+  if (pathname === "/api/search") {
+    return NextResponse.next();
+  }
   if (pathname.startsWith("/new") || pathname.startsWith("/api/search")) {
     return NextResponse.next();
   }

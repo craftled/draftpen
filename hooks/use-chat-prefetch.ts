@@ -11,7 +11,9 @@ export function useChatPrefetch() {
   const prefetchChatRoute = useCallback(
     (chatId: string) => {
       const path = `/search/${chatId}`;
-      if (prefetched.current.has(path)) return;
+      if (prefetched.current.has(path)) {
+        return;
+      }
       try {
         router.prefetch(path);
         prefetched.current.add(path);

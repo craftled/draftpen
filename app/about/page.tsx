@@ -34,6 +34,9 @@ import { SciraLogo } from "@/components/logos/scira-logo";
 import { SiteFooter } from "@/components/site-footer";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 
+const GITHUB_STARS_K_THRESHOLD = 1000 as const;
+const GITHUB_STARS_K_DIVISOR = 1000 as const;
+
 export default function AboutPage() {
   const router = useRouter();
   /*
@@ -229,8 +232,8 @@ export default function AboutPage() {
                 <span className="hidden sm:inline">
                   {!isLoadingStars && githubStars && (
                     <Badge className="ml-1 text-xs" variant="secondary">
-                      {githubStars > 1000
-                        ? `${(githubStars / 1000).toFixed(1)}k`
+                      {githubStars > GITHUB_STARS_K_THRESHOLD
+                        ? `${(githubStars / GITHUB_STARS_K_DIVISOR).toFixed(1)}k`
                         : githubStars}
                     </Badge>
                   )}

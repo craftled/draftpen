@@ -18,7 +18,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-interface MCPServer {
+type MCPServer = {
   qualifiedName: string;
   displayName: string;
   description?: string;
@@ -32,9 +32,9 @@ interface MCPServer {
     configSchema?: any;
   }>;
   createdAt?: string;
-}
+};
 
-interface MCPServerListProps {
+type MCPServerListProps = {
   servers: MCPServer[];
   query: string;
   pagination?: {
@@ -45,7 +45,7 @@ interface MCPServerListProps {
   };
   isLoading?: boolean;
   error?: string;
-}
+};
 
 export const MCPServerList: React.FC<MCPServerListProps> = ({
   servers,
@@ -228,16 +228,18 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({
                   )}
                 </div>
 
-                {server.useCount && Number.parseInt(server.useCount) > 0 && (
-                  <div className="mt-2.5 flex justify-between text-[10px] text-neutral-500">
-                    <span>Usage: {server.useCount}</span>
-                    {server.createdAt && (
-                      <span>
-                        Added: {new Date(server.createdAt).toLocaleDateString()}
-                      </span>
-                    )}
-                  </div>
-                )}
+                {server.useCount &&
+                  Number.parseInt(server.useCount, 10) > 0 && (
+                    <div className="mt-2.5 flex justify-between text-[10px] text-neutral-500">
+                      <span>Usage: {server.useCount}</span>
+                      {server.createdAt && (
+                        <span>
+                          Added:{" "}
+                          {new Date(server.createdAt).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                  )}
               </div>
             </motion.div>
           );

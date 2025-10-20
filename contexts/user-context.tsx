@@ -4,7 +4,7 @@ import { createContext, type ReactNode, useContext } from "react";
 import { useCachedUserData } from "@/hooks/use-cached-user-data";
 import type { ComprehensiveUserData } from "@/lib/user-data";
 
-interface UserContextType {
+type UserContextType = {
   // Core user data
   user: ComprehensiveUserData | null | undefined;
   isLoading: boolean;
@@ -46,13 +46,13 @@ interface UserContextType {
   // Additional utilities
   isCached: boolean;
   clearCache: () => void;
-}
+};
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-interface UserProviderProps {
+type UserProviderProps = {
   children: ReactNode;
-}
+};
 
 export function UserProvider({ children }: UserProviderProps) {
   const userData = useCachedUserData();

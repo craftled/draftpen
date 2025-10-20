@@ -63,7 +63,7 @@ import {
 import { useLookoutForm } from "./hooks/use-lookout-form";
 import { formatFrequency } from "./utils/time-utils";
 
-interface Lookout {
+type Lookout = {
   id: string;
   title: string;
   prompt: string;
@@ -75,14 +75,14 @@ interface Lookout {
   lastRunChatId?: string | null;
   createdAt: Date;
   cronSchedule?: string;
-}
+};
 
 export default function LookoutPage() {
   const [activeTab, setActiveTab] = React.useState("active");
   const isMobile = useIsMobile();
 
   // Random examples state
-  const [randomExamples, setRandomExamples] = React.useState(() =>
+  const [randomExamples, _setRandomExamples] = React.useState(() =>
     getRandomExamples(3)
   );
 
@@ -122,16 +122,13 @@ export default function LookoutPage() {
   React.useEffect(() => {
     try {
       const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      console.log("🌍 Detected system timezone:", systemTimezone);
 
       // Check if the detected timezone is in our options list
       const matchingOption = timezoneOptions.find(
         (option) => option.value === systemTimezone
       );
-      console.log("📍 Found matching option:", matchingOption);
 
       if (matchingOption) {
-        console.log("✅ Using exact match:", systemTimezone);
         setDetectedTimezone(systemTimezone);
       } else {
         // Try to find a close match based on common patterns
@@ -196,12 +193,9 @@ export default function LookoutPage() {
             fallbackTimezone = "Australia/Perth";
           }
         }
-
-        console.log("🔄 Using fallback timezone:", fallbackTimezone);
         setDetectedTimezone(fallbackTimezone);
       }
     } catch {
-      console.log("❌ Timezone detection failed, using UTC");
       setDetectedTimezone("UTC");
     }
   }, []);
@@ -236,13 +230,16 @@ export default function LookoutPage() {
 
   // Filter lookouts by tab
   const filteredLookouts = allLookouts.filter((lookout: Lookout) => {
-    if (activeTab === "active")
+    if (activeTab === "active") {
       return (
         lookout.status === "active" ||
         lookout.status === "paused" ||
         lookout.status === "running"
       );
-    if (activeTab === "archived") return lookout.status === "archived";
+    }
+    if (activeTab === "archived") {
+      return lookout.status === "archived";
+    }
     return true;
   });
 

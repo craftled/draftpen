@@ -3,15 +3,15 @@
 import { db } from "@/lib/db";
 import { subscription, user } from "./db/schema";
 
-interface CacheEntry<T> {
+type CacheEntry<T> = {
   data: T;
   cachedAt: number;
   accessCount: number;
   lastAccessed: number;
-}
+};
 
 class PerformanceCache<T> {
-  private cache = new Map<string, CacheEntry<T>>();
+  private readonly cache = new Map<string, CacheEntry<T>>();
   private readonly maxSize: number;
   private readonly ttl: number;
   private readonly name: string;
@@ -27,7 +27,9 @@ class PerformanceCache<T> {
 
   get(key: string): T | null {
     const entry = this.cache.get(key);
-    if (!entry) return null;
+    if (!entry) {
+      return null;
+    }
 
     // Check if expired
     if (Date.now() - entry.cachedAt > this.ttl) {
@@ -82,12 +84,12 @@ class PerformanceCache<T> {
 
   private cleanup(): void {
     const now = Date.now();
-    let evicted = 0;
+    let _evicted = 0;
 
     for (const [key, entry] of this.cache.entries()) {
       if (now - entry.cachedAt > this.ttl) {
         this.cache.delete(key);
-        evicted++;
+        _evicted++;
       }
     }
 
@@ -130,7 +132,9 @@ export const createProUserKey = (userId: string) => `pro-user:${userId}`;
 // Extract session token from headers
 export function extractSessionToken(headers: Headers): string | null {
   const cookies = headers.get("cookie");
-  if (!cookies) return null;
+  if (!cookies) {
+    return null;
+  }
 
   const match = cookies.match(/better-auth\.session_token=([^;]+)/);
   return match ? match[1] : null;

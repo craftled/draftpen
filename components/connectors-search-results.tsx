@@ -32,7 +32,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { CONNECTOR_ICONS } from "@/lib/connectors";
 import { cn } from "@/lib/utils";
 
-interface Document {
+type Document = {
   documentId: string;
   title: string | null;
   type: string | null;
@@ -54,14 +54,14 @@ interface Document {
     icon: string;
   } | null;
   url?: string; // URL provided by the tool
-}
+};
 
-interface ConnectorsSearchResultsProps {
+type ConnectorsSearchResultsProps = {
   results: Document[];
   query: string;
   totalResults: number;
   isLoading?: boolean;
-}
+};
 
 // Skeleton Card Component
 const SkeletonCard: React.FC = () => {
@@ -99,7 +99,9 @@ const DocumentCard: React.FC<{ document: Document; onClick?: () => void }> = ({
   onClick,
 }) => {
   const getFileIcon = (type: string | null) => {
-    if (!type) return <File className="h-4 w-4" />;
+    if (!type) {
+      return <File className="h-4 w-4" />;
+    }
 
     const lowerType = type.toLowerCase();
 
@@ -203,13 +205,19 @@ const DocumentCard: React.FC<{ document: Document; onClick?: () => void }> = ({
     });
 
   const truncateText = (text: string, maxLength = 200) => {
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + "...";
+    if (text.length <= maxLength) {
+      return text;
+    }
+    return `${text.substring(0, maxLength)}...`;
   };
 
-  const getScoreBadgeVariant = (score: number) => {
-    if (score >= 0.8) return "default";
-    if (score >= 0.6) return "secondary";
+  const _getScoreBadgeVariant = (score: number) => {
+    if (score >= 0.8) {
+      return "default";
+    }
+    if (score >= 0.6) {
+      return "secondary";
+    }
     return "destructive";
   };
 
@@ -375,11 +383,15 @@ export function ConnectorsSearchResults({
     const container = e.currentTarget;
 
     // Only handle vertical scrolling
-    if (e.deltaY === 0) return;
+    if (e.deltaY === 0) {
+      return;
+    }
 
     // Check if container can scroll horizontally
     const canScrollHorizontally = container.scrollWidth > container.clientWidth;
-    if (!canScrollHorizontally) return;
+    if (!canScrollHorizontally) {
+      return;
+    }
 
     // Always stop propagation first to prevent page scroll interference
     e.stopPropagation();
@@ -512,29 +524,25 @@ export function ConnectorsSearchResults({
                 onWheel={handleWheelScroll}
                 ref={previewResultsRef}
               >
-                {isLoading && results.length === 0 ? (
-                  <>
-                    {Array.from({ length: 3 }, (_, i) => (
+                {isLoading && results.length === 0
+                  ? Array.from({ length: 3 }, (_, i) => (
                       <div
                         className="w-[320px] flex-shrink-0"
                         key={`skeleton-${i}`}
                       >
                         <SkeletonCard />
                       </div>
+                    ))
+                  : results.map((document) => (
+                      <a
+                        className="block w-[320px] flex-shrink-0"
+                        href={document.url || "#"}
+                        key={document.documentId}
+                        target="_blank"
+                      >
+                        <DocumentCard document={document} />
+                      </a>
                     ))}
-                  </>
-                ) : (
-                  results.map((document) => (
-                    <a
-                      className="block w-[320px] flex-shrink-0"
-                      href={document.url || "#"}
-                      key={document.documentId}
-                      target="_blank"
-                    >
-                      <DocumentCard document={document} />
-                    </a>
-                  ))
-                )}
               </div>
             </div>
           </AccordionContent>

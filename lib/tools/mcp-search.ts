@@ -41,7 +41,6 @@ export const mcpSearchTool = tool({
           );
 
           if (!detailResponse.ok) {
-            console.warn(`Failed to fetch details for ${server.qualifiedName}`);
             return server;
           }
 
@@ -60,7 +59,6 @@ export const mcpSearchTool = tool({
         query,
       };
     } catch (error) {
-      console.error("Smithery search error:", error);
       return {
         error: error instanceof Error ? error.message : "Unknown error",
         query,

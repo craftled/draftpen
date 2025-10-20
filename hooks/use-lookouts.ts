@@ -12,7 +12,7 @@ import {
   updateLookoutStatusAction,
 } from "@/app/actions";
 
-interface Lookout {
+type Lookout = {
   id: string;
   title: string;
   prompt: string;
@@ -24,7 +24,7 @@ interface Lookout {
   lastRunChatId?: string | null;
   createdAt: Date;
   cronSchedule?: string;
-}
+};
 
 // Query key factory
 export const lookoutKeys = {
@@ -72,9 +72,11 @@ export function useLookouts() {
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     refetchOnMount: true, // Always refetch when component mounts
-    retry: (failureCount, error) => {
+    retry: (failureCount, _error) => {
       // Retry up to 3 times with exponential backoff
-      if (failureCount < 3) return true;
+      if (failureCount < 3) {
+        return true;
+      }
       return false;
     },
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30_000),
@@ -203,7 +205,7 @@ export function useLookouts() {
               : "updated";
       toast.success(`Lookout ${statusText}`);
     },
-    onError: (error: Error, variables, context) => {
+    onError: (error: Error, _variables, context) => {
       // Rollback on error
       if (context?.previousLookouts) {
         queryClient.setQueryData(lookoutKeys.lists(), context.previousLookouts);
@@ -279,7 +281,7 @@ export function useLookouts() {
       // Force immediate refetch after delete
       queryClient.refetchQueries({ queryKey: lookoutKeys.lists() });
     },
-    onError: (error: Error, variables, context) => {
+    onError: (error: Error, _variables, context) => {
       // Rollback on error
       if (context?.previousLookouts) {
         queryClient.setQueryData(lookoutKeys.lists(), context.previousLookouts);
@@ -325,7 +327,7 @@ export function useLookouts() {
     onSuccess: () => {
       toast.success("Test run started - you'll be notified when complete!");
     },
-    onError: (error: Error, variables, context) => {
+    onError: (error: Error, _variables, context) => {
       // Rollback on error
       if (context?.previousLookouts) {
         queryClient.setQueryData(lookoutKeys.lists(), context.previousLookouts);
@@ -357,7 +359,9 @@ export function useLookouts() {
       (lookout) => lookout.status === "running"
     );
 
-    if (!hasRunningLookouts) return;
+    if (!hasRunningLookouts) {
+      return;
+    }
 
     const interval = setInterval(() => {
       // Only invalidate if there are still running lookouts
@@ -417,13 +421,16 @@ export function useFilteredLookouts(
   const { lookouts, ...rest } = useLookouts();
 
   const filteredLookouts = lookouts.filter((lookout) => {
-    if (filter === "active")
+    if (filter === "active") {
       return (
         lookout.status === "active" ||
         lookout.status === "paused" ||
         lookout.status === "running"
       );
-    if (filter === "archived") return lookout.status === "archived";
+    }
+    if (filter === "archived") {
+      return lookout.status === "archived";
+    }
     return true;
   });
 

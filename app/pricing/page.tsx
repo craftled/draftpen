@@ -31,7 +31,9 @@ export default async function PricingPage() {
         if (res.ok) {
           const link = await res.json();
           const p = link?.products?.[0]?.prices?.[0];
-          if (p?.price_amount) priceUSD = Math.round(p.price_amount / 100);
+          if (p?.price_amount) {
+            priceUSD = Math.round(p.price_amount / 100);
+          }
           break;
         }
       }
@@ -42,7 +44,9 @@ export default async function PricingPage() {
       const productId = process.env.NEXT_PUBLIC_STARTER_TIER as string;
       for (const base of endpoints) {
         const res = await tryFetch(`${base}/products`);
-        if (!res.ok) continue;
+        if (!res.ok) {
+          continue;
+        }
         const data = await res.json();
         const items = data.items || [];
         const prod = items.find((i: any) => i?.id === productId);

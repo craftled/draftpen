@@ -4,18 +4,18 @@ import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
-interface ChatTextHighlighterProps {
+type ChatTextHighlighterProps = {
   children: React.ReactNode;
   onHighlight?: (text: string) => void;
   className?: string;
   removeHighlightOnClick?: boolean;
-}
+};
 
-interface PopupPosition {
+type PopupPosition = {
   x: number;
   y: number;
   text: string;
-}
+};
 
 export const ChatTextHighlighter: React.FC<ChatTextHighlighterProps> = ({
   children,
@@ -29,9 +29,7 @@ export const ChatTextHighlighter: React.FC<ChatTextHighlighterProps> = ({
   const handleCopy = useCallback(async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      console.log("Text copied:", text);
-    } catch (err) {
-      console.error("Copy failed:", err);
+    } catch (_err) {
       // Fallback method
       const textArea = document.createElement("textarea");
       textArea.value = text;
@@ -43,10 +41,7 @@ export const ChatTextHighlighter: React.FC<ChatTextHighlighterProps> = ({
       textArea.select();
       try {
         document.execCommand("copy");
-        console.log("Fallback copy succeeded");
-      } catch (fallbackErr) {
-        console.error("Fallback copy failed:", fallbackErr);
-      }
+      } catch (_fallbackErr) {}
       document.body.removeChild(textArea);
     }
   }, []);
@@ -98,7 +93,7 @@ export const ChatTextHighlighter: React.FC<ChatTextHighlighterProps> = ({
   const handlePointerDown = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
       const target = event.target as Node;
-      if (popupRef.current && popupRef.current.contains(target)) {
+      if (popupRef.current?.contains(target)) {
         return;
       }
       setPopup(null);
@@ -114,7 +109,9 @@ export const ChatTextHighlighter: React.FC<ChatTextHighlighterProps> = ({
   useEffect(() => {
     const handleScrollOrResize = () => setPopup(null);
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setPopup(null);
+      if (e.key === "Escape") {
+        setPopup(null);
+      }
     };
     window.addEventListener("scroll", handleScrollOrResize, true);
     window.addEventListener("resize", handleScrollOrResize);

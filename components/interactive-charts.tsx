@@ -15,14 +15,14 @@ const CHART_COLORS = {
   red: ["#ef4444", "#f87171"], // Danger & Hover
 };
 
-interface BaseChart {
+type BaseChart = {
   type: string;
   title: string;
   x_label?: string;
   y_label?: string;
   elements: any[];
   x_scale?: string;
-}
+};
 
 // Create a memoized chart component to prevent unnecessary rerenders
 const InteractiveChart = React.memo(
@@ -94,10 +94,10 @@ const InteractiveChart = React.memo(
           },
           position(
             pos: [number, number],
-            params: any,
-            dom: HTMLElement,
-            rect: { x: number; y: number; width: number; height: number },
-            size: { contentSize: [number, number]; viewSize: [number, number] }
+            _params: any,
+            _dom: HTMLElement,
+            _rect: { x: number; y: number; width: number; height: number },
+            _size: { contentSize: [number, number]; viewSize: [number, number] }
           ) {
             // Handle mobile positioning
             const isMobile = window.innerWidth < 640;
@@ -112,7 +112,7 @@ const InteractiveChart = React.memo(
             const isMobile = window.innerWidth < 640;
             if (isMobile && Array.isArray(params)) {
               // Limit to just values for mobile
-              let result = params[0].axisValueLabel + "<br/>";
+              let result = `${params[0].axisValueLabel}<br/>`;
               params.forEach((param: any) => {
                 result += `<div style="display:flex;align-items:center;margin:3px 0">
               <span style="display:inline-block;width:6px;height:6px;margin-right:5px;border-radius:50%;background-color:${param.color};"></span>
@@ -350,9 +350,12 @@ const InteractiveChart = React.memo(
             axisLabel: {
               ...defaultAxisOptions.axisLabel,
               formatter: (value: number) => {
-                if (value >= 1_000_000)
-                  return (value / 1_000_000).toFixed(1) + "M";
-                if (value >= 1000) return (value / 1000).toFixed(0) + "K";
+                if (value >= 1_000_000) {
+                  return `${(value / 1_000_000).toFixed(1)}M`;
+                }
+                if (value >= 1000) {
+                  return `${(value / 1000).toFixed(0)}K`;
+                }
                 return value.toFixed(0);
               },
             },
@@ -365,7 +368,9 @@ const InteractiveChart = React.memo(
         const data = chart.elements.reduce(
           (acc: Record<string, any[]>, item) => {
             const key = item.group;
-            if (!acc[key]) acc[key] = [];
+            if (!acc[key]) {
+              acc[key] = [];
+            }
             acc[key].push(item);
             return acc;
           },
@@ -418,9 +423,12 @@ const InteractiveChart = React.memo(
                 Object.values(data)[0]?.length > (isMobile ? 3 : 5) ? 30 : 0,
               interval: 0,
               formatter: (value: string) => {
-                if (isMobile && value.length > 6)
-                  return value.substring(0, 5) + "…";
-                if (value.length > 8) return value.substring(0, 7) + "…";
+                if (isMobile && value.length > 6) {
+                  return `${value.substring(0, 5)}…`;
+                }
+                if (value.length > 8) {
+                  return `${value.substring(0, 7)}…`;
+                }
                 return value;
               },
             },
@@ -441,9 +449,12 @@ const InteractiveChart = React.memo(
             axisLabel: {
               ...defaultAxisOptions.axisLabel,
               formatter: (value: number) => {
-                if (value >= 1_000_000)
-                  return (value / 1_000_000).toFixed(1) + "M";
-                if (value >= 1000) return (value / 1000).toFixed(0) + "K";
+                if (value >= 1_000_000) {
+                  return `${(value / 1_000_000).toFixed(1)}M`;
+                }
+                if (value >= 1000) {
+                  return `${(value / 1000).toFixed(0)}K`;
+                }
                 return value.toFixed(0);
               },
             },
@@ -494,15 +505,22 @@ const InteractiveChart = React.memo(
   (prevProps, nextProps) => {
     // Deep comparison of chart props to prevent unnecessary rerenders
     // Only rerender if essential properties change
-    if (prevProps.chart.title !== nextProps.chart.title) return false;
-    if (prevProps.chart.type !== nextProps.chart.type) return false;
+    if (prevProps.chart.title !== nextProps.chart.title) {
+      return false;
+    }
+    if (prevProps.chart.type !== nextProps.chart.type) {
+      return false;
+    }
 
     // Check if elements array references are the same
-    if (prevProps.chart.elements === nextProps.chart.elements) return true;
+    if (prevProps.chart.elements === nextProps.chart.elements) {
+      return true;
+    }
 
     // If elements references are different but lengths are different, they're definitely different
-    if (prevProps.chart.elements.length !== nextProps.chart.elements.length)
+    if (prevProps.chart.elements.length !== nextProps.chart.elements.length) {
       return false;
+    }
 
     // For streaming, consider charts equal if they have the same number of elements
     // and each element has the same label and value/points reference
@@ -511,21 +529,28 @@ const InteractiveChart = React.memo(
       const prevElement = prevProps.chart.elements[i];
       const nextElement = nextProps.chart.elements[i];
 
-      if (prevElement.label !== nextElement.label) return false;
+      if (prevElement.label !== nextElement.label) {
+        return false;
+      }
 
       // For pie charts, compare values directly
       if (prevProps.chart.type === "pie") {
-        if (prevElement.value !== nextElement.value) return false;
+        if (prevElement.value !== nextElement.value) {
+          return false;
+        }
         continue;
       }
 
       // For line/scatter charts, compare points
       // If points reference is the same, elements are equivalent
-      if (prevElement.points === nextElement.points) continue;
+      if (prevElement.points === nextElement.points) {
+        continue;
+      }
 
       // If lengths are different, they're definitely different
-      if (prevElement.points?.length !== nextElement.points?.length)
+      if (prevElement.points?.length !== nextElement.points?.length) {
         return false;
+      }
     }
 
     // If we reach here, consider them equal

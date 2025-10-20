@@ -7,13 +7,13 @@ import { cn } from "@/lib/utils";
 export const DEFAULT_FAVICON_FALLBACK =
   "https://www.google.com/s2/favicons?sz=64&domain=example.com";
 
-export interface InlineFaviconProps {
+export type InlineFaviconProps = {
   alt: string;
   className?: string;
   fallbackSrc?: string | null;
   size?: number;
   src?: string | null;
-}
+};
 
 export function InlineFavicon({
   alt,
@@ -36,7 +36,7 @@ export function InlineFavicon({
       <div
         aria-label={alt}
         className={cn(
-          "flex items-center justify-center rounded-full bg-neutral-200 text-[10px] font-semibold text-neutral-600 dark:bg-neutral-700 dark:text-neutral-200",
+          "flex items-center justify-center rounded-full bg-neutral-200 font-semibold text-[10px] text-neutral-600 dark:bg-neutral-700 dark:text-neutral-200",
           className
         )}
         role="img"

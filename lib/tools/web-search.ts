@@ -12,7 +12,9 @@ import { serverEnv } from "@/env/server";
 import type { ChatMessage } from "../types";
 
 const extractDomain = (url: string | null | undefined): string => {
-  if (!url || typeof url !== "string") return "";
+  if (!url || typeof url !== "string") {
+    return "";
+  }
   const urlPattern = /^https?:\/\/([^/?#]+)(?:[/?#]|$)/i;
   return url.match(urlPattern)?.[1] || url;
 };
@@ -68,8 +70,10 @@ const isSearchResultImages = (
 const getImageUrl = (item: SearchResultImages): string | undefined =>
   item.imageUrl || item.url;
 
-const processDomains = (domains?: (string | null)[]): string[] | undefined => {
-  if (!domains || domains.length === 0) return;
+const _processDomains = (domains?: (string | null)[]): string[] | undefined => {
+  if (!domains || domains.length === 0) {
+    return;
+  }
 
   const processedDomains = domains
     .map((domain) => extractDomain(domain))
@@ -78,7 +82,7 @@ const processDomains = (domains?: (string | null)[]): string[] | undefined => {
 };
 
 // Search provider strategy interface
-interface SearchStrategy {
+type SearchStrategy = {
   search(
     queries: string[],
     options: {
@@ -90,13 +94,13 @@ interface SearchStrategy {
   ): Promise<{
     searches: Array<{ query: string; results: any[]; images: any[] }>;
   }>;
-}
+};
 
 // Parallel AI search strategy
 class ParallelSearchStrategy implements SearchStrategy {
   constructor(
-    private parallel: Parallel,
-    private firecrawl: FirecrawlApp
+    private readonly parallel: Parallel,
+    private readonly firecrawl: FirecrawlApp
   ) {}
 
   async search(
@@ -110,10 +114,6 @@ class ParallelSearchStrategy implements SearchStrategy {
   ) {
     // Limit queries to first 5 for Parallel AI
     const limitedQueries = queries.slice(0, 5);
-    console.log(
-      "Using Parallel AI batch processing for queries:",
-      limitedQueries
-    );
 
     // Send start notifications for all queries
     limitedQueries.forEach((query, index) => {
@@ -152,10 +152,7 @@ class ParallelSearchStrategy implements SearchStrategy {
                 sources: ["images"],
                 limit: 3,
               })
-              .catch((error) => {
-                console.error(`Firecrawl error for query "${query}":`, error);
-                return { images: [] } as Partial<Document> as any;
-              }),
+              .catch((_error) => ({ images: [] }) as Partial<Document> as any),
           ]);
 
           const results = (singleResponse?.results || []).map(
@@ -196,12 +193,7 @@ class ParallelSearchStrategy implements SearchStrategy {
             results: deduplicateByDomainAndUrl(results),
             images: deduplicateByDomainAndUrl(images),
           };
-        } catch (error) {
-          console.error(
-            `Parallel AI search error for query "${query}":`,
-            error
-          );
-
+        } catch (_error) {
           options.dataStream?.write({
             type: "data-query_completion",
             data: {
@@ -220,9 +212,7 @@ class ParallelSearchStrategy implements SearchStrategy {
 
       const searchResults = await Promise.all(perQueryPromises);
       return { searches: searchResults };
-    } catch (error) {
-      console.error("Parallel AI batch orchestration error:", error);
-
+    } catch (_error) {
       // Send error notifications for all queries
       limitedQueries.forEach((query, index) => {
         options.dataStream?.write({
@@ -251,7 +241,7 @@ class ParallelSearchStrategy implements SearchStrategy {
 
 // Firecrawl search strategy
 class FirecrawlSearchStrategy implements SearchStrategy {
-  constructor(private firecrawl: FirecrawlApp) {}
+  constructor(private readonly firecrawl: FirecrawlApp) {}
 
   async search(
     queries: string[],
@@ -364,9 +354,7 @@ class FirecrawlSearchStrategy implements SearchStrategy {
           results: deduplicateByDomainAndUrl(results),
           images: images.filter((img) => img.url && img.description),
         };
-      } catch (error) {
-        console.error(`Firecrawl search error for query "${query}":`, error);
-
+      } catch (_error) {
         options.dataStream?.write({
           type: "data-query_completion",
           data: {
@@ -394,7 +382,7 @@ class FirecrawlSearchStrategy implements SearchStrategy {
 
 // Exa search strategy
 class ExaSearchStrategy implements SearchStrategy {
-  constructor(private exa: Exa) {}
+  constructor(private readonly exa: Exa) {}
 
   async search(
     queries: string[],
@@ -449,7 +437,7 @@ class ExaSearchStrategy implements SearchStrategy {
             collectedImages.push({
               url: result.image,
               description: cleanTitle(
-                result.title || result.text?.substring(0, 100) + "..." || ""
+                result.title || `${result.text?.substring(0, 100)}...` || ""
               ),
             });
           }
@@ -486,9 +474,7 @@ class ExaSearchStrategy implements SearchStrategy {
           results: deduplicateByDomainAndUrl(results),
           images: images.filter((img) => img.url && img.description),
         };
-      } catch (error) {
-        console.error(`Exa search error for query "${query}":`, error);
-
+      } catch (_error) {
         options.dataStream?.write({
           type: "data-query_completion",
           data: {
@@ -598,12 +584,6 @@ export function webSearchTool(
         parallel: new Parallel({ apiKey: serverEnv.PARALLEL_API_KEY }),
         firecrawl: new FirecrawlApp({ apiKey: serverEnv.FIRECRAWL_API_KEY }),
       };
-
-      console.log("Queries:", queries);
-      console.log("Max Results:", maxResults);
-      console.log("Topics:", topics);
-      console.log("Quality:", quality);
-      console.log("Search Provider:", searchProvider);
 
       // Create and use the appropriate search strategy
       const strategy = createSearchStrategy(searchProvider, clients);

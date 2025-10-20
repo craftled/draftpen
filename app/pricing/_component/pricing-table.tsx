@@ -33,11 +33,11 @@ type SubscriptionDetailsResult = {
   errorType?: "CANCELED" | "EXPIRED" | "GENERAL";
 };
 
-interface PricingTableProps {
+type PricingTableProps = {
   subscriptionDetails: SubscriptionDetailsResult;
   user: ComprehensiveUserData | null;
   priceUSD?: number; // from server (Polar), optional fallback to PRICING
-}
+};
 
 export default function PricingTable({
   subscriptionDetails,
@@ -45,41 +45,21 @@ export default function PricingTable({
   priceUSD,
 }: PricingTableProps) {
   const router = useRouter();
-  // Debug logging (can be removed in production)
-  console.log("PricingTable Debug:", {
-    subscriptionDetails,
-    userProStatus: user
-      ? {
-          id: user.id,
-          isProUser: user.isProUser,
-          proSource: user.proSource,
-          hasPolarSubscription: !!user.polarSubscription,
-          polarSubStatus: user.polarSubscription?.status,
-          polarSubProductId: user.polarSubscription?.productId,
-        }
-      : null,
-  });
 
   const handleCheckout = async (productId: string, slug: string) => {
-    console.log("🛒 Checkout initiated:", { productId, slug, hasUser: !!user });
-
     if (!user) {
-      console.log("❌ No user, redirecting to sign-up");
       toast.info("Please sign in to start your free trial");
       router.push("/sign-up");
       return;
     }
 
     try {
-      console.log("📦 Opening checkout with authClient.checkout()...");
       await authClient.checkout({
         products: [productId],
         slug,
         allowDiscountCodes: true,
       });
-      console.log("✅ Checkout opened successfully");
-    } catch (error) {
-      console.error("❌ Checkout failed:", error);
+    } catch (_error) {
       toast.error("Something went wrong. Please try again.");
     }
   };
@@ -87,8 +67,7 @@ export default function PricingTable({
   const handleManageSubscription = async () => {
     try {
       await authClient.customer.portal();
-    } catch (error) {
-      console.error("Failed to open customer portal:", error);
+    } catch (_error) {
       toast.error("Failed to open subscription management");
     }
   };
@@ -97,14 +76,15 @@ export default function PricingTable({
   const STARTER_SLUG = process.env.NEXT_PUBLIC_STARTER_SLUG;
 
   if (!(STARTER_TIER && STARTER_SLUG)) {
-    console.error("Missing required environment variables");
     throw new Error("Missing required environment variables for Starter tier");
   }
 
   // Check if user has active Polar subscription (includes trialing)
   const hasPolarSubscription = () => {
     const sub = subscriptionDetails.subscription;
-    if (!(subscriptionDetails.hasSubscription && sub)) return false;
+    if (!(subscriptionDetails.hasSubscription && sub)) {
+      return false;
+    }
     const now = new Date();
     return (
       sub.productId === STARTER_TIER &&
@@ -118,7 +98,9 @@ export default function PricingTable({
 
   // Get the source of Pro access for display
   const getProAccessSource = () => {
-    if (hasPolarSubscription()) return "polar";
+    if (hasPolarSubscription()) {
+      return "polar";
+    }
     return null;
   };
 

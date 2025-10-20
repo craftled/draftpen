@@ -61,20 +61,20 @@ const AuthIcons = {
   ),
 };
 
-interface SignInButtonProps {
+type SignInButtonProps = {
   title: string;
   provider: AuthProvider;
   loading: boolean;
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
   callbackURL: string;
   icon: React.ReactNode;
-}
+};
 
-interface AuthCardProps {
+type AuthCardProps = {
   title: string;
   description: string;
   mode?: "sign-in" | "sign-up";
-}
+};
 
 /**
  * Button component for social authentication providers

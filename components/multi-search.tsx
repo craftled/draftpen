@@ -90,9 +90,7 @@ const SourceCard: React.FC<{ result: SearchResult; onClick?: () => void }> = ({
 }) => {
   const [imageLoaded, setImageLoaded] = React.useState(false);
   const faviconUrl = getFaviconUrl(result.url);
-  const [faviconSrc, setFaviconSrc] = React.useState<string | null>(
-    faviconUrl
-  );
+  const [faviconSrc, setFaviconSrc] = React.useState<string | null>(faviconUrl);
   const hostname = new URL(result.url).hostname.replace("www.", "");
 
   React.useEffect(() => {
@@ -484,7 +482,7 @@ const LoadingState: React.FC<{
   annotations: DataUIPart<CustomUIDataTypes>[];
   args: MultiSearchArgs;
 }> = ({ queries, annotations, args }) => {
-  const completedCount = annotations.length;
+  const _completedCount = annotations.length;
   const totalResults = annotations.reduce(
     (sum, a) => sum + a.data.resultsCount,
     0
@@ -497,11 +495,15 @@ const LoadingState: React.FC<{
     const container = e.currentTarget;
 
     // Only handle vertical scrolling
-    if (e.deltaY === 0) return;
+    if (e.deltaY === 0) {
+      return;
+    }
 
     // Check if container can scroll horizontally
     const canScrollHorizontally = container.scrollWidth > container.clientWidth;
-    if (!canScrollHorizontally) return;
+    if (!canScrollHorizontally) {
+      return;
+    }
 
     // Always stop propagation first to prevent page scroll interference
     e.stopPropagation();
@@ -614,7 +616,7 @@ const LoadingState: React.FC<{
                 onWheel={handleWheelScroll}
                 ref={loadingSkeletonRef}
               >
-                {[...Array(3)].map((_, i) => (
+                {[...new Array(3)].map((_, i) => (
                   <div
                     className="w-[320px] flex-shrink-0 rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
                     key={i}
@@ -641,7 +643,7 @@ const LoadingState: React.FC<{
       {/* Images skeleton */}
       <div>
         <div className="grid h-[140px] grid-cols-2 grid-rows-2 gap-2 md:h-[160px] md:grid-cols-4">
-          {[...Array(5)].map((_, i) => (
+          {[...new Array(5)].map((_, i) => (
             <div
               className={cn(
                 "animate-pulse rounded-lg bg-neutral-100 dark:bg-neutral-800",
@@ -682,11 +684,15 @@ const MultiSearch = ({
     const container = e.currentTarget;
 
     // Only handle vertical scrolling
-    if (e.deltaY === 0) return;
+    if (e.deltaY === 0) {
+      return;
+    }
 
     // Check if container can scroll horizontally
     const canScrollHorizontally = container.scrollWidth > container.clientWidth;
-    if (!canScrollHorizontally) return;
+    if (!canScrollHorizontally) {
+      return;
+    }
 
     // Always stop propagation first to prevent page scroll interference
     e.stopPropagation();

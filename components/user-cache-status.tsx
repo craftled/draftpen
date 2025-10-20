@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUser } from "@/contexts/user-context";
 
-interface UserCacheStatusProps {
+type UserCacheStatusProps = {
   className?: string;
-}
+};
 
 export function UserCacheStatus({ className }: UserCacheStatusProps) {
   const {

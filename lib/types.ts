@@ -107,16 +107,16 @@ type createMemoryTools = InferUITool<SearchMemoryTool>;
 type addMemoryTools = InferUITool<AddMemoryTool>;
 // Kept for backward-compatibility of old messages referencing code_context
 // No runtime tool implementation remains; this is a loose UI-only placeholder type
-export interface CodeContextToolInput {
+export type CodeContextToolInput = {
   query?: string;
-}
+};
 
-export interface CodeContextToolOutput {
+export type CodeContextToolOutput = {
   response?: string;
   resultsCount?: number;
   outputTokens?: number;
   searchTime?: number;
-}
+};
 
 type codeContextTool = {
   input: CodeContextToolInput;
@@ -180,9 +180,9 @@ export type ChatMessage = UIMessage<
   ChatTools
 >;
 
-export interface Attachment {
+export type Attachment = {
   name: string;
   url: string;
   contentType?: string;
   mediaType?: string;
-}
+};

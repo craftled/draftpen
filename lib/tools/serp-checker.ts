@@ -2,25 +2,25 @@ import { tool } from "ai";
 import { z } from "zod";
 import { serverEnv } from "@/env/server";
 
-interface SerpResult {
+type SerpResult = {
   title: string;
   link: string;
   snippet: string;
   date?: string;
   position: number;
   sitelinks?: Array<{ title: string; link: string }>;
-}
+};
 
-interface PeopleAlsoAsk {
+type PeopleAlsoAsk = {
   question: string;
   snippet: string;
   title: string;
   link: string;
-}
+};
 
-interface RelatedSearch {
+type RelatedSearch = {
   query: string;
-}
+};
 
 export const serpCheckerTool = tool({
   description:
@@ -119,7 +119,7 @@ export const serpCheckerTool = tool({
 
     // Fetch remaining pages if needed (page 2..N)
     if (totalPages > 1) {
-      const fetches = [] as Array<Promise<{ page: number; json: any }>>;
+      const fetches = [] as Promise<{ page: number; json: any }>[];
       for (let p = 2; p <= totalPages; p++) {
         fetches.push(
           fetch(url, {

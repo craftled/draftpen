@@ -31,7 +31,7 @@ import type { LookoutFormHookReturn } from "../hooks/use-lookout-form";
 import { TimePicker } from "./time-picker";
 import { TimezoneSelector } from "./timezone-selector";
 
-interface LookoutFormProps {
+type LookoutFormProps = {
   formHook: LookoutFormHookReturn;
   isMutating: boolean;
   activeDailyLookouts: number;
@@ -40,7 +40,7 @@ interface LookoutFormProps {
   canCreateDailyMore: boolean;
   createLookout: any;
   updateLookout: any;
-}
+};
 
 export function LookoutForm({
   formHook,

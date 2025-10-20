@@ -9,13 +9,13 @@ function getClient() {
 
 export type ConnectorProvider = "google-drive" | "notion" | "onedrive";
 
-export interface ConnectorConfig {
+export type ConnectorConfig = {
   name: string;
   description: string;
   icon: string;
   documentLimit: number;
   syncTag: string;
-}
+};
 
 const GoogleDrive = (props: SVGProps<SVGSVGElement>) => (
   <svg
@@ -133,8 +133,6 @@ export async function createConnection(
   provider: ConnectorProvider,
   userId: string
 ) {
-  console.log(`🔗 Creating connection for ${provider}, userId: ${userId}`);
-
   // OneDrive is coming soon, prevent connections
   if (provider === "onedrive") {
     throw new Error("OneDrive connector is coming soon");
@@ -143,9 +141,6 @@ export async function createConnection(
   const client = getClient();
   const config = CONNECTOR_CONFIGS[provider];
   const baseUrl = getBaseUrl();
-
-  console.log(`📡 Using base URL: ${baseUrl}`);
-  console.log(`🏷️ Container tags: [${userId}, ${config.syncTag}]`);
 
   const connection = await client.connections.create(provider, {
     redirectUrl: `${baseUrl}/connectors/${provider}/callback`,
@@ -156,10 +151,6 @@ export async function createConnection(
       userId,
     },
   });
-
-  console.log(`✅ ${config.name} connection created successfully`);
-  console.log("⏰ Auth expires in:", connection.expiresIn);
-  console.log("🔗 Auth link:", connection.authLink);
 
   return connection.authLink;
 }
@@ -174,35 +165,19 @@ export async function getConnection(
   provider: ConnectorProvider,
   userId: string
 ) {
-  console.log(`🔍 Getting connection for ${provider}, userId: ${userId}`);
   try {
     const client = getClient();
     const config = CONNECTOR_CONFIGS[provider];
-    console.log(
-      `🏷️ Searching with container tags: [${userId}, ${config.syncTag}]`
-    );
 
     const connection = await client.connections.getByTags(provider, {
       containerTags: [userId, config.syncTag],
     });
 
     if (!connection) {
-      console.log(`❌ No connection found for ${provider}`);
       return null;
     }
-
-    console.log(`✅ Found connection for ${provider}:`, {
-      id: connection.id,
-      email: connection.email,
-      createdAt: connection.createdAt,
-      expiresAt: connection.expiresAt,
-    });
     return connection;
-  } catch (error) {
-    console.error(
-      `❌ Error getting ${CONNECTOR_CONFIGS[provider].name} connection:`,
-      error
-    );
+  } catch (_error) {
     return null;
   }
 }
@@ -210,7 +185,6 @@ export async function getConnection(
 // List all connections for a user
 export async function listUserConnections(userId: string) {
   try {
-    console.log("listing user connections", userId);
     const client = getClient();
 
     // Get all providers and their sync tags
@@ -224,16 +198,13 @@ export async function listUserConnections(userId: string) {
           containerTags: [userId, config.syncTag],
         });
         return connections || [];
-      } catch (error) {
-        console.error(`Error fetching connections for ${provider}:`, error);
+      } catch (_error) {
         return [];
       }
     });
 
     const allConnections = await Promise.all(connectionPromises);
     const flatConnections = allConnections.flat();
-
-    console.log("connections list", flatConnections);
     if (!flatConnections || flatConnections.length === 0) {
       return [];
     }
@@ -248,48 +219,33 @@ export async function listUserConnections(userId: string) {
         syncTag: `${conn.provider}-sync`,
       },
     }));
-  } catch (error) {
-    console.error("Error listing user connections:", error);
+  } catch (_error) {
     return [];
   }
 }
 
 // Delete connection by ID
 export async function deleteConnection(connectionId: string) {
-  console.log(`🗑️ Deleting connection with ID: ${connectionId}`);
   try {
     const client = getClient();
     const result = await client.connections.deleteByID(connectionId);
-    console.log("✅ Successfully deleted connection:", result.id);
     return result;
-  } catch (error) {
-    console.error(`❌ Error deleting connection ${connectionId}:`, error);
+  } catch (_error) {
     return null;
   }
 }
 
 // Trigger manual sync for a specific provider
 export async function manualSync(provider: ConnectorProvider, userId: string) {
-  console.log(`🔄 Starting manual sync for ${provider}, userId: ${userId}`);
   try {
     const client = getClient();
-    const config = CONNECTOR_CONFIGS[provider];
-    console.log(
-      `🏷️ Syncing with container tags: [${userId}, ${config.syncTag}]`
-    );
+    const _config = CONNECTOR_CONFIGS[provider];
 
     const result = await client.connections.import(provider, {
       containerTags: [userId],
     });
-
-    console.log(`✅ Manual sync initiated successfully for ${config.name}`);
-    console.log("📊 Sync result:", result);
     return result;
-  } catch (error) {
-    console.error(
-      `❌ Error triggering manual sync for ${CONNECTOR_CONFIGS[provider].name}:`,
-      error
-    );
+  } catch (_error) {
     return null;
   }
 }
@@ -299,13 +255,9 @@ export async function getSyncStatus(
   provider: ConnectorProvider,
   userId: string
 ) {
-  console.log(`📊 Getting sync status for ${provider}, userId: ${userId}`);
   try {
     const client = getClient();
     const config = CONNECTOR_CONFIGS[provider];
-    console.log(
-      `🏷️ Status check with container tags: [${userId}, ${config.syncTag}]`
-    );
 
     // Get connection details using the direct API call
     const connection = await client.connections.getByTags(provider, {
@@ -313,15 +265,8 @@ export async function getSyncStatus(
     });
 
     if (!connection) {
-      console.log(`❌ No connection found for ${provider} status check`);
       return null;
     }
-
-    console.log("connection", connection);
-
-    console.log(
-      `✅ Connection found for ${provider}, extracting document count from metadata...`
-    );
 
     let actualDocumentCount = 0;
 
@@ -330,15 +275,12 @@ export async function getSyncStatus(
       // Google Drive uses pageToken in metadata to indicate synced documents
       const pageToken = connection.metadata?.pageToken;
       actualDocumentCount = typeof pageToken === "number" ? pageToken : 0;
-      console.log("Google Drive pageToken count:", actualDocumentCount);
     } else {
       // Other providers (Notion, OneDrive) use listDocuments API
       try {
         const documentCount = await client.connections.listDocuments(provider, {
           containerTags: [userId, config.syncTag],
         });
-
-        console.log("documentCount for", provider, ":", documentCount);
 
         // Handle different response formats from listDocuments
         if (Array.isArray(documentCount)) {
@@ -353,8 +295,7 @@ export async function getSyncStatus(
         } else if (typeof documentCount === "number") {
           actualDocumentCount = documentCount;
         }
-      } catch (error) {
-        console.error(`Error getting document count for ${provider}:`, error);
+      } catch (_error) {
         actualDocumentCount = 0;
       }
     }
@@ -366,14 +307,8 @@ export async function getSyncStatus(
       email: connection.email,
       status: "active",
     };
-
-    console.log(`📈 Sync status for ${provider}:`, status);
     return status;
-  } catch (error) {
-    console.error(
-      `❌ Error getting sync status for ${CONNECTOR_CONFIGS[provider].name}:`,
-      error
-    );
+  } catch (_error) {
     return null;
   }
 }

@@ -24,10 +24,10 @@ const ProBadge = ({ className = "" }: { className?: string }) => (
   </span>
 );
 
-interface PostMessageUpgradeDialogProps {
+type PostMessageUpgradeDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}
+};
 
 export const PostMessageUpgradeDialog = React.memo(
   ({ open, onOpenChange }: PostMessageUpgradeDialogProps) => (
@@ -154,10 +154,10 @@ export const PostMessageUpgradeDialog = React.memo(
 
 PostMessageUpgradeDialog.displayName = "PostMessageUpgradeDialog";
 
-interface LookoutAnnouncementDialogProps {
+type LookoutAnnouncementDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}
+};
 
 export const LookoutAnnouncementDialog = React.memo(
   ({ open, onOpenChange }: LookoutAnnouncementDialogProps) => {
@@ -170,7 +170,9 @@ export const LookoutAnnouncementDialog = React.memo(
 
     React.useEffect(() => {
       const handleKeyPress = (e: KeyboardEvent) => {
-        if (!open) return;
+        if (!open) {
+          return;
+        }
 
         if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
           e.preventDefault();
@@ -314,7 +316,7 @@ export const LookoutAnnouncementDialog = React.memo(
 
 LookoutAnnouncementDialog.displayName = "LookoutAnnouncementDialog";
 
-interface ChatDialogsProps {
+type ChatDialogsProps = {
   commandDialogOpen: boolean;
   setCommandDialogOpen: (open: boolean) => void;
   showSignInPrompt: boolean;
@@ -331,7 +333,7 @@ interface ChatDialogsProps {
   setHasShownLookoutAnnouncement: (value: boolean) => void;
   user: any;
   setAnyDialogOpen: (open: boolean) => void;
-}
+};
 
 export const ChatDialogs = React.memo(
   ({

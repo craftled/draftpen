@@ -3,27 +3,27 @@ import {
   InlineFavicon,
 } from "@/components/ui/inline-favicon";
 
-interface SerpResult {
+type SerpResult = {
   title: string;
   link: string;
   snippet: string;
   date?: string;
   position: number;
   sitelinks?: Array<{ title: string; link: string }>; // optional, unused for compact view
-}
+};
 
-interface PeopleAlsoAskItem {
+type PeopleAlsoAskItem = {
   question: string;
   snippet?: string;
   title?: string;
   link: string;
-}
+};
 
-interface RelatedSearchItem {
+type RelatedSearchItem = {
   query: string;
-}
+};
 
-interface SerperOutput {
+type SerperOutput = {
   provider: string;
   endpoint: string;
   input?: { query?: string; num?: number; country?: string; language?: string };
@@ -31,7 +31,7 @@ interface SerperOutput {
   peopleAlsoAsk?: { count: number; questions: PeopleAlsoAskItem[] };
   relatedSearches?: { count: number; queries: RelatedSearchItem[] };
   credits?: number;
-}
+};
 
 function hostFromUrl(url: string): string {
   try {

@@ -74,92 +74,75 @@ export const xSearchTool = tool({
     postViewCount,
     maxResults = 15,
   }) => {
-    try {
-      const sanitizeHandle = (handle: string) =>
-        handle.replace(/^@+/, "").trim();
+    const sanitizeHandle = (handle: string) => handle.replace(/^@+/, "").trim();
 
-      const normalizedInclude = Array.isArray(includeXHandles)
-        ? includeXHandles.map(sanitizeHandle).filter(Boolean)
-        : undefined;
-      const normalizedExclude = Array.isArray(excludeXHandles)
-        ? excludeXHandles.map(sanitizeHandle).filter(Boolean)
-        : undefined;
+    const normalizedInclude = Array.isArray(includeXHandles)
+      ? includeXHandles.map(sanitizeHandle).filter(Boolean)
+      : undefined;
+    const normalizedExclude = Array.isArray(excludeXHandles)
+      ? excludeXHandles.map(sanitizeHandle).filter(Boolean)
+      : undefined;
 
-      const toYMD = (d: Date) => d.toISOString().slice(0, 10);
-      const today = new Date();
-      const daysAgo = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000);
-      const effectiveStart =
-        startDate && startDate.trim().length > 0 ? startDate : toYMD(daysAgo);
-      const effectiveEnd =
-        endDate && endDate.trim().length > 0 ? endDate : toYMD(today);
+    const toYMD = (d: Date) => d.toISOString().slice(0, 10);
+    const today = new Date();
+    const daysAgo = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000);
+    const effectiveStart =
+      startDate && startDate.trim().length > 0 ? startDate : toYMD(daysAgo);
+    const effectiveEnd =
+      endDate && endDate.trim().length > 0 ? endDate : toYMD(today);
 
-      console.log(
-        "[X search - includeHandles]:",
-        normalizedInclude,
-        "[excludeHandles]:",
-        normalizedExclude
-      );
+    const { text } = await generateText({
+      model: modelProvider.languageModel("gpt5-mini"),
+      system:
+        "You are a helpful assistant that searches for X posts and returns the results in a structured format. You will be given a search query and optional handles to include/exclude. You will then search for the posts and return the results in a structured format. You will also cite the sources in the format [Source No.]. Go very deep in the search and return the most relevant results.",
+      messages: [{ role: "user", content: `${query}` }],
+      maxOutputTokens: 10,
 
-      const { text } = await generateText({
-        model: modelProvider.languageModel("gpt5-mini"),
-        system:
-          "You are a helpful assistant that searches for X posts and returns the results in a structured format. You will be given a search query and optional handles to include/exclude. You will then search for the posts and return the results in a structured format. You will also cite the sources in the format [Source No.]. Go very deep in the search and return the most relevant results.",
-        messages: [{ role: "user", content: `${query}` }],
-        maxOutputTokens: 10,
+      onStepFinish: (_step) => {},
+    });
 
-        onStepFinish: (step) => {
-          console.log("[X search step]: ", step);
-        },
-      });
+    const citations: any[] = [];
+    const allSources = [];
 
-      console.log("[X search data]: ", text);
+    if (citations.length > 0) {
+      const tweetFetchPromises = citations
+        .filter((link) => link.sourceType === "url")
+        .map(async (link) => {
+          try {
+            const tweetUrl = link.sourceType === "url" ? link.url : "";
+            const tweetId = tweetUrl.match(/\/status\/(\d+)/)?.[1] || "";
 
-      const citations: any[] = [];
-      const allSources = [];
-
-      if (citations.length > 0) {
-        const tweetFetchPromises = citations
-          .filter((link) => link.sourceType === "url")
-          .map(async (link) => {
-            try {
-              const tweetUrl = link.sourceType === "url" ? link.url : "";
-              const tweetId = tweetUrl.match(/\/status\/(\d+)/)?.[1] || "";
-
-              const tweetData = await getTweet(tweetId);
-              if (!tweetData) return null;
-
-              const text = tweetData.text;
-              if (!text) return null;
-
-              return {
-                text,
-                link: tweetUrl,
-              };
-            } catch (error) {
-              console.error(
-                `Error fetching tweet data for ${link.sourceType === "url" ? link.url : ""}:`,
-                error
-              );
+            const tweetData = await getTweet(tweetId);
+            if (!tweetData) {
               return null;
             }
-          });
 
-        const tweetResults = await Promise.all(tweetFetchPromises);
+            const text = tweetData.text;
+            if (!text) {
+              return null;
+            }
 
-        allSources.push(...tweetResults.filter((result) => result !== null));
-      }
+            return {
+              text,
+              link: tweetUrl,
+            };
+          } catch (_error) {
+            return null;
+          }
+        });
 
-      return {
-        content: text,
-        citations,
-        sources: allSources,
-        query,
-        dateRange: `${effectiveStart} to ${effectiveEnd}`,
-        handles: normalizedInclude || normalizedExclude || [],
-      };
-    } catch (error) {
-      console.error("X search error:", error);
-      throw error;
+      const tweetResults = await Promise.all(tweetFetchPromises);
+
+      allSources.push(...tweetResults.filter((result) => result !== null));
     }
+
+    return {
+      content: text,
+      citations,
+      sources: allSources,
+      query,
+      dateRange: `${effectiveStart} to ${effectiveEnd}`,
+      handles: normalizedInclude || normalizedExclude || [],
+    };
   },
 });

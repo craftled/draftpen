@@ -24,12 +24,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   DEFAULT_FAVICON_FALLBACK,
   InlineFavicon,
 } from "@/components/ui/inline-favicon";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
 import XSearch from "@/components/x-search";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useOptimizedScroll } from "@/hooks/use-optimized-scroll";
@@ -334,19 +334,17 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
               // Format large numbers with K/M
               if (value >= 1_000_000) {
                 const millions = value / 1_000_000;
-                return (
-                  (millions % 1 === 0
-                    ? millions.toFixed(0)
-                    : millions.toFixed(1)) + "M"
-                );
+                return `${
+                  millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)
+                }M`;
               }
               if (value >= 10_000) {
                 const thousands = value / 1000;
-                return (
-                  (thousands % 1 === 0
+                return `${
+                  thousands % 1 === 0
                     ? thousands.toFixed(0)
-                    : thousands.toFixed(1)) + "K"
-                );
+                    : thousands.toFixed(1)
+                }K`;
               }
               return value.toString();
             },
@@ -373,19 +371,17 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
               // Format numbers nicely - use K for thousands, M for millions
               if (value >= 1_000_000) {
                 const millions = value / 1_000_000;
-                return (
-                  (millions % 1 === 0
-                    ? millions.toFixed(0)
-                    : millions.toFixed(1)) + "M"
-                );
+                return `${
+                  millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)
+                }M`;
               }
               if (value >= 1000) {
                 const thousands = value / 1000;
-                return (
-                  (thousands % 1 === 0
+                return `${
+                  thousands % 1 === 0
                     ? thousands.toFixed(0)
-                    : thousands.toFixed(1)) + "K"
-                );
+                    : thousands.toFixed(1)
+                }K`;
               }
               return value.toString();
             },
@@ -498,19 +494,17 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
               // Format numbers nicely - use K for thousands, M for millions
               if (value >= 1_000_000) {
                 const millions = value / 1_000_000;
-                return (
-                  (millions % 1 === 0
-                    ? millions.toFixed(0)
-                    : millions.toFixed(1)) + "M"
-                );
+                return `${
+                  millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)
+                }M`;
               }
               if (value >= 1000) {
                 const thousands = value / 1000;
-                return (
-                  (thousands % 1 === 0
+                return `${
+                  thousands % 1 === 0
                     ? thousands.toFixed(0)
-                    : thousands.toFixed(1)) + "K"
-                );
+                    : thousands.toFixed(1)
+                }K`;
               }
               return value.toString();
             },
@@ -601,19 +595,17 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
               }
               if (value >= 1_000_000) {
                 const millions = value / 1_000_000;
-                return (
-                  (millions % 1 === 0
-                    ? millions.toFixed(0)
-                    : millions.toFixed(1)) + "M"
-                );
+                return `${
+                  millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)
+                }M`;
               }
               if (value >= 10_000) {
                 const thousands = value / 1000;
-                return (
-                  (thousands % 1 === 0
+                return `${
+                  thousands % 1 === 0
                     ? thousands.toFixed(0)
-                    : thousands.toFixed(1)) + "K"
-                );
+                    : thousands.toFixed(1)
+                }K`;
               }
               return value.toString();
             },
@@ -637,19 +629,17 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
             formatter(value: number) {
               if (value >= 1_000_000) {
                 const millions = value / 1_000_000;
-                return (
-                  (millions % 1 === 0
-                    ? millions.toFixed(0)
-                    : millions.toFixed(1)) + "M"
-                );
+                return `${
+                  millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)
+                }M`;
               }
               if (value >= 1000) {
                 const thousands = value / 1000;
-                return (
-                  (thousands % 1 === 0
+                return `${
+                  thousands % 1 === 0
                     ? thousands.toFixed(0)
-                    : thousands.toFixed(1)) + "K"
-                );
+                    : thousands.toFixed(1)
+                }K`;
               }
               return value.toString();
             },
@@ -759,19 +749,17 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
             formatter(value: number) {
               if (value >= 1_000_000) {
                 const millions = value / 1_000_000;
-                return (
-                  (millions % 1 === 0
-                    ? millions.toFixed(0)
-                    : millions.toFixed(1)) + "M"
-                );
+                return `${
+                  millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)
+                }M`;
               }
               if (value >= 1000) {
                 const thousands = value / 1000;
-                return (
-                  (thousands % 1 === 0
+                return `${
+                  thousands % 1 === 0
                     ? thousands.toFixed(0)
-                    : thousands.toFixed(1)) + "K"
-                );
+                    : thousands.toFixed(1)
+                }K`;
               }
               return value.toString();
             },
@@ -864,7 +852,7 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
 ExtremeChart.displayName = "ExtremeChart";
 
 // Types for Extreme Search
-interface ExtremeSearchSource {
+type ExtremeSearchSource = {
   title: string;
   url: string;
   content: string; // 🔧 FIX: Content is always provided by the tool, should not be optional
@@ -872,7 +860,7 @@ interface ExtremeSearchSource {
   publishedDate?: string;
   published_date?: string;
   author?: string;
-}
+};
 
 // Utility function for favicon (matching multi-search)
 const getFaviconUrl = (url: string) => {
@@ -883,7 +871,6 @@ const getFaviconUrl = (url: string) => {
     return null;
   }
 };
-
 
 // Source Card Component for Extreme Search (matching multi-search design)
 const ExtremeSourceCard: React.FC<{
@@ -1028,7 +1015,7 @@ const ExtremeSourcesSheet: React.FC<{
   );
 };
 
-interface SearchQuery {
+type SearchQuery = {
   id: string;
   query: string;
   status: "started" | "reading_content" | "completed" | "error";
@@ -1039,18 +1026,18 @@ interface SearchQuery {
     text: string;
     favicon?: string;
   }>;
-}
+};
 
-interface CodeExecution {
+type CodeExecution = {
   id: string;
   title: string;
   code: string;
   status: "running" | "completed" | "error";
   result?: string;
   charts?: any[];
-}
+};
 
-interface XSearchExecution {
+type XSearchExecution = {
   id: string;
   query: string;
   startDate: string;
@@ -1064,7 +1051,7 @@ interface XSearchExecution {
     dateRange: string;
     handles: string[];
   };
-}
+};
 
 const ExtremeSearchComponent = ({
   toolInvocation,
@@ -1102,7 +1089,7 @@ const ExtremeSearchComponent = ({
       const planAnnotations = annotations.filter(
         (ann) => ann.type === "data-extreme_search" && ann.data.kind === "plan"
       );
-      const latestPlan = planAnnotations[planAnnotations.length - 1];
+      const latestPlan = planAnnotations.at(-1);
       const isResearchCompleted =
         latestPlan?.data?.kind === "plan" &&
         latestPlan.data.status?.title === "Research completed";
@@ -1137,7 +1124,7 @@ const ExtremeSearchComponent = ({
       (ann) => ann.type === "data-extreme_search" && ann.data.kind === "plan"
     );
 
-    const latestPlan = planAnnotations[planAnnotations.length - 1];
+    const latestPlan = planAnnotations.at(-1);
     const plan =
       latestPlan?.data.kind === "plan" && "plan" in latestPlan.data
         ? latestPlan.data.plan
@@ -1156,7 +1143,10 @@ const ExtremeSearchComponent = ({
 
     if (toolAnnotations.length > 0) {
       // Get the latest tool annotation
-      const latestTool = toolAnnotations[toolAnnotations.length - 1];
+      const latestTool = toolAnnotations.at(-1);
+      if (!latestTool) {
+        return { currentStatus: dynamicStatus, planData: plan };
+      }
       const data = latestTool.data;
 
       if (data.kind === "query") {
@@ -1268,7 +1258,9 @@ const ExtremeSearchComponent = ({
       const queryMap = new Map<string, SearchQuery>();
 
       annotations.forEach((ann) => {
-        if (ann.type !== "data-extreme_search") return;
+        if (ann.type !== "data-extreme_search") {
+          return;
+        }
 
         const { data } = ann;
 
@@ -1323,7 +1315,7 @@ const ExtremeSearchComponent = ({
           const matchingContent = query.content.find(
             (c) => c.url === source.url
           );
-          if (matchingContent && matchingContent.text) {
+          if (matchingContent?.text) {
             source.content = matchingContent.text;
           }
         });
@@ -1376,8 +1368,12 @@ const ExtremeSearchComponent = ({
       const xSearchMap = new Map<string, XSearchExecution>();
 
       annotations.forEach((ann) => {
-        if (ann.type !== "data-extreme_search" || ann.data.kind !== "x_search")
+        if (
+          ann.type !== "data-extreme_search" ||
+          ann.data.kind !== "x_search"
+        ) {
           return;
+        }
 
         const { data } = ann;
         xSearchMap.set(data.xSearchId, {
@@ -1434,8 +1430,9 @@ const ExtremeSearchComponent = ({
       const codeMap = new Map<string, CodeExecution>();
 
       annotations.forEach((ann) => {
-        if (ann.type !== "data-extreme_search" || ann.data.kind !== "code")
+        if (ann.type !== "data-extreme_search" || ann.data.kind !== "code") {
           return;
+        }
 
         const { data } = ann;
         codeMap.set(data.codeId, {
@@ -1510,8 +1507,8 @@ const ExtremeSearchComponent = ({
               title: tr.args?.title || tr.input?.title || "Code Execution",
               code: tr.args?.code || tr.input?.code || "",
               status: "completed",
-              result: (tr.result || tr.output || {}).result || "",
-              charts: (tr.result || tr.output || {}).charts || [],
+              result: (tr.result || tr.output)?.result || "",
+              charts: (tr.result || tr.output)?.charts || [],
             };
             return { kind: "code", item: codeItem };
           }
@@ -1525,7 +1522,9 @@ const ExtremeSearchComponent = ({
       const seen: Record<string, boolean> = {};
       const items: TimelineItem[] = [];
       for (const ann of annotations) {
-        if (ann.type !== "data-extreme_search") continue;
+        if (ann.type !== "data-extreme_search") {
+          continue;
+        }
         const d = ann.data as any;
         if (d.kind === "query") {
           const q = searchQueries.find((sq) => sq.id === d.queryId);
@@ -1595,7 +1594,7 @@ const ExtremeSearchComponent = ({
     ) {
       scrollToBottom();
     }
-  }, [combinedTimelineItems, state, scrollToBottom, annotations]);
+  }, [combinedTimelineItems, state, scrollToBottom]);
 
   // Get all sources for final result view
   const allSources = useMemo(() => {
@@ -1752,7 +1751,7 @@ const ExtremeSearchComponent = ({
         {combinedTimelineItems.map((timelineItem, itemIndex) => {
           if (timelineItem.kind === "query") {
             const query = timelineItem.item as SearchQuery;
-            const isActive =
+            const _isActive =
               state === "input-streaming" || state === "input-available";
             const isLoading =
               query.status === "started" || query.status === "reading_content";
@@ -1962,7 +1961,7 @@ const ExtremeSearchComponent = ({
 
           if (timelineItem.kind === "x_search") {
             const xSearch = timelineItem.item as XSearchExecution;
-            const isActive =
+            const _isActive =
               state === "input-streaming" || state === "input-available";
             const isLoading = xSearch.status === "started";
             const hasResults =
@@ -2315,11 +2314,15 @@ const ExtremeSearchComponent = ({
     const container = e.currentTarget;
 
     // Only handle vertical scrolling
-    if (e.deltaY === 0) return;
+    if (e.deltaY === 0) {
+      return;
+    }
 
     // Check if container can scroll horizontally
     const canScrollHorizontally = container.scrollWidth > container.clientWidth;
-    if (!canScrollHorizontally) return;
+    if (!canScrollHorizontally) {
+      return;
+    }
 
     // Always stop propagation first to prevent page scroll interference
     e.stopPropagation();
@@ -2343,111 +2346,98 @@ const ExtremeSearchComponent = ({
   };
 
   // Render sources section (matching multi-search design)
-  const renderSources = (sources: ExtremeSearchSource[]) => {
-    console.log(
-      "[ExtremeSearch] renderSources called with:",
-      sources.length,
-      "sources"
-    );
-    console.log("[ExtremeSearch] Sources data:", sources);
-
-    return (
-      <div className="w-full">
-        <div
-          className={cn(
-            "group px-4 py-3 hover:no-underline",
-            "bg-white dark:bg-neutral-900",
-            "border border-neutral-200 dark:border-neutral-800",
-            "cursor-pointer data-[state=open]:rounded-b-none",
-            sourcesAccordionOpen ? "rounded-t-lg" : "rounded-lg"
-          )}
-          onClick={() => setSourcesAccordionOpen(!sourcesAccordionOpen)}
-        >
-          <div className="flex w-full items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="rounded-md bg-neutral-100 p-1.5 dark:bg-neutral-800">
-                <Globe className="h-3.5 w-3.5 text-neutral-500" />
-              </div>
-              <h2 className="font-medium text-sm">Sources</h2>
+  const renderSources = (sources: ExtremeSearchSource[]) => (
+    <div className="w-full">
+      <div
+        className={cn(
+          "group px-4 py-3 hover:no-underline",
+          "bg-white dark:bg-neutral-900",
+          "border border-neutral-200 dark:border-neutral-800",
+          "cursor-pointer data-[state=open]:rounded-b-none",
+          sourcesAccordionOpen ? "rounded-t-lg" : "rounded-lg"
+        )}
+        onClick={() => setSourcesAccordionOpen(!sourcesAccordionOpen)}
+      >
+        <div className="flex w-full items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="rounded-md bg-neutral-100 p-1.5 dark:bg-neutral-800">
+              <Globe className="h-3.5 w-3.5 text-neutral-500" />
             </div>
-            <div className="flex items-center gap-2">
-              <Badge
-                className="rounded-full px-2.5 py-0.5 text-xs"
-                variant="secondary"
+            <h2 className="font-medium text-sm">Sources</h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge
+              className="rounded-full px-2.5 py-0.5 text-xs"
+              variant="secondary"
+            >
+              {sources.length}
+            </Badge>
+            {sources.length > 0 && (
+              <Button
+                className="h-7 px-2 text-xs"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSourcesSheetOpen(true);
+                }}
+                size="sm"
+                variant="ghost"
               >
-                {sources.length}
-              </Badge>
-              {sources.length > 0 && (
-                <Button
-                  className="h-7 px-2 text-xs"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSourcesSheetOpen(true);
-                  }}
-                  size="sm"
-                  variant="ghost"
-                >
-                  View all
-                  <ArrowUpRight className="ml-1 h-3 w-3" />
-                </Button>
+                View all
+                <ArrowUpRight className="ml-1 h-3 w-3" />
+              </Button>
+            )}
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 shrink-0 text-neutral-500 transition-transform duration-200",
+                sourcesAccordionOpen ? "rotate-180" : ""
               )}
-              <ChevronDown
-                className={cn(
-                  "h-4 w-4 shrink-0 text-neutral-500 transition-transform duration-200",
-                  sourcesAccordionOpen ? "rotate-180" : ""
-                )}
-              />
-            </div>
+            />
           </div>
         </div>
-
-        <AnimatePresence>
-          {sourcesAccordionOpen && (
-            <motion.div
-              animate={{ height: "auto", opacity: 1 }}
-              className={cn(
-                "overflow-hidden",
-                "bg-white dark:bg-neutral-900",
-                "border-neutral-200 border-x border-b dark:border-neutral-800",
-                "rounded-b-lg"
-              )}
-              exit={{ height: 0, opacity: 0 }}
-              initial={{ height: 0, opacity: 0 }}
-            >
-              <div className="space-y-3 p-3">
-                {sources.length > 0 ? (
-                  <div
-                    className="no-scrollbar flex gap-3 overflow-x-auto pb-1"
-                    onWheel={handleWheelScroll}
-                  >
-                    {sources.map((source, index) => (
-                      <a
-                        className="block w-[320px] flex-shrink-0"
-                        href={source.url}
-                        key={index}
-                        target="_blank"
-                      >
-                        <ExtremeSourceCard source={source} />
-                      </a>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-neutral-500 text-sm">No sources found</p>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
-    );
-  };
+
+      <AnimatePresence>
+        {sourcesAccordionOpen && (
+          <motion.div
+            animate={{ height: "auto", opacity: 1 }}
+            className={cn(
+              "overflow-hidden",
+              "bg-white dark:bg-neutral-900",
+              "border-neutral-200 border-x border-b dark:border-neutral-800",
+              "rounded-b-lg"
+            )}
+            exit={{ height: 0, opacity: 0 }}
+            initial={{ height: 0, opacity: 0 }}
+          >
+            <div className="space-y-3 p-3">
+              {sources.length > 0 ? (
+                <div
+                  className="no-scrollbar flex gap-3 overflow-x-auto pb-1"
+                  onWheel={handleWheelScroll}
+                >
+                  {sources.map((source, index) => (
+                    <a
+                      className="block w-[320px] flex-shrink-0"
+                      href={source.url}
+                      key={index}
+                      target="_blank"
+                    >
+                      <ExtremeSourceCard source={source} />
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-neutral-500 text-sm">No sources found</p>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 
   // Final result view
   if (isCompleted) {
-    console.log("[ExtremeSearch] 🎯 RENDERING COMPLETED STATE");
-    console.log("[ExtremeSearch] allSources length:", allSources.length);
-    console.log("[ExtremeSearch] allCharts length:", allCharts.length);
-
     return (
       <div className="space-y-2">
         {/* Research Process */}
@@ -2554,21 +2544,23 @@ const ExtremeSearchComponent = ({
           const completedX = xSearchExecutions.filter(
             (x) => x.status === "completed" && x.result
           );
-          if (completedX.length === 0) return null;
+          if (completedX.length === 0) {
+            return null;
+          }
           const combined = {
-            content: completedX.map((x) => x.result!.content).join("\n\n"),
-            citations: completedX.flatMap((x) => x.result!.citations || []),
-            sources: completedX.flatMap((x) => x.result!.sources || []),
+            content: completedX.map((x) => x.result?.content).join("\n\n"),
+            citations: completedX.flatMap((x) => x.result?.citations || []),
+            sources: completedX.flatMap((x) => x.result?.sources || []),
             query: completedX.map((x) => x.query).join(" | "),
-            dateRange: `${completedX[0].startDate || ""} to ${completedX[completedX.length - 1].endDate || ""}`,
+            dateRange: `${completedX[0]?.startDate || ""} to ${completedX.at(-1)?.endDate || ""}`,
             handles: Array.from(
               new Set(completedX.flatMap((x) => x.handles || []))
             ),
           };
           const combinedArgs = {
             query: combined.query,
-            startDate: completedX[0].startDate,
-            endDate: completedX[completedX.length - 1].endDate,
+            startDate: completedX[0]?.startDate,
+            endDate: completedX.at(-1)?.endDate,
             xHandles: Array.from(
               new Set(completedX.flatMap((x) => x.handles || []))
             ),

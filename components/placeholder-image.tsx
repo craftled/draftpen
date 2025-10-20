@@ -2,11 +2,11 @@ import { ImageIcon } from "lucide-react";
 import type React from "react";
 import { cn } from "@/lib/utils";
 
-interface PlaceholderImageProps {
+type PlaceholderImageProps = {
   className?: string;
   size?: "sm" | "md" | "lg";
   variant?: "default" | "card" | "compact";
-}
+};
 
 const PlaceholderImage: React.FC<PlaceholderImageProps> = ({
   className,

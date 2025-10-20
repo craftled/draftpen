@@ -10,13 +10,13 @@ import type { ChatMessage, CustomUIDataTypes } from "@/lib/types";
 import type { ComprehensiveUserData } from "@/lib/user-data-server";
 
 // Define interface for part, messageIndex and partIndex objects
-interface PartInfo {
+type PartInfo = {
   part: any;
   messageIndex: number;
   partIndex: number;
-}
+};
 
-interface MessagesProps {
+type MessagesProps = {
   messages: ChatMessage[];
   lastUserMessageIndex: number;
   input: string;
@@ -35,7 +35,7 @@ interface MessagesProps {
   initialMessages?: any[]; // Add initial messages prop to detect existing chat
   isOwner?: boolean; // Add ownership prop
   onHighlight?: (text: string) => void; // Add highlight handler
-}
+};
 
 const Messages: React.FC<MessagesProps> = ({
   messages,
@@ -82,66 +82,38 @@ const Messages: React.FC<MessagesProps> = ({
 
   // Filter messages to only show the ones we want to display
   const memoizedMessages = useMemo(() => {
-    console.log("=== FILTERING MESSAGES START ===");
-    console.log("Raw messages array:", messages);
-    console.log("Raw messages length:", messages.length);
-
     const filtered = messages.filter((message) => {
-      console.log("Processing message:", {
-        role: message.role,
-        id: message.id,
-        parts: message.parts?.map((p) => ({
-          type: p.type,
-          hasContent:
-            !!(p as any).text || !!(p as any).input || !!(p as any).output,
-        })),
-        partsLength: message.parts?.length,
-      });
-
       // Keep all user messages
       if (message.role === "user") {
-        console.log("✅ Keeping user message:", message.id);
         return true;
       }
 
       // For assistant messages, keep all of them for now (debugging)
       if (message.role === "assistant") {
-        console.log("✅ Keeping assistant message:", message.id);
         return true;
       }
-
-      console.log("❌ Filtering out message:", message.role, message.id);
       return false;
     });
-
-    console.log("Filtered messages length:", filtered.length);
-    console.log("Filtered messages:", filtered);
-    console.log("=== FILTERING MESSAGES END ===");
     return filtered;
   }, [messages]);
 
   // Check if there are any active tool invocations in the current messages
   const hasActiveToolInvocations = useMemo(() => {
-    const lastMessage = memoizedMessages[memoizedMessages.length - 1];
-    console.log("hasActiveToolInvocations - lastMessage:", lastMessage);
+    const lastMessage = memoizedMessages.at(-1);
 
     // Only consider tools as "active" if we're currently streaming AND the last message is assistant with tools
     if (status === "streaming" && lastMessage?.role === "assistant") {
       const hasTools = lastMessage.parts?.some(
         (part: ChatMessage["parts"][number]) => isToolUIPart(part)
       );
-      console.log("hasActiveToolInvocations - hasTools:", hasTools);
       return hasTools;
     }
-    console.log(
-      "hasActiveToolInvocations - not streaming or no assistant message, returning false"
-    );
     return false;
   }, [memoizedMessages, status]);
 
   // Check if we need to show retry due to missing assistant response (different from error status)
   const isMissingAssistantResponse = useMemo(() => {
-    const lastMessage = memoizedMessages[memoizedMessages.length - 1];
+    const lastMessage = memoizedMessages.at(-1);
 
     // Case 1: Last message is user and no assistant response yet
     if (lastMessage?.role === "user" && status === "ready" && !error) {
@@ -174,7 +146,9 @@ const Messages: React.FC<MessagesProps> = ({
   const handleRetry = useCallback(async () => {
     try {
       const lastUserMessage = messages.findLast((m) => m.role === "user");
-      if (!lastUserMessage) return;
+      if (!lastUserMessage) {
+        return;
+      }
 
       // Step 1: Delete trailing messages if user is authenticated
       if (user && lastUserMessage.id) {
@@ -199,9 +173,7 @@ const Messages: React.FC<MessagesProps> = ({
 
       // Step 4: Reload
       await regenerate();
-    } catch (error) {
-      console.error("Error in retry:", error);
-    }
+    } catch (_error) {}
   }, [messages, user, setMessages, setSuggestedQuestions, regenerate]);
 
   // Handle rendering of message parts - using the new MessagePartRenderer component
@@ -259,8 +231,6 @@ const Messages: React.FC<MessagesProps> = ({
       regenerate,
       reasoningVisibilityMap,
       reasoningFullscreenMap,
-      setReasoningVisibilityMap,
-      setReasoningFullscreenMap,
       onHighlight,
     ]
   );
@@ -272,7 +242,7 @@ const Messages: React.FC<MessagesProps> = ({
     }
 
     if (status === "streaming") {
-      const lastMessage = memoizedMessages[memoizedMessages.length - 1];
+      const lastMessage = memoizedMessages.at(-1);
       // Show loading if only user message exists (no assistant response yet)
       if (lastMessage?.role === "user") {
         return true;
@@ -290,14 +260,16 @@ const Messages: React.FC<MessagesProps> = ({
   // Compute index of the most recent assistant message; only that one should keep min-height
   const lastAssistantIndex = useMemo(() => {
     for (let i = memoizedMessages.length - 1; i >= 0; i -= 1) {
-      if (memoizedMessages[i]?.role === "assistant") return i;
+      if (memoizedMessages[i]?.role === "assistant") {
+        return i;
+      }
     }
     return -1;
   }, [memoizedMessages]);
 
   // Index of actively streaming assistant (only when last message is assistant during streaming)
   const activeAssistantIndex = useMemo(() => {
-    const lastMessage = memoizedMessages[memoizedMessages.length - 1];
+    const lastMessage = memoizedMessages.at(-1);
     if (status === "streaming" && lastMessage?.role === "assistant") {
       return memoizedMessages.length - 1;
     }
@@ -306,7 +278,7 @@ const Messages: React.FC<MessagesProps> = ({
 
   // Is the active assistant in the initial skeleton phase (0 or 1 parts)?
   const isActiveAssistantSkeleton = useMemo(() => {
-    const lastMessage = memoizedMessages[memoizedMessages.length - 1];
+    const lastMessage = memoizedMessages.at(-1);
     if (status === "streaming" && lastMessage?.role === "assistant") {
       const partsCount = lastMessage.parts?.length || 0;
       return partsCount <= 1;
@@ -317,13 +289,16 @@ const Messages: React.FC<MessagesProps> = ({
   // Loader reserves min-height when submitted, or streaming after user, or
   // streaming with assistant in skeleton phase (0/1 parts)
   const shouldReserveLoaderMinHeight = useMemo(() => {
-    const lastMessage = memoizedMessages[memoizedMessages.length - 1];
-    if (status === "submitted") return true;
+    const lastMessage = memoizedMessages.at(-1);
+    if (status === "submitted") {
+      return true;
+    }
     if (
       status === "streaming" &&
       (lastMessage?.role === "user" || isActiveAssistantSkeleton)
-    )
+    ) {
       return true;
+    }
     return false;
   }, [memoizedMessages, status, isActiveAssistantSkeleton]);
 
@@ -358,29 +333,14 @@ const Messages: React.FC<MessagesProps> = ({
     }
   }, [messages]);
 
-  console.log("=== RENDER CHECK ===");
-  console.log("memoizedMessages.length:", memoizedMessages.length);
-  console.log(
-    "memoizedMessages roles:",
-    memoizedMessages.map((m) => m.role)
-  );
-
   if (memoizedMessages.length === 0) {
-    console.log("❌ No messages to render, returning null");
     return null;
   }
-
-  console.log("✅ Proceeding to render", memoizedMessages.length, "messages");
 
   return (
     <div className="mb-30 flex flex-col space-y-0 sm:mb-36">
       <div className="flex-grow">
         {memoizedMessages.map((message, index) => {
-          console.log(`=== RENDERING MESSAGE ${index} ===`);
-          console.log("Message role:", message.role);
-          console.log("Message id:", message.id);
-          console.log("Message parts count:", message.parts?.length);
-
           const isNextMessageAssistant =
             index < memoizedMessages.length - 1 &&
             memoizedMessages[index + 1].role === "assistant";
@@ -410,10 +370,6 @@ const Messages: React.FC<MessagesProps> = ({
           } else {
             messageClasses = "mb-0";
           }
-
-          console.log(
-            `📤 About to render Message component for ${message.role} message ${index}`
-          );
           return (
             <div className={messageClasses} key={message.id || index}>
               <Message
@@ -487,15 +443,14 @@ const Messages: React.FC<MessagesProps> = ({
       {/* Missing assistant response UI is now handled inside the assistant Message */}
 
       {/* Show global error when there is no assistant message to display it */}
-      {error &&
-        memoizedMessages[memoizedMessages.length - 1]?.role !== "assistant" && (
-          <EnhancedErrorDisplay
-            error={error}
-            handleRetry={handleRetry}
-            selectedVisibilityType={selectedVisibilityType}
-            user={user ?? undefined}
-          />
-        )}
+      {error && memoizedMessages.at(-1)?.role !== "assistant" && (
+        <EnhancedErrorDisplay
+          error={error}
+          handleRetry={handleRetry}
+          selectedVisibilityType={selectedVisibilityType}
+          user={user ?? undefined}
+        />
+      )}
 
       <div ref={messagesEndRef} />
     </div>

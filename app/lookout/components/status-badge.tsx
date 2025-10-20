@@ -10,13 +10,18 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { BorderTrail } from "@/components/core/border-trail";
 import { Badge } from "@/components/ui/badge";
 
-interface StatusBadgeProps {
+type StatusBadgeProps = {
   status: "active" | "paused" | "running" | "archived";
   size?: "sm" | "md";
-}
+};
+
+const ICON_SIZE_SM = 12 as const;
+const ICON_SIZE_MD = 16 as const;
+
+const BORDERTRAIL_SIZE_RUNNING = 20 as const;
 
 export function StatusBadge({ status, size = "sm" }: StatusBadgeProps) {
-  const iconSize = size === "sm" ? 12 : 16;
+  const iconSize = size === "sm" ? ICON_SIZE_SM : ICON_SIZE_MD;
   const badgeClasses =
     size === "sm" ? "gap-1 px-2 py-0.5 text-xs" : "gap-1.5 px-3 py-1 text-sm";
 
@@ -54,7 +59,7 @@ export function StatusBadge({ status, size = "sm" }: StatusBadgeProps) {
       {status === "running" && (
         <BorderTrail
           className="bg-primary/60"
-          size={20}
+          size={BORDERTRAIL_SIZE_RUNNING}
           transition={{
             duration: 2,
             repeat: Number.POSITIVE_INFINITY,

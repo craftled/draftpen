@@ -11,7 +11,7 @@ import Marked from "marked-react";
 import React, { type ReactNode, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
-interface ReasoningPartViewProps {
+type ReasoningPartViewProps = {
   part: ReasoningUIPart;
   sectionKey: string;
   isComplete: boolean;
@@ -21,13 +21,13 @@ interface ReasoningPartViewProps {
   isFullscreen: boolean;
   setIsFullscreen: (v: boolean) => void;
   setIsExpanded: (v: boolean) => void;
-}
+};
 
 // Type definition for table flags
-interface TableFlags {
+type TableFlags = {
   header?: boolean;
   align?: "center" | "left" | "right" | null;
-}
+};
 
 const SpinnerIcon = React.memo(() => (
   <svg
@@ -57,7 +57,7 @@ SpinnerIcon.displayName = "SpinnerIcon";
 const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
   // Define custom renderer with proper types
   const renderer = {
-    code(code: string, language?: string) {
+    code(code: string, _language?: string) {
       return (
         <pre
           className="my-2 overflow-x-auto rounded border border-border/60 bg-muted/70 px-2 py-1.5 text-xs dark:bg-muted/50"
@@ -221,7 +221,7 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
       if (!isComplete && scrollRef.current) {
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
-    }, [isComplete, part.text]);
+    }, [isComplete]);
 
     // Also scroll when details change, even if isComplete doesn't change
     useEffect(() => {

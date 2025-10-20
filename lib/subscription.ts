@@ -63,8 +63,7 @@ async function getComprehensiveProStatus(
     }
 
     return { isProUser: false, source: "none" };
-  } catch (error) {
-    console.error("Error getting comprehensive pro status:", error);
+  } catch (_error) {
     return { isProUser: false, source: "none" };
   }
 }
@@ -194,8 +193,7 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
     // Cache pro user status as true for active Polar subscription
     setProUserStatus(session.user.id, true);
     return result;
-  } catch (error) {
-    console.error("Error fetching subscription details:", error);
+  } catch (_error) {
     return {
       hasSubscription: false,
       error: "Failed to load subscription details",
@@ -217,8 +215,7 @@ export async function isUserSubscribed(): Promise<boolean> {
 
     const proStatus = await getComprehensiveProStatus(session.user.id);
     return proStatus.isProUser;
-  } catch (error) {
-    console.error("Error checking user subscription status:", error);
+  } catch (_error) {
     return false;
   }
 }
@@ -297,8 +294,7 @@ export async function getUserSubscriptionStatus(): Promise<
     }
 
     return "none";
-  } catch (error) {
-    console.error("Error getting user subscription status:", error);
+  } catch (_error) {
     return "none";
   }
 }
@@ -319,8 +315,7 @@ export async function getProStatusWithSource(): Promise<{
 
     const proStatus = await getComprehensiveProStatus(session.user.id);
     return proStatus;
-  } catch (error) {
-    console.error("Error getting pro status with source:", error);
+  } catch (_error) {
     return { isProUser: false, source: "none" };
   }
 }

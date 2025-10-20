@@ -58,7 +58,7 @@ const RedditSourceCard: React.FC<{
 
   const subreddit = formatSubreddit(result.subreddit);
   const formattedScore = result.score
-    ? isNaN(result.score)
+    ? Number.isNaN(result.score)
       ? "0"
       : result.score.toString()
     : "0";
@@ -112,7 +112,7 @@ const RedditSourceCard: React.FC<{
       {/* Content */}
       <p className="mb-3 line-clamp-2 text-neutral-600 text-sm leading-relaxed dark:text-neutral-400">
         {result.content.length > 150
-          ? result.content.substring(0, 150) + "..."
+          ? `${result.content.substring(0, 150)}...`
           : result.content}
       </p>
 
@@ -264,7 +264,7 @@ const SearchLoadingState = () => {
 
               {/* Skeleton cards */}
               <div className="no-scrollbar flex gap-3 overflow-x-auto pb-1">
-                {[...Array(3)].map((_, i) => (
+                {[...new Array(3)].map((_, i) => (
                   <div
                     className="w-[320px] flex-shrink-0 rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900"
                     key={i}
@@ -305,11 +305,15 @@ const RedditSearch: React.FC<{
     const container = e.currentTarget;
 
     // Only handle vertical scrolling
-    if (e.deltaY === 0) return;
+    if (e.deltaY === 0) {
+      return;
+    }
 
     // Check if container can scroll horizontally
     const canScrollHorizontally = container.scrollWidth > container.clientWidth;
-    if (!canScrollHorizontally) return;
+    if (!canScrollHorizontally) {
+      return;
+    }
 
     // Always stop propagation first to prevent page scroll interference
     e.stopPropagation();

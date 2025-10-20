@@ -169,12 +169,7 @@ export async function suggestQuestions(history: unknown) {
       return {
         questions: object.questions,
       };
-    } catch (error) {
-      console.error(
-        `Failed to generate suggested questions with model ${modelId}:`,
-        error
-      );
-    }
+    } catch (_error) {}
   }
 
   return { questions: [] };
@@ -222,7 +217,7 @@ export async function generateTitleFromUserMessage({
 export async function enhancePrompt(raw: string) {
   try {
     const user = await getComprehensiveUserData();
-    if (!(user && user.isProUser)) {
+    if (!user?.isProUser) {
       return { success: false, error: "Pro subscription required" };
     }
 
@@ -254,8 +249,7 @@ Guidelines (MANDATORY):
     });
 
     return { success: true, enhanced: text.trim() };
-  } catch (error) {
-    console.error("Error enhancing prompt:", error);
+  } catch (_error) {
     return { success: false, error: "Failed to enhance prompt" };
   }
 }
@@ -1311,7 +1305,9 @@ export async function getUserChats(
 ): Promise<{ chats: any[]; hasMore: boolean }> {
   "use server";
 
-  if (!userId) return { chats: [], hasMore: false };
+  if (!userId) {
+    return { chats: [], hasMore: false };
+  }
 
   try {
     return await getChatsByUserId({
@@ -1320,8 +1316,7 @@ export async function getUserChats(
       startingAfter: startingAfter || null,
       endingBefore: endingBefore || null,
     });
-  } catch (error) {
-    console.error("Error fetching user chats:", error);
+  } catch (_error) {
     return { chats: [], hasMore: false };
   }
 }
@@ -1334,7 +1329,9 @@ export async function loadMoreChats(
 ): Promise<{ chats: any[]; hasMore: boolean }> {
   "use server";
 
-  if (!(userId && lastChatId)) return { chats: [], hasMore: false };
+  if (!(userId && lastChatId)) {
+    return { chats: [], hasMore: false };
+  }
 
   try {
     return await getChatsByUserId({
@@ -1343,8 +1340,7 @@ export async function loadMoreChats(
       startingAfter: null,
       endingBefore: lastChatId,
     });
-  } catch (error) {
-    console.error("Error loading more chats:", error);
+  } catch (_error) {
     return { chats: [], hasMore: false };
   }
 }
@@ -1353,12 +1349,13 @@ export async function loadMoreChats(
 export async function deleteChat(chatId: string) {
   "use server";
 
-  if (!chatId) return null;
+  if (!chatId) {
+    return null;
+  }
 
   try {
     return await deleteChatById({ id: chatId });
-  } catch (error) {
-    console.error("Error deleting chat:", error);
+  } catch (_error) {
     return null;
   }
 }
@@ -1370,88 +1367,60 @@ export async function updateChatVisibility(
 ) {
   "use server";
 
-  console.log("🔄 updateChatVisibility called with:", { chatId, visibility });
-
   if (!chatId) {
-    console.error("❌ updateChatVisibility: No chatId provided");
     throw new Error("Chat ID is required");
   }
+  const result = await updateChatVisibilityById({ chatId, visibility });
 
-  try {
-    console.log("📡 Calling updateChatVisibilityById with:", {
-      chatId,
-      visibility,
-    });
-    const result = await updateChatVisibilityById({ chatId, visibility });
-    console.log("✅ updateChatVisibilityById successful, result:", result);
-
-    // Return a serializable plain object instead of raw database result
-    return {
-      success: true,
-      chatId,
-      visibility,
-      rowCount: result?.rowCount || 0,
-    };
-  } catch (error) {
-    console.error("❌ Error in updateChatVisibility:", {
-      chatId,
-      visibility,
-      error: error instanceof Error ? error.message : error,
-      stack: error instanceof Error ? error.stack : undefined,
-    });
-    throw error;
-  }
+  // Return a serializable plain object instead of raw database result
+  return {
+    success: true,
+    chatId,
+    visibility,
+    rowCount: result?.rowCount || 0,
+  };
 }
 
 // Add function to get chat info
 export async function getChatInfo(chatId: string) {
   "use server";
 
-  if (!chatId) return null;
+  if (!chatId) {
+    return null;
+  }
 
   try {
     return await getChatById({ id: chatId });
-  } catch (error) {
-    console.error("Error getting chat info:", error);
+  } catch (_error) {
     return null;
   }
 }
 
 export async function deleteTrailingMessages({ id }: { id: string }) {
   "use server";
-  try {
-    const [message] = await getMessageById({ id });
-    console.log("Message: ", message);
+  const [message] = await getMessageById({ id });
 
-    if (!message) {
-      console.error(`No message found with id: ${id}`);
-      return;
-    }
-
-    await deleteMessagesByChatIdAfterTimestamp({
-      chatId: message.chatId,
-      timestamp: message.createdAt,
-    });
-
-    console.log(
-      `Successfully deleted trailing messages after message ID: ${id}`
-    );
-  } catch (error) {
-    console.error(`Error deleting trailing messages: ${error}`);
-    throw error; // Re-throw to allow caller to handle
+  if (!message) {
+    return;
   }
+
+  await deleteMessagesByChatIdAfterTimestamp({
+    chatId: message.chatId,
+    timestamp: message.createdAt,
+  });
 }
 
 // Add function to update chat title
 export async function updateChatTitle(chatId: string, title: string) {
   "use server";
 
-  if (!(chatId && title.trim())) return null;
+  if (!(chatId && title.trim())) {
+    return null;
+  }
 
   try {
     return await updateChatTitleById({ chatId, title: title.trim() });
-  } catch (error) {
-    console.error("Error updating chat title:", error);
+  } catch (_error) {
     return null;
   }
 }
@@ -1463,7 +1432,9 @@ export async function getSubDetails() {
   const { getComprehensiveUserData } = await import("@/lib/user-data-server");
   const userData = await getComprehensiveUserData();
 
-  if (!userData) return { hasSubscription: false };
+  if (!userData) {
+    return { hasSubscription: false };
+  }
 
   return userData.polarSubscription
     ? {
@@ -1497,8 +1468,7 @@ export async function getUserMessageCount(providedUser?: any) {
     usageCountCache.set(cacheKey, count);
 
     return { count, error: null };
-  } catch (error) {
-    console.error("Error getting user message count:", error);
+  } catch (_error) {
     return { count: 0, error: "Failed to get message count" };
   }
 }
@@ -1521,8 +1491,7 @@ export async function incrementUserMessageCount() {
     usageCountCache.delete(cacheKey);
 
     return { success: true, error: null };
-  } catch (error) {
-    console.error("Error incrementing user message count:", error);
+  } catch (_error) {
     return { success: false, error: "Failed to increment message count" };
   }
 }
@@ -1551,8 +1520,7 @@ export async function getExtremeSearchUsageCount(providedUser?: any) {
     usageCountCache.set(cacheKey, count);
 
     return { count, error: null };
-  } catch (error) {
-    console.error("Error getting extreme search usage count:", error);
+  } catch (_error) {
     return { count: 0, error: "Failed to get extreme search count" };
   }
 }
@@ -1601,11 +1569,17 @@ export async function getHistoricalUsage(providedUser?: any, months = 9) {
       let level: 0 | 1 | 2 | 3 | 4;
 
       // Define usage levels based on message count
-      if (count === 0) level = 0;
-      else if (count <= 3) level = 1;
-      else if (count <= 7) level = 2;
-      else if (count <= 12) level = 3;
-      else level = 4;
+      if (count === 0) {
+        level = 0;
+      } else if (count <= 3) {
+        level = 1;
+      } else if (count <= 7) {
+        level = 2;
+      } else if (count <= 12) {
+        level = 3;
+      } else {
+        level = 4;
+      }
 
       completeData.push({
         date: dateKey,
@@ -1615,8 +1589,7 @@ export async function getHistoricalUsage(providedUser?: any, months = 9) {
     }
 
     return completeData;
-  } catch (error) {
-    console.error("Error getting historical usage:", error);
+  } catch (_error) {
     return [];
   }
 }
@@ -1635,8 +1608,7 @@ export async function getCustomInstructions(providedUser?: any) {
       userId: user.id,
     });
     return instructions ?? null;
-  } catch (error) {
-    console.error("Error getting custom instructions:", error);
+  } catch (_error) {
     return null;
   }
 }
@@ -1673,8 +1645,7 @@ export async function saveCustomInstructions(content: string) {
     }
 
     return { success: true, data: result };
-  } catch (error) {
-    console.error("Error saving custom instructions:", error);
+  } catch (_error) {
     return { success: false, error: "Failed to save custom instructions" };
   }
 }
@@ -1690,8 +1661,7 @@ export async function deleteCustomInstructionsAction() {
 
     const result = await deleteCustomInstructions({ userId: user.id });
     return { success: true, data: result };
-  } catch (error) {
-    console.error("Error deleting custom instructions:", error);
+  } catch (_error) {
     return { success: false, error: "Failed to delete custom instructions" };
   }
 }
@@ -1767,8 +1737,7 @@ function calculateNextRun(cronSchedule: string, timezone: string): Date {
 
     const interval = CronExpressionParser.parse(actualCronExpression, options);
     return interval.next().toDate();
-  } catch (error) {
-    console.error("Error parsing cron expression:", cronSchedule, error);
+  } catch (_error) {
     // Fallback to simple calculation
     const now = new Date();
     const nextRun = new Date(now);
@@ -1780,7 +1749,7 @@ function calculateNextRun(cronSchedule: string, timezone: string): Date {
 // Helper function to calculate next run for 'once' frequency
 function calculateOnceNextRun(
   time: string,
-  timezone: string,
+  _timezone: string,
   date?: string
 ): Date {
   const [hours, minutes] = time.split(":").map(Number);
@@ -1890,12 +1859,6 @@ export async function createScheduledLookout({
       qstashScheduleId: undefined, // Will be updated if needed
     });
 
-    console.log(
-      "📝 Created lookout in database:",
-      lookout.id,
-      "Now scheduling with QStash..."
-    );
-
     // Small delay to ensure database transaction is committed
     await new Promise((resolve) => setTimeout(resolve, 100));
 
@@ -1903,12 +1866,6 @@ export async function createScheduledLookout({
     if (lookout.id) {
       try {
         if (frequency === "once") {
-          console.log(
-            "⏰ Creating QStash one-time execution for lookout:",
-            lookout.id
-          );
-          console.log("📅 Scheduled time:", nextRunAt.toISOString());
-
           const delay = Math.floor((nextRunAt.getTime() - Date.now()) / 1000); // Delay in seconds
           const minimumDelay = Math.max(delay, 5); // At least 5 seconds to ensure DB consistency
 
@@ -1917,7 +1874,7 @@ export async function createScheduledLookout({
               // if dev env use localhost:3000/api/lookout, else use scira.ai/api/lookout
               url:
                 process.env.NODE_ENV === "development"
-                  ? process.env.NGROK_URL + "/api/lookout"
+                  ? `${process.env.NGROK_URL}/api/lookout`
                   : "https://draftpen.com/api/lookout",
               body: JSON.stringify({
                 lookoutId: lookout.id,
@@ -1930,31 +1887,17 @@ export async function createScheduledLookout({
               delay: minimumDelay,
             });
 
-            console.log(
-              "✅ QStash one-time execution scheduled for lookout:",
-              lookout.id,
-              "with delay:",
-              minimumDelay,
-              "seconds"
-            );
-
             // For consistency, we don't store a qstashScheduleId for one-time executions
             // since they use the publish API instead of schedules API
           } else {
             throw new Error("Cannot schedule for a time in the past");
           }
         } else {
-          console.log(
-            "⏰ Creating QStash recurring schedule for lookout:",
-            lookout.id
-          );
-          console.log("📅 Cron schedule with timezone:", cronSchedule);
-
           const scheduleResponse = await qstash.schedules.create({
             // if dev env use localhost:3000/api/lookout, else use scira.ai/api/lookout
             destination:
               process.env.NODE_ENV === "development"
-                ? process.env.NGROK_URL + "/api/lookout"
+                ? `${process.env.NGROK_URL}/api/lookout`
                 : "https://draftpen.com/api/lookout",
             method: "POST",
             cron: cronSchedule,
@@ -1968,13 +1911,6 @@ export async function createScheduledLookout({
             },
           });
 
-          console.log(
-            "✅ QStash recurring schedule created:",
-            scheduleResponse.scheduleId,
-            "for lookout:",
-            lookout.id
-          );
-
           // Update lookout with QStash schedule ID
           await updateLookout({
             id: lookout.id,
@@ -1983,8 +1919,7 @@ export async function createScheduledLookout({
 
           lookout.qstashScheduleId = scheduleResponse.scheduleId;
         }
-      } catch (qstashError) {
-        console.error("Error creating QStash schedule:", qstashError);
+      } catch (_qstashError) {
         // Delete the lookout if QStash creation fails
         await deleteLookout({ id: lookout.id });
         throw new Error(
@@ -1995,7 +1930,6 @@ export async function createScheduledLookout({
 
     return { success: true, lookout };
   } catch (error) {
-    console.error("Error creating scheduled lookout:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
@@ -2025,12 +1959,7 @@ export async function getUserLookouts() {
             lookout.timezone
           );
           return { ...lookout, nextRunAt };
-        } catch (error) {
-          console.error(
-            "Error calculating next run for lookout:",
-            lookout.id,
-            error
-          );
+        } catch (_error) {
           return lookout;
         }
       }
@@ -2039,7 +1968,6 @@ export async function getUserLookouts() {
 
     return { success: true, lookouts: updatedLookouts };
   } catch (error) {
-    console.error("Error getting user lookouts:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
@@ -2084,8 +2012,7 @@ export async function updateLookoutStatusAction({
         } else if (status === "archived") {
           await qstash.schedules.delete(lookout.qstashScheduleId);
         }
-      } catch (qstashError) {
-        console.error("Error updating QStash schedule:", qstashError);
+      } catch (_qstashError) {
         // Continue with database update even if QStash fails
       }
     }
@@ -2094,7 +2021,6 @@ export async function updateLookoutStatusAction({
     const updatedLookout = await updateLookoutStatus({ id, status });
     return { success: true, lookout: updatedLookout };
   } catch (error) {
-    console.error("Error updating lookout status:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
@@ -2148,9 +2074,9 @@ export async function updateLookoutAction({
     }
 
     // Handle weekly day selection
-    let adjustedTime = time;
+    let _adjustedTime = time;
     if (frequency === "weekly" && dayOfWeek) {
-      adjustedTime = `${time}:${dayOfWeek}`;
+      _adjustedTime = `${time}:${dayOfWeek}`;
     }
 
     // Generate new cron schedule if frequency changed
@@ -2178,15 +2104,12 @@ export async function updateLookoutAction({
         // Delete old schedule
         await qstash.schedules.delete(lookout.qstashScheduleId);
 
-        console.log("⏰ Recreating QStash schedule for lookout:", id);
-        console.log("📅 Updated cron schedule with timezone:", cronSchedule);
-
         // Create new schedule with updated cron
         const scheduleResponse = await qstash.schedules.create({
           // if dev env use localhost:3000/api/lookout, else use scira.ai/api/lookout
           destination:
             process.env.NODE_ENV === "development"
-              ? process.env.NGROK_URL + "/api/lookout"
+              ? `${process.env.NGROK_URL}/api/lookout`
               : "https://draftpen.com/api/lookout",
           method: "POST",
           cron: cronSchedule,
@@ -2213,8 +2136,7 @@ export async function updateLookoutAction({
         });
 
         return { success: true, lookout: updatedLookout };
-      } catch (qstashError) {
-        console.error("Error updating QStash schedule:", qstashError);
+      } catch (_qstashError) {
         throw new Error("Failed to update schedule. Please try again.");
       }
     } else {
@@ -2232,7 +2154,6 @@ export async function updateLookoutAction({
       return { success: true, lookout: updatedLookout };
     }
   } catch (error) {
-    console.error("Error updating lookout:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
@@ -2257,8 +2178,7 @@ export async function deleteLookoutAction({ id }: { id: string }) {
     if (lookout.qstashScheduleId) {
       try {
         await qstash.schedules.delete(lookout.qstashScheduleId);
-      } catch (error) {
-        console.error("Error deleting QStash schedule:", error);
+      } catch (_error) {
         // Continue with database deletion even if QStash deletion fails
       }
     }
@@ -2267,7 +2187,6 @@ export async function deleteLookoutAction({ id }: { id: string }) {
     const deletedLookout = await deleteLookout({ id });
     return { success: true, lookout: deletedLookout };
   } catch (error) {
-    console.error("Error deleting lookout:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
@@ -2296,7 +2215,7 @@ export async function testLookoutAction({ id }: { id: string }) {
     // Make a POST request to the lookout API endpoint to trigger the run
     const response = await fetch(
       process.env.NODE_ENV === "development"
-        ? process.env.NGROK_URL + "/api/lookout"
+        ? `${process.env.NGROK_URL}/api/lookout`
         : "https://draftpen.com/api/lookout",
       {
         method: "POST",
@@ -2317,7 +2236,6 @@ export async function testLookoutAction({ id }: { id: string }) {
 
     return { success: true, message: "Lookout test started successfully" };
   } catch (error) {
-    console.error("Error testing lookout:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
@@ -2337,8 +2255,7 @@ export async function createConnectorAction(provider: ConnectorProvider) {
 
     const authLink = await createConnection(provider, user.id);
     return { success: true, authLink };
-  } catch (error) {
-    console.error("Error creating connector:", error);
+  } catch (_error) {
     return { success: false, error: "Failed to create connector" };
   }
 }
@@ -2358,8 +2275,7 @@ export async function listUserConnectorsAction() {
 
     const connections = await listUserConnections(user.id);
     return { success: true, connections };
-  } catch (error) {
-    console.error("Error listing connectors:", error);
+  } catch (_error) {
     return {
       success: false,
       error: "Failed to list connectors",
@@ -2382,8 +2298,7 @@ export async function deleteConnectorAction(connectionId: string) {
       return { success: true };
     }
     return { success: false, error: "Failed to delete connector" };
-  } catch (error) {
-    console.error("Error deleting connector:", error);
+  } catch (_error) {
     return { success: false, error: "Failed to delete connector" };
   }
 }
@@ -2402,8 +2317,7 @@ export async function manualSyncConnectorAction(provider: ConnectorProvider) {
       return { success: true };
     }
     return { success: false, error: "Failed to start sync" };
-  } catch (error) {
-    console.error("Error syncing connector:", error);
+  } catch (_error) {
     return { success: false, error: "Failed to start sync" };
   }
 }
@@ -2421,8 +2335,7 @@ export async function getConnectorSyncStatusAction(
 
     const status = await getSyncStatus(provider, user.id);
     return { success: true, status };
-  } catch (error) {
-    console.error("Error getting sync status:", error);
+  } catch (_error) {
     return { success: false, error: "Failed to get sync status", status: null };
   }
 }

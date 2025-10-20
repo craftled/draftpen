@@ -18,11 +18,11 @@ import {
 } from "@/components/ui/card";
 import { Navbar } from "./navbar";
 
-interface ProUpgradeScreenProps {
+type ProUpgradeScreenProps = {
   user: any;
   isProUser: boolean;
   isProStatusLoading: boolean;
-}
+};
 
 export function ProUpgradeScreen({
   user,

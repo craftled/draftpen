@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/tooltip";
 import { ShareDialog } from "./share-dialog";
 
-interface ShareButtonProps {
+type ShareButtonProps = {
   chatId: string | null;
   selectedVisibilityType: "public" | "private";
   onVisibilityChange: (visibility: "public" | "private") => Promise<void>;
@@ -23,7 +23,7 @@ interface ShareButtonProps {
   size?: "sm" | "md" | "lg";
   className?: string;
   disabled?: boolean;
-}
+};
 
 export function ShareButton({
   chatId,
@@ -44,7 +44,6 @@ export function ShareButton({
   }
 
   const handleClick = () => {
-    console.log("🔗 Share button clicked, opening dialog");
     setIsDialogOpen(true);
   };
 
@@ -95,7 +94,6 @@ export function ShareButton({
             {selectedVisibilityType === "public" ? "Manage Share" : "Share"}
           </>
         );
-      case "icon":
       default:
         return (
           <HugeiconsIcon
@@ -133,7 +131,6 @@ export function ShareButton({
           variant: "default" as const,
           size: size === "sm" ? ("sm" as const) : ("default" as const),
         };
-      case "icon":
       default:
         return {
           ...baseProps,

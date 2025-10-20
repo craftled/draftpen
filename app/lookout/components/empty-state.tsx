@@ -5,13 +5,13 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import type React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 
-interface EmptyStateProps {
-  icon?: any;
+type EmptyStateProps = {
+  icon?: React.ComponentProps<typeof HugeiconsIcon>["icon"];
   title: string;
   description: string;
   children?: React.ReactNode;
   variant?: "default" | "dashed";
-}
+};
 
 export function EmptyState({
   icon = BinocularsIcon,

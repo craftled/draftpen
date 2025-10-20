@@ -14,6 +14,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
+const COPY_FEEDBACK_DURATION_MS = 2500 as const;
+
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
@@ -38,10 +40,10 @@ const baumans = Baumans({
   preload: true,
 });
 
-interface GlobalErrorProps {
+type GlobalErrorProps = {
   error: Error & { digest?: string };
   reset: () => void;
-}
+};
 
 export default function GlobalError({ error, reset }: GlobalErrorProps) {
   const [showDetails, setShowDetails] = useState(false);
@@ -61,7 +63,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
     }
 
     if (process.env.NODE_ENV !== "production") {
-      globalThis.console?.error?.("[GlobalErrorBoundary]", error);
+      /* no-op in development; hook verbose logging here if needed */
     }
   }, [error]);
 
@@ -78,7 +80,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
     try {
       await navigator.clipboard.writeText(details);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
+      setTimeout(() => setCopied(false), COPY_FEEDBACK_DURATION_MS);
     } catch {
       // swallow
     }

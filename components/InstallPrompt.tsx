@@ -14,7 +14,9 @@ export function InstallPrompt() {
   );
 
   useEffect(() => {
-    if (isDismissed) return;
+    if (isDismissed) {
+      return;
+    }
 
     const isIOS =
       /iPad|iPhone|iPod/.test(navigator.userAgent) &&

@@ -22,7 +22,7 @@ export function ClassicLoader({
   return (
     <div className={cn("relative", sizeClasses[size], className)}>
       <div className="absolute h-full w-full">
-        {[...Array(12)].map((_, i) => (
+        {[...new Array(12)].map((_, i) => (
           <div
             className="absolute animate-[spinner-fade_1.2s_linear_infinite] rounded-full bg-primary"
             key={i}

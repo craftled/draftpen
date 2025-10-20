@@ -96,7 +96,7 @@ export const SearchLoadingState = ({
                 {text}
               </TextShimmer>
               <div className="flex gap-2">
-                {[...Array(3)].map((_, i) => (
+                {[...new Array(3)].map((_, i) => (
                   <div
                     className="h-1.5 animate-pulse rounded-full bg-neutral-200 dark:bg-neutral-700"
                     key={i}
@@ -132,7 +132,9 @@ LineNumbers.displayName = "LineNumbers";
 
 const StatusBadge = memo(
   ({ status }: { status: "running" | "completed" | "error" }) => {
-    if (status === "completed") return null;
+    if (status === "completed") {
+      return null;
+    }
 
     if (status === "error") {
       return (
@@ -172,7 +174,9 @@ CodeBlock.displayName = "CodeBlock";
 
 const OutputBlock = memo(
   ({ output, error }: { output?: string; error?: string }) => {
-    if (!(output || error)) return null;
+    if (!(output || error)) {
+      return null;
+    }
 
     return (
       <div

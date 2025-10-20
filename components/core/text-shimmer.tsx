@@ -4,13 +4,13 @@ import type React from "react";
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
 
-interface TextShimmerProps {
+type TextShimmerProps = {
   children: string;
   as?: React.ElementType;
   className?: string;
   duration?: number;
   spread?: number;
-}
+};
 
 export function TextShimmer({
   children,

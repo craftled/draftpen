@@ -25,7 +25,6 @@ export const textTranslateTool = tool({
           ),
       }),
     });
-    console.log(translation);
     return {
       translatedText: translation.translatedText,
       detectedLanguage: translation.detectedLanguage,

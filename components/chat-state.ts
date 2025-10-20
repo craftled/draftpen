@@ -1,4 +1,4 @@
-export interface ChatState {
+export type ChatState = {
   // UI state
   hasSubmitted: boolean;
   hasManuallyScrolled: boolean;
@@ -15,15 +15,15 @@ export interface ChatState {
   suggestedQuestions: string[];
   attachments: Attachment[];
   selectedVisibilityType: "public" | "private";
-}
+};
 
-interface Attachment {
+type Attachment = {
   name: string;
   contentType?: string;
   mediaType?: string;
   url: string;
   size: number;
-}
+};
 
 export type ChatAction =
   | { type: "SET_HAS_SUBMITTED"; payload: boolean }

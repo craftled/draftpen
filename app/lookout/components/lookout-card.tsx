@@ -16,7 +16,11 @@ import { formatNextRun } from "../utils/time-utils";
 import { ActionButtons } from "./action-buttons";
 import { StatusBadge } from "./status-badge";
 
-interface Lookout {
+const BORDERTRAIL_SIZE_CARD = 40 as const;
+
+const ICON_SIZE_XS = 12 as const;
+
+type Lookout = {
   id: string;
   title: string;
   prompt: string;
@@ -28,9 +32,9 @@ interface Lookout {
   lastRunChatId?: string | null;
   createdAt: Date;
   cronSchedule?: string;
-}
+};
 
-interface LookoutCardProps {
+type LookoutCardProps = {
   lookout: Lookout;
   isMutating?: boolean;
   onStatusChange: (
@@ -41,7 +45,7 @@ interface LookoutCardProps {
   onTest: (id: string) => void;
   onOpenDetails: (lookout: Lookout) => void;
   showActions?: boolean;
-}
+};
 
 export function LookoutCard({
   lookout,
@@ -71,7 +75,7 @@ export function LookoutCard({
       {lookout.status === "running" && (
         <BorderTrail
           className="bg-primary/60"
-          size={40}
+          size={BORDERTRAIL_SIZE_CARD}
           transition={{
             duration: 3,
             repeat: Number.POSITIVE_INFINITY,
@@ -92,7 +96,7 @@ export function LookoutCard({
           </div>
 
           {showActions && (
-            <div onClick={handleActionClick}>
+            <button onClick={handleActionClick} type="button">
               <ActionButtons
                 isMutating={isMutating}
                 lookoutId={lookout.id}
@@ -101,7 +105,7 @@ export function LookoutCard({
                 onTest={onTest}
                 status={lookout.status}
               />
-            </div>
+            </button>
           )}
         </div>
       </CardHeader>
@@ -130,7 +134,7 @@ export function LookoutCard({
                   <HugeiconsIcon
                     color="currentColor"
                     icon={BinocularsIcon}
-                    size={12}
+                    size={ICON_SIZE_XS}
                     strokeWidth={1.5}
                   />
                   View Results

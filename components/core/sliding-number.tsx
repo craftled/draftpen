@@ -46,7 +46,9 @@ function NumberDigit({
   const [ref, bounds] = useMeasure();
 
   const y = useTransform(mv, (latest) => {
-    if (!bounds.height) return 0;
+    if (!bounds.height) {
+      return 0;
+    }
     const placeValue = latest % 10;
     const offset = (10 + number - placeValue) % 10;
     let memo = offset * bounds.height;

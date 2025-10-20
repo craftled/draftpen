@@ -6,12 +6,12 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { UserProfile } from "@/components/user-profile";
 
-interface NavbarProps {
+type NavbarProps = {
   user: any;
   isProUser: boolean;
   isProStatusLoading: boolean;
   showProBadge?: boolean;
-}
+};
 
 export function Navbar({
   user,

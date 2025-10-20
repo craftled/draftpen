@@ -11,6 +11,8 @@ import { ChatSDKError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
 import { getStreamContext } from "../../route";
 
+const RESUME_THRESHOLD_SECONDS = 15 as const;
+
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -66,7 +68,9 @@ export async function GET(
   }
 
   const emptyDataStream = createUIMessageStream<ChatMessage>({
-    execute: () => {},
+    execute: () => {
+      /* no-op: used to initialize a resumable empty stream */
+    },
   });
 
   const stream = await streamContext.resumableStream(recentStreamId, () =>
@@ -79,30 +83,27 @@ export async function GET(
    */
   if (!stream) {
     const messages = await getMessagesByChatId({ id: chatId });
-    console.log("Messages: ", messages);
     const mostRecentMessage = messages.at(-1);
 
     if (!mostRecentMessage) {
-      console.log("No most recent message found");
       return new Response(emptyDataStream, { status: 200 });
     }
 
     if (mostRecentMessage.role !== "assistant") {
-      console.log("Most recent message is not an assistant message");
       return new Response(emptyDataStream, { status: 200 });
     }
 
     const messageCreatedAt = new Date(mostRecentMessage.createdAt);
 
-    if (differenceInSeconds(resumeRequestedAt, messageCreatedAt) > 15) {
-      console.log("Most recent message is too old");
+    if (
+      differenceInSeconds(resumeRequestedAt, messageCreatedAt) >
+      RESUME_THRESHOLD_SECONDS
+    ) {
       return new Response(emptyDataStream, { status: 200 });
     }
 
     const restoredStream = createUIMessageStream<ChatMessage>({
       execute: ({ writer }) => {
-        console.log("Restoring stream...");
-        console.log("Most recent message: ", mostRecentMessage);
         writer.write({
           type: "data-appendMessage",
           data: JSON.stringify(mostRecentMessage),

@@ -7,6 +7,9 @@ const jiti = createJiti(fileURLToPath(import.meta.url));
 jiti.import("./env/server.ts");
 jiti.import("./env/client.ts");
 
+const DEVICE_SIZES = [640, 750, 828, 1080, 1200, 1920, 2048, 3840] as const;
+const IMAGE_SIZES = [16, 32, 48, 64, 96, 128, 256, 384] as const;
+
 const nextConfig: NextConfig = {
   compiler: {
     // if NODE_ENV is production, remove console.log
@@ -151,8 +154,8 @@ const nextConfig: NextConfig = {
     ],
     // Add additional settings for better image loading
     domains: [],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    deviceSizes: [...DEVICE_SIZES],
+    imageSizes: [...IMAGE_SIZES],
     formats: ["image/webp"],
     // Next.js 16 default is 14400s (4 hours) - align with new defaults
     minimumCacheTTL: 14_400,

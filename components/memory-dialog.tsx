@@ -42,9 +42,7 @@ export function MemoryDialog() {
       initialPageParam: 1,
       getNextPageParam: (lastPage) => {
         const hasMore = lastPage.memories.length >= 20;
-        return hasMore
-          ? Number(lastPage.memories[lastPage.memories.length - 1]?.id)
-          : undefined;
+        return hasMore ? Number(lastPage.memories.at(-1)?.id) : undefined;
       },
       staleTime: 1000 * 60 * 5, // 5 minutes
     });
@@ -57,7 +55,9 @@ export function MemoryDialog() {
   } = useQuery({
     queryKey: ["memories", "search", searchQuery],
     queryFn: async () => {
-      if (!searchQuery.trim()) return { memories: [], total: 0 };
+      if (!searchQuery.trim()) {
+        return { memories: [], total: 0 };
+      }
       return await searchMemories(searchQuery);
     },
     enabled: false, // Don't run automatically, only when search is triggered
@@ -70,8 +70,7 @@ export function MemoryDialog() {
       queryClient.invalidateQueries({ queryKey: ["memories"] });
       toast.success("MemoryIcon successfully deleted");
     },
-    onError: (error) => {
-      console.error("Delete memory error:", error);
+    onError: (_error) => {
       toast.error("Failed to delete memory");
     },
   });
@@ -94,7 +93,9 @@ export function MemoryDialog() {
 
   // Format date in a more readable way
   const formatDate = (dateString: string | undefined) => {
-    if (!dateString) return "Unknown date";
+    if (!dateString) {
+      return "Unknown date";
+    }
     const date = new Date(dateString);
     return new Intl.DateTimeFormat("en-US", {
       month: "short",
@@ -107,8 +108,12 @@ export function MemoryDialog() {
 
   // Get memory content based on the response type
   const getMemoryContent = (memory: MemoryItem): string => {
-    if (memory.memory) return memory.memory;
-    if (memory.name) return memory.name;
+    if (memory.memory) {
+      return memory.memory;
+    }
+    if (memory.name) {
+      return memory.name;
+    }
     return "No content available";
   };
 

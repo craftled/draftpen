@@ -4,11 +4,15 @@ import { z } from "zod";
 
 import { auth } from "@/lib/auth";
 
+const BYTES_PER_KB = 1024 as const;
+const BYTES_PER_MB = BYTES_PER_KB * BYTES_PER_KB;
+const MAX_UPLOAD_MB = 5 as const;
+
 // File validation schema
 const FileSchema = z.object({
   file: z
     .instanceof(Blob)
-    .refine((file) => file.size <= 5 * 1024 * 1024, {
+    .refine((file) => file.size <= MAX_UPLOAD_MB * BYTES_PER_MB, {
       message: "File size should be less than 5MB",
     })
     .refine(

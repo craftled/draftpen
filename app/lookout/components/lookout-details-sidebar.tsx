@@ -26,7 +26,27 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-interface LookoutRun {
+const BORDERTRAIL_SIZE_RUNNING_SM = 14 as const;
+
+const ICON_SIZE_TINY = 10 as const;
+
+const ICON_SIZE_SM = 14 as const;
+const BORDERTRAIL_SIZE_RUNNING_BADGE = 20 as const;
+const ICON_STROKE_WIDTH = 1.5 as const;
+
+const MS_PER_SECOND = 1000 as const;
+
+const PERCENT_100 = 100 as const;
+const SECONDS_PER_MINUTE = 60 as const;
+const MINUTES_PER_HOUR = 60 as const;
+const HOURS_PER_DAY = 24 as const;
+const DAYS_IN_WEEK = 7 as const;
+const MS_PER_MINUTE = SECONDS_PER_MINUTE * MS_PER_SECOND;
+const MS_PER_HOUR = MINUTES_PER_HOUR * MS_PER_MINUTE;
+const MS_PER_DAY = HOURS_PER_DAY * MS_PER_HOUR;
+const ERROR_HISTORY_LIMIT = 3 as const;
+
+type LookoutRun = {
   runAt: string;
   chatId: string;
   status: "success" | "error" | "timeout";
@@ -34,9 +54,9 @@ interface LookoutRun {
   duration?: number;
   tokensUsed?: number;
   searchesPerformed?: number;
-}
+};
 
-interface LookoutWithHistory {
+type LookoutWithHistory = {
   id: string;
   title: string;
   prompt: string;
@@ -49,9 +69,9 @@ interface LookoutWithHistory {
   runHistory: LookoutRun[];
   createdAt: Date;
   updatedAt: Date;
-}
+};
 
-interface LookoutDetailsSidebarProps {
+type LookoutDetailsSidebarProps = {
   lookout: LookoutWithHistory;
   allLookouts: LookoutWithHistory[];
   isOpen: boolean;
@@ -59,13 +79,13 @@ interface LookoutDetailsSidebarProps {
   onLookoutChange?: (lookout: LookoutWithHistory) => void;
   onEditLookout?: (lookout: LookoutWithHistory) => void;
   onTest?: (id: string) => void;
-}
+};
 
 export function LookoutDetailsSidebar({
   lookout,
   allLookouts,
-  isOpen,
-  onOpenChange,
+  isOpen: _isOpen,
+  onOpenChange: _onOpenChange,
   onLookoutChange,
   onEditLookout,
   onTest,
@@ -76,7 +96,8 @@ export function LookoutDetailsSidebar({
     (run) => run.status === "success"
   ).length;
   const failedRuns = runHistory.filter((run) => run.status === "error").length;
-  const successRate = totalRuns > 0 ? (successfulRuns / totalRuns) * 100 : 0;
+  const successRate =
+    totalRuns > 0 ? (successfulRuns / totalRuns) * PERCENT_100 : 0;
 
   const averageDuration =
     runHistory.length > 0
@@ -86,7 +107,7 @@ export function LookoutDetailsSidebar({
 
   const lastWeekRuns = runHistory.filter(
     (run) =>
-      new Date(run.runAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      new Date(run.runAt) > new Date(Date.now() - DAYS_IN_WEEK * MS_PER_DAY)
   ).length;
 
   // Get currently running lookouts
@@ -103,8 +124,8 @@ export function LookoutDetailsSidebar({
             className="text-green-500"
             color="currentColor"
             icon={CheckmarkCircle01Icon}
-            size={14}
-            strokeWidth={1.5}
+            size={ICON_SIZE_SM}
+            strokeWidth={ICON_STROKE_WIDTH}
           />
         );
       case "error":
@@ -113,8 +134,8 @@ export function LookoutDetailsSidebar({
             className="text-red-500"
             color="currentColor"
             icon={Cancel01Icon}
-            size={14}
-            strokeWidth={1.5}
+            size={ICON_SIZE_SM}
+            strokeWidth={ICON_STROKE_WIDTH}
           />
         );
       case "timeout":
@@ -123,8 +144,8 @@ export function LookoutDetailsSidebar({
             className="text-yellow-500"
             color="currentColor"
             icon={AlertCircleIcon}
-            size={14}
-            strokeWidth={1.5}
+            size={ICON_SIZE_SM}
+            strokeWidth={ICON_STROKE_WIDTH}
           />
         );
       default:
@@ -133,8 +154,8 @@ export function LookoutDetailsSidebar({
             className="text-gray-500"
             color="currentColor"
             icon={Activity01Icon}
-            size={14}
-            strokeWidth={1.5}
+            size={ICON_SIZE_SM}
+            strokeWidth={ICON_STROKE_WIDTH}
           />
         );
     }
@@ -165,7 +186,7 @@ export function LookoutDetailsSidebar({
           >
             <BorderTrail
               className="bg-primary/60"
-              size={20}
+              size={BORDERTRAIL_SIZE_RUNNING_BADGE}
               transition={{
                 duration: 2,
                 repeat: Number.POSITIVE_INFINITY,
@@ -175,8 +196,8 @@ export function LookoutDetailsSidebar({
             <HugeiconsIcon
               color="currentColor"
               icon={PlayIcon}
-              size={10}
-              strokeWidth={1.5}
+              size={ICON_SIZE_TINY}
+              strokeWidth={ICON_STROKE_WIDTH}
             />
             Running
           </Badge>
@@ -194,6 +215,16 @@ export function LookoutDetailsSidebar({
           </Badge>
         );
     }
+  };
+
+  const getTestTooltip = (status: string) => {
+    if (status === "running") {
+      return "Cannot test while running";
+    }
+    if (status === "archived") {
+      return "Cannot test archived lookout";
+    }
+    return "Run test now";
   };
 
   return (
@@ -221,7 +252,7 @@ export function LookoutDetailsSidebar({
                   </span>
                   <span className="font-medium text-sm">
                     {averageDuration > 0
-                      ? `${(averageDuration / 1000).toFixed(1)}s`
+                      ? `${(averageDuration / MS_PER_SECOND).toFixed(1)}s`
                       : "N/A"}
                   </span>
                 </div>
@@ -288,11 +319,11 @@ export function LookoutDetailsSidebar({
                 <div className="max-h-32 space-y-2 overflow-y-auto">
                   {runHistory
                     .filter((run) => run.status === "error")
-                    .slice(-3)
-                    .map((run, index) => (
+                    .slice(-ERROR_HISTORY_LIMIT)
+                    .map((run) => (
                       <div
                         className="rounded border border-red-200 bg-red-50 p-2 dark:border-red-800 dark:bg-red-950/20"
-                        key={index}
+                        key={run.chatId}
                       >
                         <div className="mb-1 font-medium text-red-700 text-xs dark:text-red-400">
                           {format(new Date(run.runAt), "MMM d, h:mm a")}
@@ -318,20 +349,21 @@ export function LookoutDetailsSidebar({
                   </h3>
                   <div className="space-y-2">
                     {runningLookouts.map((runningLookout) => (
-                      <div
-                        className={`cursor-pointer rounded-md border p-3 transition-colors hover:bg-muted/50 ${
+                      <button
+                        className={`w-full cursor-pointer rounded-md border p-3 text-left transition-colors hover:bg-muted/50 ${
                           runningLookout.id === lookout.id
                             ? "border-primary/30 bg-muted"
                             : ""
                         }`}
                         key={runningLookout.id}
                         onClick={() => onLookoutChange?.(runningLookout)}
+                        type="button"
                       >
                         <div className="flex items-center gap-2">
                           <div className="relative overflow-hidden rounded border border-primary/20 p-1">
                             <BorderTrail
                               className="bg-primary/60"
-                              size={14}
+                              size={BORDERTRAIL_SIZE_RUNNING_SM}
                               transition={{
                                 duration: 2,
                                 repeat: Number.POSITIVE_INFINITY,
@@ -342,8 +374,8 @@ export function LookoutDetailsSidebar({
                               className="text-primary"
                               color="currentColor"
                               icon={PlayIcon}
-                              size={10}
-                              strokeWidth={1.5}
+                              size={ICON_SIZE_TINY}
+                              strokeWidth={ICON_STROKE_WIDTH}
                             />
                           </div>
                           <div className="min-w-0 flex-1">
@@ -361,7 +393,7 @@ export function LookoutDetailsSidebar({
                             </Badge>
                           )}
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -439,7 +471,7 @@ export function LookoutDetailsSidebar({
                   </div>
                   <div className="font-semibold text-lg">
                     {averageDuration > 0
-                      ? `${(averageDuration / 1000).toFixed(1)}s`
+                      ? `${(averageDuration / MS_PER_SECOND).toFixed(1)}s`
                       : "N/A"}
                   </div>
                 </div>
@@ -473,7 +505,7 @@ export function LookoutDetailsSidebar({
                                   className="h-4 text-xs"
                                   variant="outline"
                                 >
-                                  {(run.duration / 1000).toFixed(1)}s
+                                  {(run.duration / MS_PER_SECOND).toFixed(1)}s
                                 </Badge>
                               )}
                             </div>
@@ -500,7 +532,7 @@ export function LookoutDetailsSidebar({
                                 color="currentColor"
                                 icon={ArrowUpRightIcon}
                                 size={12}
-                                strokeWidth={1.5}
+                                strokeWidth={ICON_STROKE_WIDTH}
                               />
                             </Button>
                           </Link>
@@ -517,7 +549,7 @@ export function LookoutDetailsSidebar({
                         color="currentColor"
                         icon={Activity01Icon}
                         size={16}
-                        strokeWidth={1.5}
+                        strokeWidth={ICON_STROKE_WIDTH}
                       />
                     </div>
                     <p className="text-xs">No runs yet</p>
@@ -574,20 +606,14 @@ export function LookoutDetailsSidebar({
                   className="mr-1"
                   color="currentColor"
                   icon={TestTubeIcon}
-                  size={14}
-                  strokeWidth={1.5}
+                  size={ICON_SIZE_SM}
+                  strokeWidth={ICON_STROKE_WIDTH}
                 />
                 Test
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>
-                {lookout.status === "running"
-                  ? "Cannot test while running"
-                  : lookout.status === "archived"
-                    ? "Cannot test archived lookout"
-                    : "Run test now"}
-              </p>
+              <p>{getTestTooltip(lookout.status)}</p>
             </TooltipContent>
           </Tooltip>
           <Tooltip>
@@ -603,7 +629,7 @@ export function LookoutDetailsSidebar({
                   color="currentColor"
                   icon={Chart01Icon}
                   size={14}
-                  strokeWidth={1.5}
+                  strokeWidth={ICON_STROKE_WIDTH}
                 />
                 {showAnalytics ? "Overview" : "Analytics"}
               </Button>

@@ -3,14 +3,20 @@ import { useCallback, useEffect, useState } from "react";
 // Get the initial value synchronously during initialization
 function getStoredValue<T>(key: string, defaultValue: T): T {
   // Always return defaultValue on server-side
-  if (typeof window === "undefined") return defaultValue;
+  if (typeof window === "undefined") {
+    return defaultValue;
+  }
 
   try {
     const item = localStorage.getItem(key);
-    if (!item) return defaultValue;
+    if (!item) {
+      return defaultValue;
+    }
 
     // Handle special case for undefined
-    if (item === "undefined") return defaultValue;
+    if (item === "undefined") {
+      return defaultValue;
+    }
 
     return JSON.parse(item);
   } catch {
@@ -30,7 +36,9 @@ export function useLocalStorage<T>(
 
   // Listen for storage changes from other components/tabs
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined") {
+      return;
+    }
 
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === key && e.newValue !== null) {
@@ -88,9 +96,7 @@ export function useLocalStorage<T>(
           });
           window.dispatchEvent(customEvent);
         }
-      } catch (error) {
-        console.warn(`Error saving to localStorage key "${key}":`, error);
-      }
+      } catch (_error) {}
     },
     [key, storedValue]
   );

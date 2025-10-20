@@ -1,7 +1,7 @@
+import fs from "node:fs";
+import path from "node:path";
 import { format } from "date-fns";
-import fs from "fs";
 import { ImageResponse } from "next/og";
-import path from "path";
 import { SciraLogo } from "@/components/logos/scira-logo";
 import { getChatWithUserById } from "@/lib/db/queries";
 
@@ -326,8 +326,7 @@ export async function GET(
         ],
       }
     );
-  } catch (error) {
-    console.error("Error generating OG image:", error);
+  } catch (_error) {
     return new Response("Error generating OG image", { status: 500 });
   }
 }

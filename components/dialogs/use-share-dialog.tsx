@@ -2,14 +2,14 @@
 
 import { useCallback, useState } from "react";
 
-interface UseShareDialogProps {
+type UseShareDialogProps = {
   chatId?: string;
   currentVisibility: "public" | "private";
   onVisibilityChange: (visibility: "public" | "private") => Promise<void>;
   isOwner?: boolean;
-}
+};
 
-interface UseShareDialogReturn {
+type UseShareDialogReturn = {
   isOpen: boolean;
   openDialog: () => void;
   closeDialog: () => void;
@@ -21,7 +21,7 @@ interface UseShareDialogReturn {
     onVisibilityChange: (visibility: "public" | "private") => Promise<void>;
     isOwner: boolean;
   } | null;
-}
+};
 
 export function useShareDialog({
   chatId,
@@ -32,12 +32,10 @@ export function useShareDialog({
   const [isOpen, setIsOpen] = useState(false);
 
   const openDialog = useCallback(() => {
-    console.log("🔄 useShareDialog: Opening share dialog for chatId:", chatId);
     setIsOpen(true);
-  }, [chatId]);
+  }, []);
 
   const closeDialog = useCallback(() => {
-    console.log("🔄 useShareDialog: Closing share dialog");
     setIsOpen(false);
   }, []);
 

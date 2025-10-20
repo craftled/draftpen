@@ -56,12 +56,6 @@ export class ChatSDKError extends Error {
     const { message, cause, statusCode } = this;
 
     if (visibility === "log") {
-      console.error({
-        code,
-        message,
-        cause,
-      });
-
       return Response.json(
         { code: "", message: "Something went wrong. Please try again later." },
         { status: statusCode }
@@ -216,8 +210,14 @@ export function getErrorActions(error: ChatSDKError): {
 export function getErrorIcon(
   error: ChatSDKError
 ): "warning" | "error" | "upgrade" | "auth" {
-  if (isSignInRequired(error)) return "auth";
-  if (isProRequired(error) || isRateLimited(error)) return "upgrade";
-  if (error.type === "offline") return "warning";
+  if (isSignInRequired(error)) {
+    return "auth";
+  }
+  if (isProRequired(error) || isRateLimited(error)) {
+    return "upgrade";
+  }
+  if (error.type === "offline") {
+    return "warning";
+  }
   return "error";
 }

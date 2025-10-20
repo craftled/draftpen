@@ -77,19 +77,19 @@ const SCROLL_THRESHOLD = 0.8;
 const INTERSECTION_ROOT_MARGIN = "100px";
 const FOCUS_DELAY = 100;
 
-interface Chat {
+type Chat = {
   id: string;
   title: string;
   createdAt: Date;
   userId: string;
   visibility: "public" | "private";
-}
+};
 
-interface ChatHistoryDialogProps {
+type ChatHistoryDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   user: User | null;
-}
+};
 
 // Search modes for different filtering strategies
 type SearchMode = "all" | "title" | "date" | "visibility";
@@ -193,13 +193,17 @@ const formatCompactTime = (() => {
 
 // Custom fuzzy search function
 function fuzzySearch(query: string, text: string): boolean {
-  if (!query) return true;
+  if (!query) {
+    return true;
+  }
 
   const queryLower = query.toLowerCase();
   const textLower = text.toLowerCase();
 
   // Exact match gets highest priority
-  if (textLower.includes(queryLower)) return true;
+  if (textLower.includes(queryLower)) {
+    return true;
+  }
 
   // Fuzzy matching - check if all characters in query appear in order
   let queryIndex = 0;
@@ -218,7 +222,9 @@ function parseDateQuery(dateStr: string): Date | null {
   const dateRegex = /^(\d{1,2})\/(\d{1,2})\/(\d{2})$/;
   const match = dateStr.match(dateRegex);
 
-  if (!match) return null;
+  if (!match) {
+    return null;
+  }
 
   const [, dayStr, monthStr, yearStr] = match;
   const day = Number.parseInt(dayStr, 10);
@@ -255,7 +261,9 @@ function isSameDay(date1: Date, date2: Date): boolean {
 
 // Advanced search function with multiple criteria
 function advancedSearch(chat: Chat, query: string, mode: SearchMode): boolean {
-  if (!query) return true;
+  if (!query) {
+    return true;
+  }
 
   // Handle special search prefixes
   if (query.startsWith("public:")) {
@@ -321,7 +329,6 @@ function advancedSearch(chat: Chat, query: string, mode: SearchMode): boolean {
     }
     case "visibility":
       return fuzzySearch(query, chat.visibility);
-    case "all":
     default:
       return (
         fuzzySearch(query, chat.title) ||
@@ -376,7 +383,9 @@ export function ChatHistoryDialog({
   } = useInfiniteQuery({
     queryKey: ["chats", user?.id],
     queryFn: async ({ pageParam }) => {
-      if (!user?.id) return { chats: [], hasMore: false };
+      if (!user?.id) {
+        return { chats: [], hasMore: false };
+      }
 
       if (pageParam) {
         // Load more chats using the last chat ID as cursor
@@ -386,8 +395,10 @@ export function ChatHistoryDialog({
       return await getUserChats(user.id, 20);
     },
     getNextPageParam: (lastPage) => {
-      if (!lastPage.hasMore || lastPage.chats.length === 0) return;
-      return lastPage.chats[lastPage.chats.length - 1].id;
+      if (!lastPage.hasMore || lastPage.chats.length === 0) {
+        return;
+      }
+      return lastPage.chats.at(-1).id;
     },
     enabled: !!user?.id,
     refetchOnWindowFocus: true,
@@ -448,7 +459,9 @@ export function ChatHistoryDialog({
 
   // Periodic update for real-time timestamps
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      return;
+    }
 
     const updateTimes = () => {
       // Force a re-render to update the displayed times
@@ -515,7 +528,9 @@ export function ChatHistoryDialog({
       toast.success("Chat deleted");
       // Update cache after successful deletion
       queryClient.setQueryData(["chats", user?.id], (oldData: any) => {
-        if (!oldData) return oldData;
+        if (!oldData) {
+          return oldData;
+        }
         return {
           ...oldData,
           pages: oldData.pages.map((page: any) => ({
@@ -525,8 +540,7 @@ export function ChatHistoryDialog({
         };
       });
     },
-    onError: (error) => {
-      console.error("Failed to delete chat:", error);
+    onError: (_error) => {
       toast.error("Failed to delete chat. Please try again.");
       queryClient.invalidateQueries({ queryKey: ["chats", user?.id] });
     },
@@ -540,7 +554,9 @@ export function ChatHistoryDialog({
         toast.success("Title updated");
         // Update cache after successful title update
         queryClient.setQueryData(["chats", user?.id], (oldData: any) => {
-          if (!oldData) return oldData;
+          if (!oldData) {
+            return oldData;
+          }
           return {
             ...oldData,
             pages: oldData.pages.map((page: any) => ({
@@ -555,8 +571,7 @@ export function ChatHistoryDialog({
         toast.error("Failed to update title. Please try again.");
       }
     },
-    onError: (error) => {
-      console.error("Failed to update chat title:", error);
+    onError: (_error) => {
       toast.error("Failed to update title. Please try again.");
     },
   });
@@ -585,7 +600,9 @@ export function ChatHistoryDialog({
     const currentTrigger = loadMoreTriggerRef.current;
     const currentList = listRef.current;
 
-    if (!(currentTrigger && currentList)) return;
+    if (!(currentTrigger && currentList)) {
+      return;
+    }
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -639,7 +656,6 @@ export function ChatHistoryDialog({
   const handleDeleteChat = useCallback(
     (e: React.MouseEvent | KeyboardEvent, id: string) => {
       e.stopPropagation();
-      console.log("SETTING DELETING CHAT ID:", id);
       setDeletingChatId(id);
     },
     []
@@ -659,9 +675,7 @@ export function ChatHistoryDialog({
           redirect("/");
         }
         // If not current chat, stay in the dialog
-      } catch (error) {
-        // Error handling is done in mutation callbacks, but we should reset state
-        console.error("Delete chat error:", error);
+      } catch (_error) {
         toast.error("Failed to delete chat. Please try again.");
       }
     },
@@ -671,7 +685,6 @@ export function ChatHistoryDialog({
   // Cancel deletion
   const cancelDeleteChat = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log("CANCELING DELETION");
     setDeletingChatId(null);
   }, []);
 
@@ -682,7 +695,6 @@ export function ChatHistoryDialog({
 
       // Prevent editing if chat is in deleting state
       if (deletingChatId === id) {
-        console.warn("Cannot edit title while chat is in deleting state");
         return;
       }
 
@@ -714,10 +726,7 @@ export function ChatHistoryDialog({
         });
         setEditingChatId(null);
         setEditingTitle("");
-      } catch (error) {
-        // Error handling is done in mutation callbacks
-        console.error("Save title error:", error);
-      }
+      } catch (_error) {}
     },
     [editingTitle, updateTitleMutation]
   );
@@ -750,7 +759,6 @@ export function ChatHistoryDialog({
         return { icon: Calendar, label: "Date" };
       case "visibility":
         return { icon: Globe, label: "Visibility" };
-      case "all":
       default:
         return { icon: Search, label: "All" };
     }
@@ -1047,243 +1055,230 @@ export function ChatHistoryDialog({
   }
 
   return (
-    <>
-      <CommandDialog onOpenChange={onOpenChange} open={open}>
-        <div className="relative">
-          {/* Custom search input with mode indicator */}
-          <div className="flex h-12 items-center gap-2 border-b px-3 pr-16 sm:pr-20">
-            <IconComponent className="size-4 shrink-0 opacity-50" />
-            <input
-              className="flex h-10 w-full rounded-md bg-transparent py-3 pr-2 text-sm outline-hidden placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (
-                  e.key === "Tab" &&
-                  !e.shiftKey &&
-                  !e.ctrlKey &&
-                  !e.metaKey
-                ) {
-                  e.preventDefault();
-                  // Cycle through search modes only with plain Tab
-                  cycleSearchMode();
-                }
-              }}
-              placeholder={`Search ${currentModeInfo.label.toLowerCase()}...`}
-              ref={inputRef}
-              value={searchQuery}
-            />
-            <div className="absolute top-3 right-12 flex items-center gap-1">
-              <Button
-                className="h-6 bg-muted px-1.5 text-xs hover:bg-muted/80 sm:px-2"
-                onClick={cycleSearchMode}
-                size="sm"
-                variant="ghost"
-              >
-                {currentModeInfo.label}
-              </Button>
-            </div>
+    <CommandDialog onOpenChange={onOpenChange} open={open}>
+      <div className="relative">
+        {/* Custom search input with mode indicator */}
+        <div className="flex h-12 items-center gap-2 border-b px-3 pr-16 sm:pr-20">
+          <IconComponent className="size-4 shrink-0 opacity-50" />
+          <input
+            className="flex h-10 w-full rounded-md bg-transparent py-3 pr-2 text-sm outline-hidden placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Tab" && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                // Cycle through search modes only with plain Tab
+                cycleSearchMode();
+              }
+            }}
+            placeholder={`Search ${currentModeInfo.label.toLowerCase()}...`}
+            ref={inputRef}
+            value={searchQuery}
+          />
+          <div className="absolute top-3 right-12 flex items-center gap-1">
+            <Button
+              className="h-6 bg-muted px-1.5 text-xs hover:bg-muted/80 sm:px-2"
+              onClick={cycleSearchMode}
+              size="sm"
+              variant="ghost"
+            >
+              {currentModeInfo.label}
+            </Button>
           </div>
+        </div>
 
-          <CommandList
-            aria-label="Chat history"
-            className="scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent max-h-[520px] min-h-[520px] flex-1 [&>[cmdk-list-sizer]]:space-y-6! [&>[cmdk-list-sizer]]:py-2!"
-            onScroll={handleScroll}
-            ref={listRef}
-            role="listbox"
-          >
-            {isLoading ? (
-              <div>
-                <CommandGroup heading="Recent Conversations">
-                  {Array(5)
-                    .fill(0)
-                    .map((_, i) => (
-                      <CommandItem
-                        className="flex items-center justify-between gap-2! rounded-md p-2! px-3!"
-                        disabled
-                        key={`skeleton-${i}`}
-                      >
-                        <div className="flex min-w-0 flex-grow items-center gap-2">
-                          <Skeleton className="h-4 w-4 shrink-0 rounded-full" />
-                          <Skeleton className="h-4 w-[180px]" />
-                        </div>
-                        <div className="flex shrink-0 items-center gap-2">
-                          <Skeleton className="h-5 w-16 rounded-full" />
-                          <Skeleton className="h-3 w-[70px]" />
-                          <Skeleton className="h-7 w-7 rounded-full" />
-                        </div>
-                      </CommandItem>
-                    ))}
-                </CommandGroup>
-              </div>
-            ) : (
-              <>
-                {allChats.length > 0 ? (
-                  <>
-                    {[
-                      { key: "today", heading: "Today" },
-                      { key: "yesterday", heading: "Yesterday" },
-                      { key: "thisWeek", heading: "This Week" },
-                      { key: "lastWeek", heading: "Last Week" },
-                      { key: "thisMonth", heading: "This Month" },
-                      { key: "older", heading: "Older" },
-                    ].map(({ key, heading }) => {
-                      const chats =
-                        categorizedChats[key as keyof typeof categorizedChats];
-                      return (
-                        chats.length > 0 && (
-                          <CommandGroup
-                            className="mb-0! py-1! [&_[cmdk-group-heading]]:py-0.5!"
-                            heading={heading}
-                            key={key}
-                          >
-                            {chats.map((chat) => renderChatItem(chat))}
-                          </CommandGroup>
-                        )
-                      );
-                    })}
+        <CommandList
+          aria-label="Chat history"
+          className="scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent max-h-[520px] min-h-[520px] flex-1 [&>[cmdk-list-sizer]]:space-y-6! [&>[cmdk-list-sizer]]:py-2!"
+          onScroll={handleScroll}
+          ref={listRef}
+          role="listbox"
+        >
+          {isLoading ? (
+            <div>
+              <CommandGroup heading="Recent Conversations">
+                {new Array(5).fill(0).map((_, i) => (
+                  <CommandItem
+                    className="flex items-center justify-between gap-2! rounded-md p-2! px-3!"
+                    disabled
+                    key={`skeleton-${i}`}
+                  >
+                    <div className="flex min-w-0 flex-grow items-center gap-2">
+                      <Skeleton className="h-4 w-4 shrink-0 rounded-full" />
+                      <Skeleton className="h-4 w-[180px]" />
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Skeleton className="h-5 w-16 rounded-full" />
+                      <Skeleton className="h-3 w-[70px]" />
+                      <Skeleton className="h-7 w-7 rounded-full" />
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </div>
+          ) : allChats.length > 0 ? (
+            <>
+              {[
+                { key: "today", heading: "Today" },
+                { key: "yesterday", heading: "Yesterday" },
+                { key: "thisWeek", heading: "This Week" },
+                { key: "lastWeek", heading: "Last Week" },
+                { key: "thisMonth", heading: "This Month" },
+                { key: "older", heading: "Older" },
+              ].map(({ key, heading }) => {
+                const chats =
+                  categorizedChats[key as keyof typeof categorizedChats];
+                return (
+                  chats.length > 0 && (
+                    <CommandGroup
+                      className="mb-0! py-1! [&_[cmdk-group-heading]]:py-0.5!"
+                      heading={heading}
+                      key={key}
+                    >
+                      {chats.map((chat) => renderChatItem(chat))}
+                    </CommandGroup>
+                  )
+                );
+              })}
 
-                    {/* Infinite scroll trigger and loading indicator */}
-                    {hasNextPage && (
-                      <div
-                        className="flex items-center justify-center px-3 py-2"
-                        ref={loadMoreTriggerRef}
-                      >
-                        {isFetchingNextPage ? (
-                          <div className="flex items-center gap-2 text-muted-foreground text-xs">
-                            <Spinner />
-                            Loading more...
-                          </div>
-                        ) : (
-                          <div className="h-1" />
-                        )}
+              {/* Infinite scroll trigger and loading indicator */}
+              {hasNextPage && (
+                <div
+                  className="flex items-center justify-center px-3 py-2"
+                  ref={loadMoreTriggerRef}
+                >
+                  {isFetchingNextPage ? (
+                    <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                      <Spinner />
+                      Loading more...
+                    </div>
+                  ) : (
+                    <div className="h-1" />
+                  )}
+                </div>
+              )}
+            </>
+          ) : (
+            <CommandEmpty>
+              <Empty className="border-0">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <History className="size-6" />
+                  </EmptyMedia>
+                  <EmptyTitle>No conversations found</EmptyTitle>
+                  {searchQuery ? (
+                    <EmptyDescription>
+                      Try a different search term or change search mode
+                    </EmptyDescription>
+                  ) : (
+                    <EmptyDescription>
+                      Start a new chat to begin
+                    </EmptyDescription>
+                  )}
+                </EmptyHeader>
+                {searchQuery ? (
+                  <EmptyContent>
+                    <div className="space-y-1.5 text-muted-foreground/80 text-xs">
+                      <p className="font-medium">Search tips:</p>
+                      <div className="space-y-0.5">
+                        <p>
+                          •{" "}
+                          <code className="rounded bg-muted px-1 py-0.5 text-xs">
+                            public:
+                          </code>{" "}
+                          or{" "}
+                          <code className="rounded bg-muted px-1 py-0.5 text-xs">
+                            private:
+                          </code>{" "}
+                          for visibility
+                        </p>
+                        <p>
+                          •{" "}
+                          <code className="rounded bg-muted px-1 py-0.5 text-xs">
+                            today:
+                          </code>
+                          ,{" "}
+                          <code className="rounded bg-muted px-1 py-0.5 text-xs">
+                            week:
+                          </code>
+                          ,{" "}
+                          <code className="rounded bg-muted px-1 py-0.5 text-xs">
+                            month:
+                          </code>{" "}
+                          for dates
+                        </p>
+                        <p>
+                          •{" "}
+                          <code className="rounded bg-muted px-1 py-0.5 text-xs">
+                            date:22/05/25
+                          </code>{" "}
+                          for specific date (DD/MM/YY)
+                        </p>
+                        <p>
+                          • Switch to Date mode and type{" "}
+                          <code className="rounded bg-muted px-1 py-0.5 text-xs">
+                            22/05/25
+                          </code>
+                        </p>
                       </div>
-                    )}
-                  </>
+                    </div>
+                  </EmptyContent>
                 ) : (
-                  <CommandEmpty>
-                    <Empty className="border-0">
-                      <EmptyHeader>
-                        <EmptyMedia variant="icon">
-                          <History className="size-6" />
-                        </EmptyMedia>
-                        <EmptyTitle>No conversations found</EmptyTitle>
-                        {searchQuery ? (
-                          <EmptyDescription>
-                            Try a different search term or change search mode
-                          </EmptyDescription>
-                        ) : (
-                          <EmptyDescription>
-                            Start a new chat to begin
-                          </EmptyDescription>
-                        )}
-                      </EmptyHeader>
-                      {searchQuery ? (
-                        <EmptyContent>
-                          <div className="space-y-1.5 text-muted-foreground/80 text-xs">
-                            <p className="font-medium">Search tips:</p>
-                            <div className="space-y-0.5">
-                              <p>
-                                •{" "}
-                                <code className="rounded bg-muted px-1 py-0.5 text-xs">
-                                  public:
-                                </code>{" "}
-                                or{" "}
-                                <code className="rounded bg-muted px-1 py-0.5 text-xs">
-                                  private:
-                                </code>{" "}
-                                for visibility
-                              </p>
-                              <p>
-                                •{" "}
-                                <code className="rounded bg-muted px-1 py-0.5 text-xs">
-                                  today:
-                                </code>
-                                ,{" "}
-                                <code className="rounded bg-muted px-1 py-0.5 text-xs">
-                                  week:
-                                </code>
-                                ,{" "}
-                                <code className="rounded bg-muted px-1 py-0.5 text-xs">
-                                  month:
-                                </code>{" "}
-                                for dates
-                              </p>
-                              <p>
-                                •{" "}
-                                <code className="rounded bg-muted px-1 py-0.5 text-xs">
-                                  date:22/05/25
-                                </code>{" "}
-                                for specific date (DD/MM/YY)
-                              </p>
-                              <p>
-                                • Switch to Date mode and type{" "}
-                                <code className="rounded bg-muted px-1 py-0.5 text-xs">
-                                  22/05/25
-                                </code>
-                              </p>
-                            </div>
-                          </div>
-                        </EmptyContent>
-                      ) : (
-                        <EmptyContent>
-                          <Button
-                            className="w-full max-w-[200px]"
-                            onClick={() => onOpenChange(false)}
-                          >
-                            Start a new search
-                          </Button>
-                        </EmptyContent>
-                      )}
-                    </Empty>
-                  </CommandEmpty>
+                  <EmptyContent>
+                    <Button
+                      className="w-full max-w-[200px]"
+                      onClick={() => onOpenChange(false)}
+                    >
+                      Start a new search
+                    </Button>
+                  </EmptyContent>
                 )}
-              </>
-            )}
-          </CommandList>
+              </Empty>
+            </CommandEmpty>
+          )}
+        </CommandList>
 
-          {/* Mobile hints */}
-          <div className="right-0 bottom-0 left-0 block border-border border-t bg-background/90 p-3 text-center text-muted-foreground text-xs sm:hidden">
-            <div className="flex items-center justify-center gap-3">
-              <span>Tap to open</span>
-              <span>•</span>
-              <span>Edit to rename</span>
-              <span>•</span>
-              <span>Trash to delete</span>
-            </div>
+        {/* Mobile hints */}
+        <div className="right-0 bottom-0 left-0 block border-border border-t bg-background/90 p-3 text-center text-muted-foreground text-xs sm:hidden">
+          <div className="flex items-center justify-center gap-3">
+            <span>Tap to open</span>
+            <span>•</span>
+            <span>Edit to rename</span>
+            <span>•</span>
+            <span>Trash to delete</span>
           </div>
+        </div>
 
-          {/* Desktop keyboard shortcuts */}
-          <div className="right-0 bottom-0 left-0 hidden border-border border-t bg-background/90 p-3 text-center text-muted-foreground text-xs sm:block">
-            <div className="flex items-center justify-between px-2">
-              {/* Important navigation shortcuts on the left */}
-              <div className="flex items-center gap-4">
-                <span className="flex items-center gap-1.5">
-                  <Kbd className="rounded font-mono">⏎</Kbd> open
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Kbd className="rounded">↑</Kbd>
-                  <Kbd className="rounded">↓</Kbd>
-                  navigate
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Kbd className="rounded">Tab</Kbd> toggle mode
-                </span>
-              </div>
+        {/* Desktop keyboard shortcuts */}
+        <div className="right-0 bottom-0 left-0 hidden border-border border-t bg-background/90 p-3 text-center text-muted-foreground text-xs sm:block">
+          <div className="flex items-center justify-between px-2">
+            {/* Important navigation shortcuts on the left */}
+            <div className="flex items-center gap-4">
+              <span className="flex items-center gap-1.5">
+                <Kbd className="rounded font-mono">⏎</Kbd> open
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Kbd className="rounded">↑</Kbd>
+                <Kbd className="rounded">↓</Kbd>
+                navigate
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Kbd className="rounded">Tab</Kbd> toggle mode
+              </span>
+            </div>
 
-              {/* Less critical shortcuts on the right */}
-              <div className="flex items-center gap-4">
-                <span className="text-muted-foreground/80">
-                  Click edit to rename • Click trash to delete
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Kbd className="rounded">Esc</Kbd> close
-                </span>
-              </div>
+            {/* Less critical shortcuts on the right */}
+            <div className="flex items-center gap-4">
+              <span className="text-muted-foreground/80">
+                Click edit to rename • Click trash to delete
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Kbd className="rounded">Esc</Kbd> close
+              </span>
             </div>
           </div>
         </div>
-      </CommandDialog>
-    </>
+      </div>
+    </CommandDialog>
   );
 }
 

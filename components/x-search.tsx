@@ -22,31 +22,31 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-interface Citation {
+type Citation = {
   url: string;
   title: string;
   description?: string;
   tweet_id?: string;
   author?: string;
   created_at?: string;
-}
+};
 
-interface Source {
+type Source = {
   text: string;
   link: string;
   title?: string;
-}
+};
 
-interface XSearchResponse {
+type XSearchResponse = {
   content: string;
   citations: Citation[];
   sources: Source[];
   query: string;
   dateRange: string;
   handles: string[];
-}
+};
 
-interface XSearchArgs {
+type XSearchArgs = {
   query: string;
   startDate: string;
   endDate: string;
@@ -55,12 +55,12 @@ interface XSearchArgs {
   postFavoritesCount?: number;
   postViewCount?: number;
   maxResults?: number;
-}
+};
 
-interface XSearchProps {
+type XSearchProps = {
   result: XSearchResponse;
   args: XSearchArgs;
-}
+};
 
 const XSearchLoadingState = () => (
   <Card className="my-4 w-full border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
@@ -76,7 +76,7 @@ const XSearchLoadingState = () => (
       </div>
     </CardHeader>
     <CardContent className="space-y-4">
-      {[...Array(3)].map((_, i) => (
+      {[...new Array(3)].map((_, i) => (
         <div
           className="animate-pulse rounded-lg border border-neutral-200 p-4 dark:border-neutral-800"
           key={i}
@@ -106,7 +106,7 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
       .filter((citation) => {
         // Handle both string URLs and objects with url property
         const url = typeof citation === "string" ? citation : citation.url;
-        return url && url.includes("x.com");
+        return url?.includes("x.com");
       })
       .map((citation) => {
         // Handle both string URLs and objects with url property

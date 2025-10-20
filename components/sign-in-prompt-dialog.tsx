@@ -21,18 +21,18 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { signIn } from "@/lib/auth-client";
 
-interface SignInPromptDialogProps {
+type SignInPromptDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-}
+};
 
 type Provider = "github" | "google" | "twitter" | "microsoft";
 
-interface SignInButtonProps {
+type SignInButtonProps = {
   provider: Provider;
   loading: boolean;
   setLoading: React.Dispatch<React.SetStateAction<boolean>>;
-}
+};
 
 const SignInButton = ({ provider, loading, setLoading }: SignInButtonProps) => {
   const isGithub = provider === "github";

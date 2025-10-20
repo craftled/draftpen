@@ -28,9 +28,9 @@ import {
   RefreshCw,
   X,
 } from "lucide-react";
+import Image from "next/image";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import Image from "next/image";
 import { deleteTrailingMessages } from "@/app/actions";
 import { ChatTextHighlighter } from "@/components/chat-text-highlighter";
 import { MarkdownRenderer } from "@/components/markdown";
@@ -57,12 +57,12 @@ import type { ComprehensiveUserData } from "@/lib/user-data-server";
 import { cn } from "@/lib/utils";
 
 // Enhanced Error Display Component
-interface EnhancedErrorDisplayProps {
+type EnhancedErrorDisplayProps = {
   error: any;
   handleRetry?: () => Promise<void>;
   user?: any;
   selectedVisibilityType?: "public" | "private";
-}
+};
 
 const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
   error,
@@ -85,7 +85,7 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
         };
         isChatSDKError = true;
       }
-    } catch (e) {
+    } catch (_e) {
       // Not JSON, fallback
       parsedError = {
         type: "unknown",
@@ -283,7 +283,10 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
                 canPerformAction(actions.secondary.action) && (
                   <Button
                     className="text-xs"
-                    onClick={() => handleAction(actions.secondary!.action)}
+                    onClick={() =>
+                      actions.secondary &&
+                      handleAction(actions.secondary.action)
+                    }
                     size="sm"
                     variant="outline"
                   >
@@ -296,7 +299,9 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
               {actions.primary && canPerformAction(actions.primary.action) && (
                 <Button
                   className={colors.button}
-                  onClick={() => handleAction(actions.primary!.action)}
+                  onClick={() =>
+                    actions.primary && handleAction(actions.primary.action)
+                  }
                   size="sm"
                 >
                   {actions.primary.action === "signin" && (
@@ -327,7 +332,7 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
 
 export { EnhancedErrorDisplay };
 
-interface MessageProps {
+type MessageProps = {
   message: ChatMessage;
   index: number;
   lastUserMessageIndex: number;
@@ -354,10 +359,10 @@ interface MessageProps {
   isOwner?: boolean;
   onHighlight?: (text: string) => void;
   shouldReduceHeight?: boolean;
-}
+};
 
 // Message Editor Component
-interface MessageEditorProps {
+type MessageEditorProps = {
   message: ChatMessage;
   setMode: (mode: "view" | "edit") => void;
   setMessages: UseChatHelpers<ChatMessage>["setMessages"];
@@ -365,7 +370,7 @@ interface MessageEditorProps {
   messages: ChatMessage[];
   setSuggestedQuestions: (questions: string[]) => void;
   user?: ComprehensiveUserData | null;
-}
+};
 
 const MessageEditor: React.FC<MessageEditorProps> = ({
   message,
@@ -385,18 +390,18 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
   );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => {
-    if (textareaRef.current) {
-      adjustHeight();
-    }
-  }, []);
-
-  const adjustHeight = () => {
+  const adjustHeight = React.useCallback(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 2}px`;
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      adjustHeight();
+    }
+  }, [adjustHeight]);
 
   const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setDraftContent(event.target.value);
@@ -471,8 +476,7 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
             setMode("view");
 
             await regenerate();
-          } catch (error) {
-            console.error("Error updating message:", error);
+          } catch (_error) {
             toast.error("Failed to update message. Please try again.");
           } finally {
             setIsSubmitting(false);
@@ -647,7 +651,7 @@ export const Message: React.FC<MessageProps> = ({
       const contentHeight = messageContentRef.current.scrollHeight;
       setExceedsMaxHeight(contentHeight > USER_MESSAGE_MAX_HEIGHT);
     }
-  }, [combinedUserText]);
+  }, []);
 
   // Dynamic font size based on content length with mobile responsiveness
   const getDynamicFontSize = useCallback((content: string) => {
@@ -674,7 +678,9 @@ export const Message: React.FC<MessageProps> = ({
   const handleSuggestedQuestionClick = useCallback(
     async (question: string) => {
       // Only proceed if user is authenticated for public chats
-      if (selectedVisibilityType === "public" && !user) return;
+      if (selectedVisibilityType === "public" && !user) {
+        return;
+      }
 
       setSuggestedQuestions([]);
 
@@ -790,11 +796,8 @@ export const Message: React.FC<MessageProps> = ({
                   )}
 
                   {/* If no parts have text, fall back to the content property */}
-                  {!(
-                    message.parts &&
-                    message.parts.some(
-                      (part) => part.type === "text" && part.text
-                    )
+                  {!message.parts?.some(
+                    (part) => part.type === "text" && part.text
                   ) && (
                     <div
                       className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert [&>*]:!font-be-vietnam-pro prose-p:my-1 prose-pre:my-1 mt-2 prose-p:mt-0 max-w-none font-normal prose-code:before:hidden prose-code:after:hidden sm:prose-p:my-2 sm:prose-pre:my-2 sm:prose-p:mt-0 ${getDynamicFontSize(
@@ -901,24 +904,22 @@ export const Message: React.FC<MessageProps> = ({
                   <div className="-bottom-4 absolute right-0 flex transform items-center rounded-md border border-border bg-background/95 opacity-100 shadow-sm backdrop-blur-sm transition-all duration-200 hover:shadow-md sm:translate-x-2 sm:opacity-0 sm:group-hover:translate-x-0 sm:group-hover:opacity-100 dark:border-border dark:bg-background/95">
                     {((user && isOwner) ||
                       (!user && selectedVisibilityType === "private")) && (
-                      <>
-                        <Button
-                          aria-label="Edit message"
-                          className="h-7 w-7 rounded-r-none rounded-l-md text-muted-foreground transition-colors hover:bg-muted hover:text-primary dark:text-muted-foreground dark:hover:bg-muted"
-                          disabled={
-                            status === "submitted" || status === "streaming"
-                          }
-                          onClick={() => setMode("edit")}
-                          size="icon"
-                          variant="ghost"
-                        >
-                          <HugeiconsIcon
-                            className="size-6 flex-shrink-0 pl-1"
-                            icon={PencilEdit02Icon}
-                            size={24}
-                          />
-                        </Button>
-                      </>
+                      <Button
+                        aria-label="Edit message"
+                        className="h-7 w-7 rounded-r-none rounded-l-md text-muted-foreground transition-colors hover:bg-muted hover:text-primary dark:text-muted-foreground dark:hover:bg-muted"
+                        disabled={
+                          status === "submitted" || status === "streaming"
+                        }
+                        onClick={() => setMode("edit")}
+                        size="icon"
+                        variant="ghost"
+                      >
+                        <HugeiconsIcon
+                          className="size-6 flex-shrink-0 pl-1"
+                          icon={PencilEdit02Icon}
+                          size={24}
+                        />
+                      </Button>
                     )}
                     <Separator
                       className="h-5 bg-black dark:bg-white"
@@ -1078,24 +1079,22 @@ export const Message: React.FC<MessageProps> = ({
                   {/* Only show edit button for owners OR unauthenticated users on private chats */}
                   {((user && isOwner) ||
                     (!user && selectedVisibilityType === "private")) && (
-                    <>
-                      <Button
-                        aria-label="Edit message"
-                        className="h-7 w-7 rounded-r-none rounded-l-md text-muted-foreground transition-colors hover:bg-muted hover:text-primary dark:text-muted-foreground dark:hover:bg-muted"
-                        disabled={
-                          status === "submitted" || status === "streaming"
-                        }
-                        onClick={() => setMode("edit")}
-                        size="icon"
-                        variant="ghost"
-                      >
-                        <HugeiconsIcon
-                          className="size-6 flex-shrink-0 pl-1 text-primary"
-                          icon={PencilEdit02Icon}
-                          size={24}
-                        />
-                      </Button>
-                    </>
+                    <Button
+                      aria-label="Edit message"
+                      className="h-7 w-7 rounded-r-none rounded-l-md text-muted-foreground transition-colors hover:bg-muted hover:text-primary dark:text-muted-foreground dark:hover:bg-muted"
+                      disabled={
+                        status === "submitted" || status === "streaming"
+                      }
+                      onClick={() => setMode("edit")}
+                      size="icon"
+                      variant="ghost"
+                    >
+                      <HugeiconsIcon
+                        className="size-6 flex-shrink-0 pl-1 text-primary"
+                        icon={PencilEdit02Icon}
+                        size={24}
+                      />
+                    </Button>
                   )}
                   <Separator
                     className="h-5 bg-black dark:bg-white"
@@ -1148,10 +1147,6 @@ export const Message: React.FC<MessageProps> = ({
       >
         {message.parts?.map(
           (part: ChatMessage["parts"][number], partIndex: number) => {
-            console.log(`🔧 Rendering part ${partIndex}:`, {
-              type: part.type,
-              hasText: part.type === "text",
-            });
             const key = `${message.id || index}-part-${partIndex}-${part.type}`;
             return (
               <div key={key}>
@@ -1280,7 +1275,9 @@ export const EditableAttachmentsBadge = ({
       att.mediaType === "application/pdf"
   );
 
-  if (fileAttachments.length === 0) return null;
+  if (fileAttachments.length === 0) {
+    return null;
+  }
 
   const isPdf = (attachment: Attachment) =>
     attachment.contentType === "application/pdf" ||
@@ -1293,7 +1290,7 @@ export const EditableAttachmentsBadge = ({
           // Truncate filename to 15 characters
           const fileName = attachment.name || `File ${i + 1}`;
           const truncatedName =
-            fileName.length > 15 ? fileName.substring(0, 12) + "..." : fileName;
+            fileName.length > 15 ? `${fileName.substring(0, 12)}...` : fileName;
 
           const isImage =
             attachment.contentType?.startsWith("image/") ||
@@ -1612,11 +1609,11 @@ export const AttachmentsBadge = ({
       att.mediaType === "application/pdf"
   );
 
-  React.useEffect(() => {
-    console.log("fileAttachments", fileAttachments);
-  }, [fileAttachments]);
+  React.useEffect(() => {}, []);
 
-  if (fileAttachments.length === 0) return null;
+  if (fileAttachments.length === 0) {
+    return null;
+  }
 
   const isPdf = (attachment: Attachment) =>
     attachment.contentType === "application/pdf" ||
@@ -1629,7 +1626,7 @@ export const AttachmentsBadge = ({
           // Truncate filename to 15 characters
           const fileName = attachment.name || `File ${i + 1}`;
           const truncatedName =
-            fileName.length > 15 ? fileName.substring(0, 12) + "..." : fileName;
+            fileName.length > 15 ? `${fileName.substring(0, 12)}...` : fileName;
 
           const fileExtension = fileName.split(".").pop()?.toLowerCase();
           const isImage =

@@ -75,7 +75,9 @@ function getCachedUserData(userId: string): ComprehensiveUserData | null {
       data.email.trim() === "" ||
       !data?.name ||
       data.name.trim() === "";
-    if (!bad) return data;
+    if (!bad) {
+      return data;
+    }
   }
   if (cached) {
     userDataCache.delete(userId);
@@ -246,8 +248,7 @@ export async function getLightweightUserAuth(): Promise<LightweightUserAuth | nu
     setCachedLightweightAuth(userId, lightweightData);
 
     return lightweightData;
-  } catch (error) {
-    console.error("Error in lightweight auth check:", error);
+  } catch (_error) {
     return null;
   }
 }
@@ -318,7 +319,7 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
         columns: { idToken: true },
       });
       const idToken = acct?.idToken;
-      if (idToken && idToken.includes(".")) {
+      if (idToken?.includes(".")) {
         const payloadB64 = idToken.split(".")[1];
         const normalized = payloadB64.replace(/-/g, "+").replace(/_/g, "/");
         const json = Buffer.from(normalized, "base64").toString("utf8");
@@ -330,10 +331,7 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
           undefined;
         providerClaims.picture = payload.picture || undefined;
       }
-    } catch (e) {
-      // Non-fatal; continue with whatever we have
-      console.warn("Provider claims decode failed (non-fatal):", e);
-    }
+    } catch (_e) {}
 
     // Optionally backfill empty DB fields if we discovered trustworthy values
     try {
@@ -362,9 +360,7 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
           .set({ ...(updates as any), updatedAt: new Date() })
           .where(eq(user.id, userId));
       }
-    } catch (e) {
-      console.warn("Backfill of user profile fields failed (non-fatal):", e);
-    }
+    } catch (_e) {}
 
     // Process Polar subscriptions from the joined data
     const polarSubscriptions = userWithSubscriptions
@@ -428,16 +424,14 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
       email?: string | null;
       image?: string | null;
     } | null;
-    const resolvedName =
-      userData.name && userData.name.trim()
-        ? userData.name
-        : sessionUser?.name?.trim() ||
-          providerClaims.name ||
-          (userData.email ? userData.email.split("@")[0] : "");
-    const resolvedEmail =
-      userData.email && userData.email.trim()
-        ? userData.email
-        : sessionUser?.email?.trim() || providerClaims.email || "";
+    const resolvedName = userData.name?.trim()
+      ? userData.name
+      : sessionUser?.name?.trim() ||
+        providerClaims.name ||
+        (userData.email ? userData.email.split("@")[0] : "");
+    const resolvedEmail = userData.email?.trim()
+      ? userData.email
+      : sessionUser?.email?.trim() || providerClaims.email || "";
     const resolvedImage =
       userData.image ?? sessionUser?.image ?? providerClaims.picture ?? null;
 
@@ -475,8 +469,7 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
     setCachedUserData(userId, comprehensiveData);
 
     return comprehensiveData;
-  } catch (error) {
-    console.error("Error getting comprehensive user data:", error);
+  } catch (_error) {
     return null;
   }
 }

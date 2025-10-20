@@ -35,10 +35,6 @@ export const retrieveTool = tool({
         apiKey: serverEnv.FIRECRAWL_API_KEY,
       });
 
-      console.log(
-        `Retrieving content from ${url} with Exa AI, summary: ${include_summary}, livecrawl: ${live_crawl}`
-      );
-
       const start = Date.now();
       let result;
       let usingFirecrawl = false;
@@ -57,12 +53,9 @@ export const retrieveTool = tool({
           result.results.length === 0 ||
           !result.results[0].text
         ) {
-          console.log("Exa AI returned no content, falling back to Firecrawl");
           usingFirecrawl = true;
         }
-      } catch (exaError) {
-        console.error("Exa AI error:", exaError);
-        console.log("Falling back to Firecrawl");
+      } catch (_exaError) {
         usingFirecrawl = true;
       }
 
@@ -79,8 +72,6 @@ export const retrieveTool = tool({
           if (!scrapeResponse) {
             throw new Error(`Firecrawl failed: ${scrapeResponse}`);
           }
-
-          console.log(`Firecrawl successfully scraped ${url}`);
 
           // Format Firecrawl response to match expected output
           return {
@@ -110,8 +101,7 @@ export const retrieveTool = tool({
             response_time: (Date.now() - start) / 1000,
             source: "firecrawl",
           };
-        } catch (firecrawlError) {
-          console.error("Firecrawl error:", firecrawlError);
+        } catch (_firecrawlError) {
           return {
             error: "Both Exa AI and Firecrawl failed to retrieve content",
             results: [],
@@ -122,7 +112,7 @@ export const retrieveTool = tool({
       // Return Exa results if successful
       return {
         base_url: url,
-        results: result!.results.map((item) => {
+        results: result?.results.map((item) => {
           const typedItem = item as any;
           return {
             url: item.url,
@@ -144,7 +134,6 @@ export const retrieveTool = tool({
         source: "exa",
       };
     } catch (error) {
-      console.error("Exa AI error:", error);
       return {
         error:
           error instanceof Error ? error.message : "Failed to retrieve content",

@@ -8,6 +8,12 @@ import {
 import { z } from "zod";
 import { modelProvider } from "@/ai/providers";
 
+const HANDLE_PREFIX_RE = /^@+/;
+const DEFAULT_MAX_RESULTS = 100 as const;
+const DAY_MS = 86_400_000 as const;
+const DEFAULT_LOOKBACK_DAYS = 15 as const;
+const DEFAULT_LOOKBACK_MS = DEFAULT_LOOKBACK_DAYS * DAY_MS;
+
 const xqlTool = tool({
   description:
     "Search X posts for recent information and discussions with the ability to filter by X handles, date range, and post engagement metrics.",
@@ -57,7 +63,7 @@ const xqlTool = tool({
       maxResults: z
         .number()
         .min(1)
-        .max(100)
+        .max(DEFAULT_MAX_RESULTS)
         .optional()
         .describe(
           "The maximum number of search results to return (default 15) but you can go up to 30"
@@ -80,33 +86,27 @@ const xqlTool = tool({
     endDate,
     includeXHandles,
     excludeXHandles,
-    postFavoritesCount,
-    postViewCount,
-    maxResults,
+    postFavoritesCount: _postFavoritesCount,
+    postViewCount: _postViewCount,
+    maxResults: _maxResults,
   }) {
-    const sanitizeHandle = (handle: string) => handle.replace(/^@+/, "").trim();
+    const sanitizeHandle = (handle: string) =>
+      handle.replace(HANDLE_PREFIX_RE, "").trim();
 
-    const normalizedInclude = Array.isArray(includeXHandles)
+    const _normalizedInclude = Array.isArray(includeXHandles)
       ? includeXHandles.map(sanitizeHandle).filter(Boolean)
       : undefined;
-    const normalizedExclude = Array.isArray(excludeXHandles)
+    const _normalizedExclude = Array.isArray(excludeXHandles)
       ? excludeXHandles.map(sanitizeHandle).filter(Boolean)
       : undefined;
 
     const toYMD = (d: Date) => d.toISOString().slice(0, 10);
     const today = new Date();
-    const daysAgo = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000);
-    const effectiveStart =
+    const daysAgo = new Date(Date.now() - DEFAULT_LOOKBACK_MS);
+    const _effectiveStart =
       startDate && startDate.trim().length > 0 ? startDate : toYMD(daysAgo);
-    const effectiveEnd =
+    const _effectiveEnd =
       endDate && endDate.trim().length > 0 ? endDate : toYMD(today);
-
-    console.log(
-      "X search - includeHandles:",
-      normalizedInclude,
-      "excludeHandles:",
-      normalizedExclude
-    );
 
     const result = await generateText({
       model: modelProvider.languageModel("gpt5-mini"),
@@ -133,7 +133,7 @@ export type XQLMessage = UIMessage<
   InferUITools<typeof tools>
 >;
 
-export async function POST(req: Request) {
+export function POST(_req: Request) {
   return new Response(JSON.stringify({ error: "X search is disabled" }), {
     status: 410,
   });

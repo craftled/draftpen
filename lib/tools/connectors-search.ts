@@ -43,7 +43,7 @@ export function createConnectorsSearchTool(
     }) => {
       try {
         let allResults: any[] = [];
-        let totalCount = 0;
+        let _totalCount = 0;
 
         if (provider === "all") {
           // Use selected connectors if available, otherwise search all
@@ -64,8 +64,7 @@ export function createConnectorsSearchTool(
                 includeSummary: true,
               });
               return result;
-            } catch (error) {
-              console.error(`Error searching ${providerKey}:`, error);
+            } catch (_error) {
               return { results: [], total: 0 };
             }
           });
@@ -74,7 +73,7 @@ export function createConnectorsSearchTool(
 
           // Combine all results
           allResults = searchResults.flatMap((result) => result.results || []);
-          totalCount = searchResults.reduce(
+          _totalCount = searchResults.reduce(
             (sum, result) => sum + (result.total || 0),
             0
           );
@@ -89,7 +88,7 @@ export function createConnectorsSearchTool(
             includeSummary: true,
           });
           allResults = result.results || [];
-          totalCount = result.total || 0;
+          _totalCount = result.total || 0;
         }
 
         // Helper function to generate document URLs based on provider
@@ -97,7 +96,9 @@ export function createConnectorsSearchTool(
           document: any,
           provider: ConnectorProvider | null
         ): string => {
-          if (!provider) return "#";
+          if (!provider) {
+            return "#";
+          }
 
           const providerLower = provider.toLowerCase();
 
@@ -134,7 +135,9 @@ export function createConnectorsSearchTool(
                 chunk.content.trim() !== "" &&
                 chunk.content !== "Empty Chunk"
             );
-            if (hasValidChunks) return true;
+            if (hasValidChunks) {
+              return true;
+            }
           }
 
           // Check if document has valid summary
@@ -221,8 +224,7 @@ export function createConnectorsSearchTool(
               : CONNECTOR_CONFIGS[provider as ConnectorProvider]?.name ||
                 provider,
         };
-      } catch (error) {
-        console.error("Error searching connectors:", error);
+      } catch (_error) {
         return {
           success: false,
           error: "Failed to search your connected documents",

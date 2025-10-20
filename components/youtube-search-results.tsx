@@ -11,8 +11,8 @@ import {
   User2,
   YoutubeIcon,
 } from "lucide-react";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import React, { useMemo, useState } from "react";
 import {
   Accordion,
@@ -35,7 +35,9 @@ import { SearchLoadingState } from "./tool-invocation-list-view";
 
 // Helper function to parse captions that might be JSON-encoded
 const parseCaptions = (captions: string | undefined): string | undefined => {
-  if (!captions) return;
+  if (!captions) {
+    return;
+  }
 
   try {
     // Try to parse as JSON in case the API returns nested JSON
@@ -48,7 +50,7 @@ const parseCaptions = (captions: string | undefined): string | undefined => {
 };
 
 // Updated interfaces to match the optimized tool output
-interface VideoDetails {
+type VideoDetails = {
   title?: string;
   author_name?: string;
   author_url?: string;
@@ -56,9 +58,9 @@ interface VideoDetails {
   type?: string;
   provider_name?: string;
   provider_url?: string;
-}
+};
 
-interface VideoResult {
+type VideoResult = {
   videoId: string;
   url: string;
   details?: VideoDetails;
@@ -68,21 +70,21 @@ interface VideoResult {
   likes?: string;
   summary?: string;
   publishedDate?: string;
-}
+};
 
-interface YouTubeSearchResponse {
+type YouTubeSearchResponse = {
   results: VideoResult[];
-}
+};
 
-interface YouTubeCardProps {
+type YouTubeCardProps = {
   video: VideoResult;
   index: number;
-}
+};
 
-interface YouTubeSearchResultsProps {
+type YouTubeSearchResultsProps = {
   results: YouTubeSearchResponse;
   isLoading?: boolean;
-}
+};
 
 const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
   const [transcriptSearch, setTranscriptSearch] = useState("");
@@ -90,17 +92,12 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
 
   // Format timestamp for accessibility and URL generation
   const formatTimestamp = (timestamp: string) => {
-    console.log(`🕐 Parsing timestamp: "${timestamp}"`);
     // Match the format: "0:06 - [Music]" or "0:10 - good morning gamers"
     const match = timestamp.match(/^(\d+:\d+(?::\d+)?) - (.+)$/);
     if (match) {
       const [_, time, description] = match;
-      console.log(
-        `✅ Parsed timestamp - time: "${time}", description: "${description}"`
-      );
       return { time, description };
     }
-    console.warn(`⚠️ Failed to parse timestamp: "${timestamp}"`);
     return { time: "", description: timestamp };
   };
 
@@ -109,7 +106,9 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
 
   // Filter transcript based on search
   const filteredTranscript = useMemo(() => {
-    if (!(parsedCaptions && transcriptSearch.trim())) return parsedCaptions;
+    if (!(parsedCaptions && transcriptSearch.trim())) {
+      return parsedCaptions;
+    }
 
     const searchTerm = transcriptSearch.toLowerCase();
     const lines = parsedCaptions.split("\n");
@@ -121,8 +120,9 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
 
   // Filter chapters based on search (both time and content)
   const filteredChapters = useMemo(() => {
-    if (!(video?.timestamps && chapterSearch.trim()))
+    if (!(video?.timestamps && chapterSearch.trim())) {
       return video?.timestamps || [];
+    }
 
     const searchTerm = chapterSearch.toLowerCase();
     return video.timestamps.filter((timestamp: string) => {
@@ -132,13 +132,14 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
         description.toLowerCase().includes(searchTerm)
       );
     });
-  }, [video?.timestamps, chapterSearch]);
+  }, [video?.timestamps, chapterSearch, formatTimestamp]);
 
-  if (!video) return null;
+  if (!video) {
+    return null;
+  }
 
   // Convert timestamp to seconds for YouTube URL
   const timestampToSeconds = (time: string): number => {
-    console.log(`⏱️ Converting time to seconds: "${time}"`);
     const parts = time.split(":").map((part) => Number.parseInt(part, 10));
     let seconds = 0;
 
@@ -149,8 +150,6 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
       // HH:MM:SS format (e.g., "1:10:30")
       seconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
     }
-
-    console.log(`📊 Time "${time}" converted to ${seconds} seconds`);
     return seconds;
   };
 
@@ -363,7 +362,9 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
                               formatTimestamp(timestamp);
                             const seconds = timestampToSeconds(time);
 
-                            if (!time || seconds === 0) return null;
+                            if (!time || seconds === 0) {
+                              return null;
+                            }
 
                             return (
                               <Link
@@ -509,13 +510,17 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
                               {filteredTranscript
                                 .split("\n")
                                 .map((line, idx) => {
-                                  if (!line.trim()) return null;
+                                  if (!line.trim()) {
+                                    return null;
+                                  }
                                   const searchTerm =
                                     transcriptSearch.toLowerCase();
                                   const lowerLine = line.toLowerCase();
                                   const index = lowerLine.indexOf(searchTerm);
 
-                                  if (index === -1) return null;
+                                  if (index === -1) {
+                                    return null;
+                                  }
 
                                   return (
                                     <div
@@ -616,13 +621,15 @@ export const YouTubeSearchResults: React.FC<YouTubeSearchResultsProps> = ({
     );
   }
 
-  if (!(results && results.results && Array.isArray(results.results))) {
+  if (!(results?.results && Array.isArray(results.results))) {
     return <YouTubeEmptyState />;
   }
 
   // Filter out videos with no meaningful content - using parseCaptions for proper filtering
   const filteredVideos = results.results.filter((video) => {
-    if (!video) return false;
+    if (!video) {
+      return false;
+    }
 
     const hasTimestamps =
       video.timestamps &&
@@ -641,60 +648,27 @@ export const YouTubeSearchResults: React.FC<YouTubeSearchResultsProps> = ({
     return hasTimestamps || hasCaptions || hasSummary;
   });
 
-  console.log("📊 YouTube Results Summary:", {
-    totalResults: results.results.length,
-    filteredResults: filteredVideos.length,
-    videoIds: filteredVideos.map((v) => v.videoId),
-  });
-
   // Debug each video's content
-  results.results.forEach((video, index) => {
-    if (!video) return;
+  results.results.forEach((video, _index) => {
+    if (!video) {
+      return;
+    }
 
     const hasTimestamps =
       video.timestamps &&
       Array.isArray(video.timestamps) &&
       video.timestamps.length > 0;
-    const hasCaptions =
+    const _hasCaptions =
       video.captions &&
       (typeof video.captions === "string"
         ? video.captions.trim().length > 0
         : !!parseCaptions(video.captions));
-    const hasSummary =
+    const _hasSummary =
       video.summary &&
       typeof video.summary === "string" &&
       video.summary.trim().length > 0;
 
-    console.log(`🎥 Video ${index + 1} (${video.videoId}):`, {
-      title: video.details?.title?.substring(0, 50) + "...",
-      hasTimestamps,
-      timestampCount: Array.isArray(video.timestamps)
-        ? video.timestamps.length
-        : 0,
-      hasCaptions,
-      captionsLength:
-        typeof video.captions === "string"
-          ? video.captions.length
-          : parseCaptions(video.captions)?.length || 0,
-      hasSummary,
-      captionsType: typeof video.captions,
-      timestampsType: typeof video.timestamps,
-      rawCaptions: video.captions
-        ? typeof video.captions === "string"
-          ? video.captions.substring(0, 100) + "..."
-          : "NOT STRING"
-        : "NULL",
-      rawTimestamps: Array.isArray(video.timestamps)
-        ? video.timestamps.slice(0, 2)
-        : video.timestamps,
-      willShowInUI: hasTimestamps || hasCaptions || hasSummary,
-    });
-
     if (hasTimestamps && video.timestamps) {
-      console.log(
-        `📝 Sample timestamps for ${video.videoId}:`,
-        video.timestamps.slice(0, 3)
-      );
     }
   });
 

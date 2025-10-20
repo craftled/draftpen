@@ -2,14 +2,17 @@
 
 import { AlarmClockIcon, Alert02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import type React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 
-interface WarningCardProps {
+const ICON_SIZE_SM = 16 as const;
+
+type WarningCardProps = {
   type: "total-limit" | "daily-limit" | "custom";
-  icon?: any;
+  icon?: React.ComponentProps<typeof HugeiconsIcon>["icon"];
   message?: string;
   className?: string;
-}
+};
 
 const warningConfig = {
   "total-limit": {
@@ -47,7 +50,7 @@ export function WarningCard({
           className="flex-shrink-0 text-orange-600 dark:text-orange-400"
           color="currentColor"
           icon={IconComponent}
-          size={16}
+          size={ICON_SIZE_SM}
           strokeWidth={1.5}
         />
         <p className="text-orange-600 text-sm dark:text-orange-400">

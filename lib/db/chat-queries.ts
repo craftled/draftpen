@@ -27,9 +27,6 @@ export async function getChatWithInitialMessages({
   hasMoreMessages: boolean;
 }> {
   try {
-    console.log(
-      "🔍 [DB-OPTIMIZED] getChatWithInitialMessages: Starting combined query..."
-    );
     const startTime = Date.now();
 
     // Get chat data
@@ -62,18 +59,14 @@ export async function getChatWithInitialMessages({
       ? messages.slice(0, messageLimit)
       : messages;
 
-    const queryTime = (Date.now() - startTime) / 1000;
-    console.log(
-      `⏱️  [DB-OPTIMIZED] getChatWithInitialMessages: Combined query took ${queryTime.toFixed(2)}s`
-    );
+    const _queryTime = (Date.now() - startTime) / 1000;
 
     return {
       chat: selectedChat,
       messages: limitedMessages,
       hasMoreMessages,
     };
-  } catch (error) {
-    console.error("Error in getChatWithInitialMessages:", error);
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get chat with messages"
@@ -136,8 +129,7 @@ export async function getChatWithUserAndInitialMessages({
       messages: limitedMessages,
       hasMoreMessages,
     };
-  } catch (error) {
-    console.error("Error in getChatWithUserAndInitialMessages:", error);
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get chat with user and messages"
@@ -163,10 +155,6 @@ export async function getChatsWithInitialMessages({
     if (chatIds.length === 0) {
       return {};
     }
-
-    console.log(
-      "🔍 [DB-OPTIMIZED] getChatsWithInitialMessages: Starting batch query..."
-    );
     const startTime = Date.now();
 
     // Get all chats in one query
@@ -192,7 +180,7 @@ export async function getChatsWithInitialMessages({
       if (!messagesByChat.has(msg.chatId)) {
         messagesByChat.set(msg.chatId, []);
       }
-      messagesByChat.get(msg.chatId)!.push(msg);
+      messagesByChat.get(msg.chatId)?.push(msg);
     });
 
     // Build result object
@@ -219,14 +207,10 @@ export async function getChatsWithInitialMessages({
       };
     });
 
-    const queryTime = (Date.now() - startTime) / 1000;
-    console.log(
-      `⏱️  [DB-OPTIMIZED] getChatsWithInitialMessages: Batch query took ${queryTime.toFixed(2)}s`
-    );
+    const _queryTime = (Date.now() - startTime) / 1000;
 
     return result;
-  } catch (error) {
-    console.error("Error in getChatsWithInitialMessages:", error);
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get chats with messages"
@@ -247,9 +231,6 @@ export async function getChatVisibilityAndOwnership({
   canAccess: boolean;
 }> {
   try {
-    console.log(
-      "🔍 [DB-OPTIMIZED] getChatVisibilityAndOwnership: Starting visibility check..."
-    );
     const startTime = Date.now();
 
     const [selectedChat] = await db
@@ -269,18 +250,14 @@ export async function getChatVisibilityAndOwnership({
     const isOwner = userId ? selectedChat.userId === userId : false;
     const canAccess = selectedChat.visibility === "public" || isOwner;
 
-    const queryTime = (Date.now() - startTime) / 1000;
-    console.log(
-      `⏱️  [DB-OPTIMIZED] getChatVisibilityAndOwnership: Visibility check took ${queryTime.toFixed(2)}s`
-    );
+    const _queryTime = (Date.now() - startTime) / 1000;
 
     return {
       chat: selectedChat,
       isOwner,
       canAccess,
     };
-  } catch (error) {
-    console.error("Error in getChatVisibilityAndOwnership:", error);
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to check chat visibility and ownership"
@@ -318,8 +295,7 @@ export async function getAdditionalMessages({
       messages: limitedMessages,
       hasMore,
     };
-  } catch (error) {
-    console.error("Error in getAdditionalMessages:", error);
+  } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get additional messages"
