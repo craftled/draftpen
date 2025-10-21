@@ -83,10 +83,10 @@ export function useCachedUserData() {
     // Legacy compatibility helpers
     subscriptionData: user?.polarSubscription
       ? {
-          hasSubscription: true,
+          hasSubscription: true as const,
           subscription: user.polarSubscription,
         }
-      : { hasSubscription: false },
+      : { hasSubscription: false as const },
 
     // Additional utilities
     isCached: Boolean(cachedUser),

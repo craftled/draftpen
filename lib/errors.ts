@@ -22,6 +22,16 @@ export type ErrorCode = `${ErrorType}:${Surface}`;
 
 export type ErrorVisibility = "response" | "log" | "none";
 
+// HTTP status codes
+const HTTP_BAD_REQUEST = 400 as const;
+const HTTP_UNAUTHORIZED = 401 as const;
+const HTTP_FORBIDDEN = 403 as const;
+const HTTP_NOT_FOUND = 404 as const;
+const HTTP_PAYMENT_REQUIRED = 402 as const;
+const HTTP_TOO_MANY_REQUESTS = 429 as const;
+const HTTP_SERVICE_UNAVAILABLE = 503 as const;
+const HTTP_INTERNAL_ERROR = 500 as const;
+
 export const visibilityBySurface: Record<Surface, ErrorVisibility> = {
   database: "log",
   chat: "response",
@@ -33,9 +43,9 @@ export const visibilityBySurface: Record<Surface, ErrorVisibility> = {
 };
 
 export class ChatSDKError extends Error {
-  public type: ErrorType;
-  public surface: Surface;
-  public statusCode: number;
+  type: ErrorType;
+  surface: Surface;
+  statusCode: number;
 
   constructor(errorCode: ErrorCode, cause?: string) {
     super();
@@ -49,7 +59,7 @@ export class ChatSDKError extends Error {
     this.statusCode = getStatusCodeByType(this.type);
   }
 
-  public toResponse() {
+  toResponse() {
     const code: ErrorCode = `${this.type}:${this.surface}`;
     const visibility = visibilityBySurface[this.surface];
 
@@ -121,23 +131,23 @@ export function getMessageByErrorCode(errorCode: ErrorCode): string {
 function getStatusCodeByType(type: ErrorType) {
   switch (type) {
     case "bad_request":
-      return 400;
+      return HTTP_BAD_REQUEST;
     case "unauthorized":
-      return 401;
+      return HTTP_UNAUTHORIZED;
     case "forbidden":
-      return 403;
+      return HTTP_FORBIDDEN;
     case "not_found":
-      return 404;
+      return HTTP_NOT_FOUND;
     case "rate_limit":
-      return 429;
+      return HTTP_TOO_MANY_REQUESTS;
     case "upgrade_required":
-      return 402; // Payment Required
+      return HTTP_PAYMENT_REQUIRED; // Payment Required
     case "model_restricted":
-      return 403;
+      return HTTP_FORBIDDEN;
     case "offline":
-      return 503;
+      return HTTP_SERVICE_UNAVAILABLE;
     default:
-      return 500;
+      return HTTP_INTERNAL_ERROR;
   }
 }
 

@@ -2,12 +2,26 @@ import { tool } from "ai";
 import { z } from "zod";
 import { serverEnv } from "@/env/server";
 
-type DFSKeywordItem = {
-  keyword: string;
+const MAX_SEED_KEYWORDS = 5 as const;
+const DEFAULT_LOCATION_CODE_US = 2840 as const;
+const MAX_RESULTS_LIMIT = 200 as const;
+const DEFAULT_RESULTS_LIMIT = 100 as const;
+const DFS_SUCCESS_CODE = 20_000 as const;
+
+type RawKeywordItem = {
+  keyword?: string;
   search_volume?: number;
   cpc?: number;
   competition?: number;
-  difficulty?: number; // convenience alias (maps to competition when available)
+  competition_index?: number;
+};
+
+type DFSTask = { result?: RawKeywordItem[] };
+
+type DFSResponse = {
+  status_code?: number;
+  status_message?: string;
+  tasks?: DFSTask[];
 };
 
 export const keywordResearchTool = tool({
@@ -25,13 +39,13 @@ export const keywordResearchTool = tool({
       seed_keywords: z
         .array(z.string().min(1))
         .min(1)
-        .max(5)
+        .max(MAX_SEED_KEYWORDS)
         .optional()
         .describe("1-5 seed keywords to generate ideas from"),
       location_code: z
         .number()
         .optional()
-        .default(2840)
+        .default(DEFAULT_LOCATION_CODE_US)
         .describe(
           "DataForSEO location_code. Defaults to 2840 (United States)."
         ),
@@ -43,8 +57,8 @@ export const keywordResearchTool = tool({
       limit: z
         .number()
         .min(1)
-        .max(200)
-        .default(100)
+        .max(MAX_RESULTS_LIMIT)
+        .default(DEFAULT_RESULTS_LIMIT)
         .optional()
         .describe("Max number of keyword ideas to return (default 100)"),
       include_adult_keywords: z.boolean().optional().default(false),
@@ -58,9 +72,9 @@ export const keywordResearchTool = tool({
   execute: async ({
     query,
     seed_keywords,
-    location_code = 2840,
+    location_code = DEFAULT_LOCATION_CODE_US,
     language_code = "en",
-    limit = 100,
+    limit = DEFAULT_RESULTS_LIMIT,
     include_adult_keywords = false,
   }: {
     query?: string;
@@ -79,12 +93,12 @@ export const keywordResearchTool = tool({
       );
     }
 
-    const seeds =
-      seed_keywords && seed_keywords.length > 0
-        ? seed_keywords
-        : query
-          ? [query]
-          : [];
+    let seeds: string[] = [];
+    if (seed_keywords && seed_keywords.length > 0) {
+      seeds = seed_keywords;
+    } else if (query) {
+      seeds = [query];
+    }
 
     if (seeds.length === 0) {
       throw new Error(
@@ -123,10 +137,10 @@ export const keywordResearchTool = tool({
       );
     }
 
-    const json = await res.json();
+    const json = (await res.json()) as DFSResponse;
 
     // Check for API errors
-    if (json.status_code !== 20_000) {
+    if (json.status_code !== DFS_SUCCESS_CODE) {
       throw new Error(
         `DataForSEO API error: ${json.status_message || "Unknown error"}`
       );
@@ -134,8 +148,8 @@ export const keywordResearchTool = tool({
 
     // Expected structure: { tasks: [{ result: [...keyword objects...] }] }
     // Each result item is a keyword object directly
-    const items: any[] =
-      json?.tasks?.flatMap((t: any) => t?.result || []) || [];
+    const items: RawKeywordItem[] =
+      json?.tasks?.flatMap((t: DFSTask) => t?.result ?? []) ?? [];
 
     if (items.length === 0) {
       return {
@@ -155,7 +169,7 @@ export const keywordResearchTool = tool({
       };
     }
 
-    const normalized = items.slice(0, limit).map((it: any) => ({
+    const normalized = items.slice(0, limit).map((it: RawKeywordItem) => ({
       keyword: it.keyword,
       search_volume: it.search_volume ?? undefined,
       cpc: typeof it.cpc === "number" ? it.cpc : undefined,

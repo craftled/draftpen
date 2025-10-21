@@ -8,7 +8,7 @@ type UserContextType = {
   // Core user data
   user: ComprehensiveUserData | null | undefined;
   isLoading: boolean;
-  error: any;
+  error: unknown;
   refetch: () => void;
   isRefetching: boolean;
 
@@ -18,7 +18,7 @@ type UserContextType = {
   subscriptionStatus: string;
 
   // Polar subscription details
-  polarSubscription: any;
+  polarSubscription: ComprehensiveUserData["polarSubscription"] | undefined;
   hasPolarSubscription: boolean;
 
   // Trial status (new)
@@ -41,7 +41,12 @@ type UserContextType = {
   hasNoSubscription: boolean;
 
   // Legacy compatibility helpers
-  subscriptionData: any;
+  subscriptionData:
+    | {
+        hasSubscription: true;
+        subscription: ComprehensiveUserData["polarSubscription"];
+      }
+    | { hasSubscription: false };
 
   // Additional utilities
   isCached: boolean;

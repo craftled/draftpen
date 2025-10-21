@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useRef } from "react";
 
+const PREFETCH_HOVER_DELAY_MS = 200 as const;
+
 // Client-safe, route-only prefetching (no server-only imports)
 export function useChatPrefetch() {
   const router = useRouter();
@@ -17,14 +19,19 @@ export function useChatPrefetch() {
       try {
         router.prefetch(path);
         prefetched.current.add(path);
-      } catch {}
+      } catch (_err) {
+        // Prefetch is best-effort; ignore failures silently
+      }
     },
     [router]
   );
 
   const prefetchOnHover = useCallback(
     (chatId: string) => {
-      const tid = setTimeout(() => prefetchChatRoute(chatId), 200);
+      const tid = setTimeout(
+        () => prefetchChatRoute(chatId),
+        PREFETCH_HOVER_DELAY_MS
+      );
       return () => clearTimeout(tid);
     },
     [prefetchChatRoute]
@@ -39,7 +46,9 @@ export function useChatPrefetch() {
 
   const prefetchChats = useCallback(
     (chatIds: string[]) => {
-      chatIds.forEach((id) => prefetchChatRoute(id));
+      for (const id of chatIds) {
+        prefetchChatRoute(id);
+      }
     },
     [prefetchChatRoute]
   );

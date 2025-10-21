@@ -46,7 +46,7 @@ export type DataExtremeSearchPart = {
         code: string;
         status: "running" | "completed" | "error";
         result?: string;
-        charts?: any[];
+        charts?: unknown[];
       };
 };
 
@@ -144,7 +144,7 @@ export type CodeContextToolDefinition = codeContextTool;
 export type CustomUIDataTypes = {
   appendMessage: string;
   id: string;
-  "message-annotations": any;
+  "message-annotations": unknown;
   query_completion: {
     query: string;
     index: number;

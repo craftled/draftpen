@@ -1,3 +1,17 @@
+type PolarPriceLike = {
+  price_amount?: number;
+  recurring_interval?: string;
+  type?: string;
+  price_currency?: string;
+};
+
+type PolarProductLike = {
+  id?: string;
+  prices?: PolarPriceLike[];
+};
+
+const CENTS_PER_DOLLAR = 100 as const;
+
 export async function getPriceUSD(): Promise<number | undefined> {
   const linkId = process.env.POLAR_CHECKOUT_LINK_ID as string | undefined;
   const token = process.env.POLAR_ACCESS_TOKEN as string | undefined;
@@ -21,11 +35,13 @@ export async function getPriceUSD(): Promise<number | undefined> {
         const link = await res.json();
         const p = link?.products?.[0]?.prices?.[0];
         if (p?.price_amount) {
-          return Math.round(p.price_amount / 100);
+          return Math.round(p.price_amount / CENTS_PER_DOLLAR);
         }
       }
     }
-  } catch {}
+  } catch (_error) {
+    // Best-effort: ignore transient API errors and fall through to next strategy
+  }
 
   try {
     if (productId) {
@@ -34,20 +50,22 @@ export async function getPriceUSD(): Promise<number | undefined> {
         return;
       }
       const data = await res.json();
-      const items = data.items || [];
-      const prod = items.find((i: any) => i?.id === productId);
+      const items: PolarProductLike[] = data.items || [];
+      const prod = items.find((i: PolarProductLike) => i?.id === productId);
       const prices = prod?.prices || [];
       const chosen =
         prices.find(
-          (p: any) =>
+          (p: PolarPriceLike) =>
             (p.recurring_interval === "month" || p.type === "recurring") &&
             String(p.price_currency).toUpperCase() === "USD"
         ) || prices[0];
       if (chosen?.price_amount) {
-        return Math.round(chosen.price_amount / 100);
+        return Math.round(chosen.price_amount / CENTS_PER_DOLLAR);
       }
     }
-  } catch {}
+  } catch (_error) {
+    // Best-effort: ignore transient API errors
+  }
 
   return;
 }

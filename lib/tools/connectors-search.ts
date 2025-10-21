@@ -1,10 +1,25 @@
 import { tool } from "ai";
 import Supermemory from "supermemory";
 import { z } from "zod";
+
+import { serverEnv } from "@/env/server";
+
+type SMDocument = {
+  documentId: string;
+  title?: string;
+  chunks?: Array<{ content?: string }>;
+  summary?: string;
+  content?: string;
+  score?: number;
+  metadata?: { source?: string; containerTags?: string | string[] };
+};
+
+type RawSMDocument = Omit<SMDocument, "title"> & { title?: string | null };
+
 import { CONNECTOR_CONFIGS, type ConnectorProvider } from "@/lib/connectors";
 
 const client = new Supermemory({
-  apiKey: process.env.SUPERMEMORY_API_KEY!,
+  apiKey: serverEnv.SUPERMEMORY_API_KEY,
 });
 
 export function createConnectorsSearchTool(
@@ -42,8 +57,16 @@ export function createConnectorsSearchTool(
       provider?: ConnectorProvider | "all";
     }) => {
       try {
-        let allResults: any[] = [];
+        let allResults: SMDocument[] = [];
         let _totalCount = 0;
+
+        const normalizeDocuments = (
+          documents: RawSMDocument[] | undefined
+        ): SMDocument[] =>
+          (documents ?? []).map((document) => ({
+            ...document,
+            title: document.title ?? undefined,
+          }));
 
         if (provider === "all") {
           // Use selected connectors if available, otherwise search all
@@ -72,7 +95,9 @@ export function createConnectorsSearchTool(
           const searchResults = await Promise.all(searchPromises);
 
           // Combine all results
-          allResults = searchResults.flatMap((result) => result.results || []);
+          allResults = searchResults.flatMap((result) =>
+            normalizeDocuments(result.results as RawSMDocument[] | undefined)
+          );
           _totalCount = searchResults.reduce(
             (sum, result) => sum + (result.total || 0),
             0
@@ -87,20 +112,22 @@ export function createConnectorsSearchTool(
             rerank: true,
             includeSummary: true,
           });
-          allResults = result.results || [];
+          allResults = normalizeDocuments(
+            result.results as RawSMDocument[] | undefined
+          );
           _totalCount = result.total || 0;
         }
 
         // Helper function to generate document URLs based on provider
         const generateDocumentUrl = (
-          document: any,
-          provider: ConnectorProvider | null
+          document: SMDocument,
+          prov: ConnectorProvider | null
         ): string => {
-          if (!provider) {
+          if (!prov) {
             return "#";
           }
 
-          const providerLower = provider.toLowerCase();
+          const providerLower = prov.toLowerCase();
 
           switch (providerLower) {
             case "google_drive":
@@ -126,11 +153,11 @@ export function createConnectorsSearchTool(
         };
 
         // Helper function to check if a document has meaningful content
-        const hasValidContent = (doc: any): boolean => {
+        const hasValidContent = (doc: SMDocument): boolean => {
           // Check if document has valid chunks with non-empty content
           if (doc.chunks && Array.isArray(doc.chunks)) {
             const hasValidChunks = doc.chunks.some(
-              (chunk: any) =>
+              (chunk) =>
                 chunk.content &&
                 chunk.content.trim() !== "" &&
                 chunk.content !== "Empty Chunk"

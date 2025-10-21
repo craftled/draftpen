@@ -3,6 +3,23 @@
 import { db } from "@/lib/db";
 import { subscription, user } from "./db/schema";
 
+// Regex constants
+const SESSION_TOKEN_RE = /better-auth\.session_token=([^;]+)/;
+
+// Time constants
+const ONE_MINUTE_MS = 60_000 as const;
+const TWO_MINUTES_MS = 120_000 as const;
+const FIVE_MINUTES_MS = 300_000 as const;
+const FIFTEEN_MINUTES_MS = 900_000 as const;
+const THIRTY_MINUTES_MS = 1_800_000 as const;
+
+// Cache size defaults
+const DEFAULT_MAX_SIZE = 1000 as const;
+const SESSIONS_MAX = 500 as const;
+const SUBSCRIPTIONS_MAX = 1000 as const;
+const USAGE_COUNTS_MAX = 2000 as const;
+const PRO_USER_MAX = 1000 as const;
+
 type CacheEntry<T> = {
   data: T;
   cachedAt: number;
@@ -14,15 +31,16 @@ class PerformanceCache<T> {
   private readonly cache = new Map<string, CacheEntry<T>>();
   private readonly maxSize: number;
   private readonly ttl: number;
-  private readonly name: string;
 
-  constructor(name: string, maxSize = 1000, ttlMs: number = 2 * 60 * 1000) {
-    this.name = name;
+  constructor(
+    maxSize: number = DEFAULT_MAX_SIZE,
+    ttlMs: number = TWO_MINUTES_MS
+  ) {
     this.maxSize = maxSize;
     this.ttl = ttlMs;
 
-    // Clean up every 5 minutes
-    setInterval(() => this.cleanup(), 5 * 60 * 1000);
+    // Clean up periodically
+    setInterval(() => this.cleanup(), FIVE_MINUTES_MS);
   }
 
   get(key: string): T | null {
@@ -98,25 +116,21 @@ class PerformanceCache<T> {
 }
 
 // Create cache instances with appropriate limits
-export const sessionCache = new PerformanceCache<any>(
-  "sessions",
-  500,
-  15 * 60 * 1000
+export const sessionCache = new PerformanceCache<unknown>(
+  SESSIONS_MAX,
+  FIFTEEN_MINUTES_MS
 ); // 15 min, 500 sessions
-export const subscriptionCache = new PerformanceCache<any>(
-  "subscriptions",
-  1000,
-  1 * 60 * 1000
+export const subscriptionCache = new PerformanceCache<unknown>(
+  SUBSCRIPTIONS_MAX,
+  ONE_MINUTE_MS
 ); // 1 min, 1000 users
 export const usageCountCache = new PerformanceCache<number>(
-  "usage-counts",
-  2000,
-  5 * 60 * 1000
+  USAGE_COUNTS_MAX,
+  FIVE_MINUTES_MS
 ); // 5 min, 2000 users
 export const proUserStatusCache = new PerformanceCache<boolean>(
-  "pro-user-status",
-  1000,
-  30 * 60 * 1000
+  PRO_USER_MAX,
+  THIRTY_MINUTES_MS
 ); // 30 min, 1000 users
 
 // Cache key generators
@@ -136,7 +150,7 @@ export function extractSessionToken(headers: Headers): string | null {
     return null;
   }
 
-  const match = cookies.match(/better-auth\.session_token=([^;]+)/);
+  const match = cookies.match(SESSION_TOKEN_RE);
   return match ? match[1] : null;
 }
 
@@ -151,18 +165,30 @@ export function setProUserStatus(userId: string, isProUser: boolean): void {
   proUserStatusCache.set(cacheKey, isProUser);
 }
 
+type MinimalSubscriptionData = {
+  hasSubscription?: boolean;
+  subscription?: { status?: string; currentPeriodEnd?: string | Date } | null;
+};
+
 export function computeAndCacheProUserStatus(
   userId: string,
-  subscriptionData: any
+  subscriptionData: MinimalSubscriptionData
 ): boolean {
   const sub = subscriptionData?.subscription;
   const now = new Date();
-  const isProUser = Boolean(
-    subscriptionData?.hasSubscription &&
-      sub &&
-      (sub.status === "active" || sub.status === "trialing") &&
-      new Date(sub.currentPeriodEnd) > now
-  );
+  let currentPeriodEnd: Date | null = null;
+  if (sub?.currentPeriodEnd instanceof Date) {
+    currentPeriodEnd = sub.currentPeriodEnd;
+  } else if (sub?.currentPeriodEnd) {
+    currentPeriodEnd = new Date(sub.currentPeriodEnd);
+  } else {
+    currentPeriodEnd = null;
+  }
+  const isProUser =
+    Boolean(subscriptionData?.hasSubscription) &&
+    Boolean(sub) &&
+    (sub?.status === "active" || sub?.status === "trialing") &&
+    Boolean(currentPeriodEnd && currentPeriodEnd > now);
 
   setProUserStatus(userId, isProUser);
   return isProUser;

@@ -2,6 +2,8 @@ import { supermemoryTools } from "@supermemory/tools/ai-sdk";
 import type { Tool } from "ai";
 import { serverEnv } from "@/env/server";
 
+type MemoryRecord = Record<string, unknown>;
+
 export function createMemoryTools(userId: string) {
   return supermemoryTools(serverEnv.SUPERMEMORY_API_KEY, {
     containerTags: [userId],
@@ -14,7 +16,7 @@ export type SearchMemoryTool = Tool<
   },
   | {
       success: boolean;
-      results: any[];
+      results: MemoryRecord[];
       count: number;
       error?: undefined;
     }
@@ -32,7 +34,7 @@ export type AddMemoryTool = Tool<
   },
   | {
       success: boolean;
-      memory: any;
+      memory: MemoryRecord;
       error?: undefined;
     }
   | {

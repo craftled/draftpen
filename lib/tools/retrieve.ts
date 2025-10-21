@@ -4,6 +4,24 @@ import Exa from "exa-js";
 import { z } from "zod";
 import { serverEnv } from "@/env/server";
 
+const HTTP_PREFIX_RE = /^https?:\/\//;
+const MS_PER_SECOND = 1000 as const;
+
+type ExaContentItem = {
+  url: string;
+  text?: string;
+  summary?: string;
+  title?: string;
+  author?: string;
+  publishedDate?: string;
+  image?: string;
+  favicon?: string;
+};
+
+type ExaResult = {
+  results?: ExaContentItem[];
+};
+
 export const retrieveTool = tool({
   description:
     "Retrieve the full content from a URL using Exa AI, with Firecrawl as a fallback. Returns text, title, summary, images, and more.",
@@ -36,7 +54,7 @@ export const retrieveTool = tool({
       });
 
       const start = Date.now();
-      let result;
+      let result: ExaResult | null = null;
       let usingFirecrawl = false;
 
       try {
@@ -61,7 +79,7 @@ export const retrieveTool = tool({
 
       // Use Firecrawl as fallback
       if (usingFirecrawl) {
-        const urlWithoutHttps = url.replace(/^https?:\/\//, "");
+        const urlWithoutHttps = url.replace(HTTP_PREFIX_RE, "");
         try {
           const scrapeResponse = await firecrawl.scrape(urlWithoutHttps, {
             parsers: ["pdf"],
@@ -98,7 +116,7 @@ export const retrieveTool = tool({
                 language: scrapeResponse.metadata?.language || "en",
               },
             ],
-            response_time: (Date.now() - start) / 1000,
+            response_time: (Date.now() - start) / MS_PER_SECOND,
             source: "firecrawl",
           };
         } catch (_firecrawlError) {
@@ -112,25 +130,18 @@ export const retrieveTool = tool({
       // Return Exa results if successful
       return {
         base_url: url,
-        results: result?.results.map((item) => {
-          const typedItem = item as any;
-          return {
-            url: item.url,
-            content: typedItem.text || typedItem.summary || "",
-            title:
-              typedItem.title ||
-              item.url.split("/").pop() ||
-              "Retrieved Content",
-            description:
-              typedItem.summary || `Content retrieved from ${item.url}`,
-            author: typedItem.author || undefined,
-            publishedDate: typedItem.publishedDate || undefined,
-            image: typedItem.image || undefined,
-            favicon: typedItem.favicon || undefined,
-            language: "en",
-          };
-        }),
-        response_time: (Date.now() - start) / 1000,
+        results: result?.results.map((item) => ({
+          url: item.url,
+          content: item.text ?? item.summary ?? "",
+          title: item.title || item.url.split("/").pop() || "Retrieved Content",
+          description: item.summary || `Content retrieved from ${item.url}`,
+          author: item.author || undefined,
+          publishedDate: item.publishedDate || undefined,
+          image: item.image || undefined,
+          favicon: item.favicon || undefined,
+          language: "en",
+        })),
+        response_time: (Date.now() - start) / MS_PER_SECOND,
         source: "exa",
       };
     } catch (error) {

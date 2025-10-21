@@ -1,6 +1,9 @@
 import { tool } from "ai";
 import { z } from "zod";
 
+const NOON_HOUR = 12 as const;
+const EVENING_HOUR = 17 as const;
+
 export const greetingTool = (timezone?: string) =>
   tool({
     description: "Generate a professional greeting for the user",
@@ -18,11 +21,7 @@ export const greetingTool = (timezone?: string) =>
         .optional()
         .describe("Whether to include time-specific greeting"),
     }),
-    execute: async ({
-      name,
-      style = "professional",
-      includeTimeOfDay = true,
-    }) => {
+    execute: ({ name, style = "professional", includeTimeOfDay = true }) => {
       const now = new Date();
 
       // Determine hour based on provided timezone (falls back to server time if not provided or invalid)
@@ -46,10 +45,10 @@ export const greetingTool = (timezone?: string) =>
       let timeEmoji = "";
 
       if (includeTimeOfDay) {
-        if (hour < 12) {
+        if (hour < NOON_HOUR) {
           timeGreeting = "Good morning";
           timeEmoji = "🌅";
-        } else if (hour < 17) {
+        } else if (hour < EVENING_HOUR) {
           timeGreeting = "Good afternoon";
           timeEmoji = "☀️";
         } else {

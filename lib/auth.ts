@@ -45,6 +45,8 @@ const polarClient = new Polar({
   // Force production server even in development to match token
 });
 
+const FIVE_MINUTES_SECONDS = 300 as const;
+
 export const auth = betterAuth({
   rateLimit: {
     max: 50,
@@ -52,12 +54,14 @@ export const auth = betterAuth({
   },
   cookieCache: {
     enabled: true,
-    maxAge: 5 * 60,
+    maxAge: FIVE_MINUTES_SECONDS,
   },
   onAPIError: {
     throw: true,
     errorURL: "/auth/error",
-    onError: (_error) => {},
+    onError: (_error) => {
+      // Intentionally ignored: errors are surfaced via throw and errorURL
+    },
   },
   database: drizzleAdapter(maindb, {
     provider: "pg",
@@ -81,7 +85,13 @@ export const auth = betterAuth({
       clientId: serverEnv.GOOGLE_CLIENT_ID,
       clientSecret: serverEnv.GOOGLE_CLIENT_SECRET,
       redirectUri: `${process.env.NODE_ENV === "production" ? process.env.NEXT_PUBLIC_APP_URL : "http://localhost:3000"}/api/auth/callback/google`,
-      mapProfileToUser: (profile: any) => {
+      mapProfileToUser: (profile: {
+        given_name?: string;
+        family_name?: string;
+        name?: string;
+        email?: string;
+        picture?: string;
+      }) => {
         const nameFromParts = [profile?.given_name, profile?.family_name]
           .filter(Boolean)
           .join(" ");
@@ -124,6 +134,7 @@ export const auth = betterAuth({
                       .set({ id: existingCustomer.externalId })
                       .where(eq(user.id, newUser.id));
                   } else {
+                    // No-op: user did not have an id to update
                   }
                 }
 
@@ -180,7 +191,7 @@ export const auth = betterAuth({
 
                       // STEP 1.5: Check if user exists to prevent foreign key violations
                       // Also preserve existing userId if not found in webhook (for updates)
-                      let validUserId = null;
+                      let validUserId: string | null = null;
                       if (userId) {
                         try {
                           const userExists = await db.query.user.findFirst({
@@ -190,8 +201,11 @@ export const auth = betterAuth({
                           validUserId = userExists ? userId : null;
 
                           if (!userExists) {
+                            // No local user found for externalId; will try fallbacks
                           }
-                        } catch (_error) {}
+                        } catch (_error) {
+                          // Swallow lookup errors; webhook processing continues with fallbacks
+                        }
                       } else {
                         try {
                           const existing =
@@ -202,7 +216,9 @@ export const auth = betterAuth({
                           if (existing?.userId) {
                             validUserId = existing.userId;
                           }
-                        } catch (_error) {}
+                        } catch (_error) {
+                          // Swallow lookup errors; proceed to email-based fallback
+                        }
                       }
                       // STEP 1.6: Fallback linking by email if externalId did not resolve a local user
                       if (!validUserId) {
@@ -217,7 +233,9 @@ export const auth = betterAuth({
                               validUserId = userByEmail.id;
                             }
                           }
-                        } catch (_e) {}
+                        } catch (_e) {
+                          // Swallow lookup errors; unable to resolve by email
+                        }
                       }
 
                       // STEP 2: Build subscription data
@@ -238,8 +256,14 @@ export const auth = betterAuth({
                         startedAt: safeParseDate(data.startedAt) || new Date(),
                         endsAt: safeParseDate(data.endsAt),
                         endedAt: safeParseDate(data.endedAt),
-                        trialStart: safeParseDate((data as any).trial_start),
-                        trialEnd: safeParseDate((data as any).trial_end),
+                        trialStart: safeParseDate(
+                          (data as { trial_start?: string | Date | null })
+                            .trial_start
+                        ),
+                        trialEnd: safeParseDate(
+                          (data as { trial_end?: string | Date | null })
+                            .trial_end
+                        ),
                         customerId: data.customerId,
                         productId: data.productId,
                         checkoutId: data.checkoutId || "",
@@ -258,7 +282,9 @@ export const auth = betterAuth({
 
                       // STEP 3: Use Drizzle's onConflictDoUpdate for proper upsert
                       // IMPORTANT: Only update userId if we have a valid one (don't overwrite with NULL)
-                      const updateSet: any = {
+                      const updateSet: Partial<
+                        typeof subscription.$inferInsert
+                      > = {
                         modifiedAt: subscriptionData.modifiedAt || new Date(),
                         amount: subscriptionData.amount,
                         currency: subscriptionData.currency,

@@ -118,7 +118,7 @@ export async function getChatsByUserId({
     const extendedLimit = limit + 1;
 
     // Use maindb to avoid replica lag for recently created chats
-    const query = (whereCondition?: SQL<any>) =>
+    const query = (whereCondition?: SQL<unknown>) =>
       maindb
         .select()
         .from(chat)
@@ -278,7 +278,7 @@ export async function deleteMessagesByChatIdAfterTimestamp({
         and(eq(message.chatId, chatId), gte(message.createdAt, timestamp))
       );
 
-    const messageIds = messagesToDelete.map((message) => message.id);
+    const messageIds = messagesToDelete.map((m) => m.id);
 
     if (messageIds.length > 0) {
       return await db
@@ -296,11 +296,11 @@ export async function deleteMessagesByChatIdAfterTimestamp({
 }
 
 export async function deleteTrailingMessages({ id }: { id: string }) {
-  const [message] = await getMessageById({ id });
+  const [msg] = await getMessageById({ id });
 
   await deleteMessagesByChatIdAfterTimestamp({
-    chatId: message.chatId,
-    timestamp: message.createdAt,
+    chatId: msg.chatId,
+    timestamp: msg.createdAt,
   });
 }
 
@@ -608,7 +608,8 @@ export async function getHistoricalUsageData({
 }) {
   try {
     // Get actual message data for the specified months from message table
-    const totalDays = months * 30; // Approximately 30 days per month
+    const DAYS_PER_MONTH = 30 as const;
+    const totalDays = months * DAYS_PER_MONTH; // Approximately 30 days per month
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(endDate.getDate() - (totalDays - 1)); // totalDays - 1 + today
@@ -635,10 +636,10 @@ export async function getHistoricalUsageData({
     // Group messages by date and count them
     const dailyCounts = new Map<string, number>();
 
-    historicalMessages.forEach((msg) => {
+    for (const msg of historicalMessages) {
       const dateKey = msg.createdAt.toISOString().split("T")[0]; // Get YYYY-MM-DD format
       dailyCounts.set(dateKey, (dailyCounts.get(dateKey) || 0) + 1);
-    });
+    }
 
     // Convert to array format expected by the frontend
     const result = Array.from(dailyCounts.entries()).map(([date, count]) => ({
@@ -801,9 +802,7 @@ export async function getLookoutById({ id }: { id: string }) {
       .from(lookout)
       .where(eq(lookout.id, id));
 
-    if (selectedLookout) {
-    } else {
-    }
+    // selectedLookout may be undefined; simply return the value below
 
     return selectedLookout;
   } catch (_error) {
@@ -834,7 +833,7 @@ export async function updateLookout({
   qstashScheduleId?: string;
 }) {
   try {
-    const updateData: any = { updatedAt: new Date() };
+    const updateData: Record<string, unknown> = { updatedAt: new Date() };
     if (title !== undefined) {
       updateData.title = title;
     }
@@ -920,7 +919,7 @@ export async function updateLookoutLastRun({
       throw new Error("Lookout not found");
     }
 
-    const currentHistory = (currentLookout.runHistory as any[]) || [];
+    const currentHistory = (currentLookout.runHistory as unknown[]) || [];
 
     // Add new run to history
     const newRun = {
@@ -934,9 +933,10 @@ export async function updateLookoutLastRun({
     };
 
     // Keep only last 100 runs to prevent unbounded growth
-    const updatedHistory = [...currentHistory, newRun].slice(-100);
+    const MAX_RUNS = 100 as const;
+    const updatedHistory = [...currentHistory, newRun].slice(-MAX_RUNS);
 
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       lastRunAt,
       lastRunChatId,
       runHistory: updatedHistory,
@@ -969,7 +969,16 @@ export async function getLookoutRunStats({ id }: { id: string }) {
       return null;
     }
 
-    const runHistory = (lookout.runHistory as any[]) || [];
+    const runHistory = (lookout.runHistory as unknown[]) || [];
+
+    const MS_PER_SECOND = 1000 as const;
+    const SECONDS_PER_MINUTE = 60 as const;
+    const MINUTES_PER_HOUR = 60 as const;
+    const HOURS_PER_DAY = 24 as const;
+    const DAY_MS =
+      HOURS_PER_DAY * MINUTES_PER_HOUR * SECONDS_PER_MINUTE * MS_PER_SECOND;
+    const DAYS_PER_WEEK = 7 as const;
+    const WEEK_MS = (DAYS_PER_WEEK * DAY_MS) as const;
 
     return {
       totalRuns: runHistory.length,
@@ -980,8 +989,7 @@ export async function getLookoutRunStats({ id }: { id: string }) {
         runHistory.reduce((sum, run) => sum + (run.duration || 0), 0) /
           runHistory.length || 0,
       lastWeekRuns: runHistory.filter(
-        (run) =>
-          new Date(run.runAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        (run) => new Date(run.runAt) > new Date(Date.now() - WEEK_MS)
       ).length,
     };
   } catch (_error) {

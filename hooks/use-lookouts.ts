@@ -2,6 +2,14 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
+
+const TWO_SECONDS_MS = 2000 as const;
+const THREE_SECONDS_MS = 3000 as const;
+const FIVE_SECONDS_MS = 5000 as const;
+const THIRTY_SECONDS_MS = 30_000 as const;
+const ONE_SECOND_MS = 1000 as const;
+const MAX_RETRY_ATTEMPTS = 3 as const;
+
 import { toast } from "sonner";
 import {
   createScheduledLookout,
@@ -24,6 +32,16 @@ type Lookout = {
   lastRunChatId?: string | null;
   createdAt: Date;
   cronSchedule?: string;
+};
+
+type CreateLookoutParams = {
+  title: string;
+  prompt: string;
+  frequency: "once" | "daily" | "weekly" | "monthly";
+  time: string;
+  timezone: string;
+  date?: string;
+  onSuccess?: () => void;
 };
 
 // Query key factory
@@ -64,22 +82,23 @@ export function useLookouts() {
       }
       throw new Error(result.error || "Failed to load lookouts");
     },
-    staleTime: 1000 * 2, // Consider data fresh for 2 seconds
-    refetchInterval: 1000 * 5, // Refetch every 5 seconds for real-time updates
+    staleTime: TWO_SECONDS_MS, // Consider data fresh for 2 seconds
+    refetchInterval: FIVE_SECONDS_MS, // Refetch every 5 seconds for real-time updates
     refetchIntervalInBackground: false, // Don't poll when tab is not focused
-    gcTime: 1000 * 30, // Keep in cache for 30 seconds
+    gcTime: THIRTY_SECONDS_MS, // Keep in cache for 30 seconds
     networkMode: "always", // Always try to refetch
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     refetchOnMount: true, // Always refetch when component mounts
     retry: (failureCount, _error) => {
-      // Retry up to 3 times with exponential backoff
-      if (failureCount < 3) {
+      // Retry up to MAX_RETRY_ATTEMPTS times with exponential backoff
+      if (failureCount < MAX_RETRY_ATTEMPTS) {
         return true;
       }
       return false;
     },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30_000),
+    retryDelay: (attemptIndex) =>
+      Math.min(ONE_SECOND_MS * 2 ** attemptIndex, THIRTY_SECONDS_MS),
     // Enable query deduplication for performance
     structuralSharing: true,
 
@@ -110,7 +129,7 @@ export function useLookouts() {
     });
 
     // Show completion toast for each completed lookout with debouncing
-    completedLookouts.forEach((lookout) => {
+    for (const lookout of completedLookouts) {
       const completionKey = `${lookout.id}-${lookout.lastRunAt?.getTime()}`;
       recentCompletionsRef.current.add(completionKey);
 
@@ -121,8 +140,8 @@ export function useLookouts() {
       // Clear completion key after 30 seconds to allow future notifications
       setTimeout(() => {
         recentCompletionsRef.current.delete(completionKey);
-      }, 30_000);
-    });
+      }, THIRTY_SECONDS_MS);
+    }
 
     previousLookutsRef.current = lookouts;
   }, [lookouts]);
@@ -158,9 +177,9 @@ export function useLookouts() {
         data.onSuccess();
       }
     },
-    onError: (error: Error) => {
+    onError: (err: Error) => {
       isActualCreateRef.current = false; // Reset flag on error
-      toast.error(error.message);
+      toast.error(err.message);
     },
   });
 
@@ -195,22 +214,24 @@ export function useLookouts() {
       return { previousLookouts };
     },
     onSuccess: (data) => {
-      const statusText =
-        data.status === "active"
-          ? "activated"
-          : data.status === "paused"
-            ? "paused"
-            : data.status === "archived"
-              ? "archived"
-              : "updated";
+      let statusText: string;
+      if (data.status === "active") {
+        statusText = "activated";
+      } else if (data.status === "paused") {
+        statusText = "paused";
+      } else if (data.status === "archived") {
+        statusText = "archived";
+      } else {
+        statusText = "updated";
+      }
       toast.success(`Lookout ${statusText}`);
     },
-    onError: (error: Error, _variables, context) => {
+    onError: (mutationError: Error, _variables, context) => {
       // Rollback on error
       if (context?.previousLookouts) {
         queryClient.setQueryData(lookoutKeys.lists(), context.previousLookouts);
       }
-      toast.error(error.message);
+      toast.error(mutationError.message);
     },
     onSettled: () => {
       // Always refetch after error or success for real-time updates
@@ -246,8 +267,8 @@ export function useLookouts() {
         data.onSuccess();
       }
     },
-    onError: (error: Error) => {
-      toast.error(error.message);
+    onError: (_error: Error) => {
+      toast.error(_error.message);
     },
   });
 
@@ -281,12 +302,12 @@ export function useLookouts() {
       // Force immediate refetch after delete
       queryClient.refetchQueries({ queryKey: lookoutKeys.lists() });
     },
-    onError: (error: Error, _variables, context) => {
+    onError: (mutationError: Error, _variables, context) => {
       // Rollback on error
       if (context?.previousLookouts) {
         queryClient.setQueryData(lookoutKeys.lists(), context.previousLookouts);
       }
-      toast.error(error.message);
+      toast.error(mutationError.message);
     },
     onSettled: () => {
       // Always refetch after error or success for real-time updates
@@ -327,12 +348,12 @@ export function useLookouts() {
     onSuccess: () => {
       toast.success("Test run started - you'll be notified when complete!");
     },
-    onError: (error: Error, _variables, context) => {
+    onError: (mutationError: Error, _variables, context) => {
       // Rollback on error
       if (context?.previousLookouts) {
         queryClient.setQueryData(lookoutKeys.lists(), context.previousLookouts);
       }
-      toast.error(error.message);
+      toast.error(mutationError.message);
     },
     onSettled: () => {
       // Always refetch after error or success to get real status
@@ -371,7 +392,7 @@ export function useLookouts() {
       if (currentRunning) {
         queryClient.invalidateQueries({ queryKey: lookoutKeys.lists() });
       }
-    }, 3000); // Check every 3 seconds when there are running lookouts
+    }, THREE_SECONDS_MS); // Check every 3 seconds when there are running lookouts
 
     return () => clearInterval(interval);
   }, [lookouts, queryClient]);
@@ -388,7 +409,7 @@ export function useLookouts() {
 
     // Metadata
     lastUpdated: dataUpdatedAt,
-    createLookout: (params: any) => {
+    createLookout: (params: CreateLookoutParams) => {
       isActualCreateRef.current = true; // Mark as actual create
       createMutation.mutate(params);
     },

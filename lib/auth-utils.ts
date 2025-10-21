@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { getUserById } from "@/lib/db/queries";
 import type { User } from "./db/schema";
 import {
   createSessionKey,
@@ -7,14 +8,21 @@ import {
   sessionCache,
 } from "./performance-cache";
 
-export const getSession = async () => {
+type AuthSession = {
+  user?: {
+    id?: string;
+    [key: string]: unknown;
+  } | null;
+} | null;
+
+export const getSession = async (): Promise<AuthSession> => {
   const requestHeaders = await headers();
   const sessionToken = extractSessionToken(requestHeaders);
 
   // Try cache first (only if we have a session token)
   if (sessionToken) {
     const cacheKey = createSessionKey(sessionToken);
-    const cached = sessionCache.get(cacheKey);
+    const cached = sessionCache.get(cacheKey) as AuthSession | null;
     if (cached) {
       return cached;
     }
@@ -30,10 +38,15 @@ export const getSession = async () => {
     sessionCache.set(cacheKey, session);
   }
 
-  return session;
+  return session ?? null;
 };
 
 export const getUser = async (): Promise<User | null> => {
   const session = await getSession();
-  return session?.user as User | null;
+  const userId = session?.user?.id;
+  if (!userId) {
+    return null;
+  }
+
+  return await getUserById(userId);
 };

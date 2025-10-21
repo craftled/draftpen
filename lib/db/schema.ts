@@ -226,3 +226,18 @@ export type ExtremeSearchUsage = InferSelectModel<typeof extremeSearchUsage>;
 export type MessageUsage = InferSelectModel<typeof messageUsage>;
 export type CustomInstructions = InferSelectModel<typeof customInstructions>;
 export type Lookout = InferSelectModel<typeof lookout>;
+
+export const schema = {
+  user,
+  session,
+  verification,
+  account,
+  chat,
+  message,
+  stream,
+  subscription,
+  extremeSearchUsage,
+  messageUsage,
+  customInstructions,
+  lookout,
+} as const;

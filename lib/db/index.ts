@@ -3,11 +3,11 @@ import { upstashCache } from "drizzle-orm/cache/upstash";
 import { drizzle } from "drizzle-orm/neon-http";
 import { withReplicas } from "drizzle-orm/pg-core";
 import { serverEnv } from "@/env/server";
-import * as schema from "@/lib/db/schema";
+import { schema } from "@/lib/db/schema";
 
 const sql = neon(serverEnv.DATABASE_URL);
-const sqlread1 = neon(process.env.READ_DB_1!);
-const sqlread2 = neon(process.env.READ_DB_2!);
+const sqlread1 = process.env.READ_DB_1 ? neon(process.env.READ_DB_1) : sql;
+const sqlread2 = process.env.READ_DB_2 ? neon(process.env.READ_DB_2) : sql;
 
 export const maindb = drizzle(sql, {
   schema,

@@ -12,6 +12,8 @@ import {
   user,
 } from "./schema";
 
+const MS_PER_SECOND = 1000 as const;
+
 // Combined query to get chat and initial messages in one database call
 export async function getChatWithInitialMessages({
   id,
@@ -59,7 +61,7 @@ export async function getChatWithInitialMessages({
       ? messages.slice(0, messageLimit)
       : messages;
 
-    const _queryTime = (Date.now() - startTime) / 1000;
+    const _queryTime = (Date.now() - startTime) / MS_PER_SECOND;
 
     return {
       chat: selectedChat,
@@ -176,12 +178,12 @@ export async function getChatsWithInitialMessages({
 
     // Group messages by chat ID and apply limits
     const messagesByChat = new Map<string, Message[]>();
-    allMessages.forEach((msg) => {
+    for (const msg of allMessages) {
       if (!messagesByChat.has(msg.chatId)) {
         messagesByChat.set(msg.chatId, []);
       }
       messagesByChat.get(msg.chatId)?.push(msg);
-    });
+    }
 
     // Build result object
     const result: {
@@ -192,8 +194,8 @@ export async function getChatsWithInitialMessages({
       };
     } = {};
 
-    chatIds.forEach((chatId) => {
-      const chat = chatMap.get(chatId) || null;
+    for (const chatId of chatIds) {
+      const chatRecord = chatMap.get(chatId) || null;
       const messages = messagesByChat.get(chatId) || [];
       const hasMoreMessages = messages.length > messageLimit;
       const limitedMessages = hasMoreMessages
@@ -201,13 +203,13 @@ export async function getChatsWithInitialMessages({
         : messages;
 
       result[chatId] = {
-        chat,
+        chat: chatRecord,
         messages: limitedMessages,
         hasMoreMessages,
       };
-    });
+    }
 
-    const _queryTime = (Date.now() - startTime) / 1000;
+    const _queryTime = (Date.now() - startTime) / MS_PER_SECOND;
 
     return result;
   } catch (_error) {
@@ -250,7 +252,7 @@ export async function getChatVisibilityAndOwnership({
     const isOwner = userId ? selectedChat.userId === userId : false;
     const canAccess = selectedChat.visibility === "public" || isOwner;
 
-    const _queryTime = (Date.now() - startTime) / 1000;
+    const _queryTime = (Date.now() - startTime) / MS_PER_SECOND;
 
     return {
       chat: selectedChat,

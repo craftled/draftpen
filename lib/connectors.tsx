@@ -3,7 +3,7 @@ import Supermemory from "supermemory";
 
 function getClient() {
   return new Supermemory({
-    apiKey: process.env.SUPERMEMORY_API_KEY!,
+    apiKey: process.env.SUPERMEMORY_API_KEY ?? "",
   });
 }
 
@@ -25,6 +25,7 @@ const GoogleDrive = (props: SVGProps<SVGSVGElement>) => (
     xmlns="http://www.w3.org/2000/svg"
     {...props}
   >
+    <title>Google Drive</title>
     <path
       d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5z"
       fill="#0066da"
@@ -61,6 +62,7 @@ const Notion = (props: SVGProps<SVGSVGElement>) => (
     xmlns="http://www.w3.org/2000/svg"
     {...props}
   >
+    <title>Notion</title>
     <path
       d="M16.092 11.538 164.09.608c18.179-1.56 22.85-.508 34.28 7.801l47.243 33.282C253.406 47.414 256 48.975 256 55.207v182.527c0 11.439-4.155 18.205-18.696 19.24L65.44 267.378c-10.913.517-16.11-1.043-21.825-8.327L8.826 213.814C2.586 205.487 0 199.254 0 191.97V29.726c0-9.352 4.155-17.153 16.092-18.188Z"
       fill="#FFF"
@@ -78,6 +80,7 @@ const OneDrive = (props: SVGProps<SVGSVGElement>) => (
     xmlns="http://www.w3.org/2000/svg"
     {...props}
   >
+    <title>OneDrive</title>
     <path d="M121.666 121.666H0V0h121.666z" fill="#F1511B" />
     <path d="M256 121.666H134.335V0H256z" fill="#80CC28" />
     <path d="M121.663 256.002H0V134.336h121.663z" fill="#00ADEF" />
@@ -156,7 +159,7 @@ export async function createConnection(
 }
 
 // Legacy function for backward compatibility
-export async function createGoogleDriveConnection(userId: string) {
+export function createGoogleDriveConnection(userId: string) {
   return createConnection("google-drive", userId);
 }
 
@@ -290,8 +293,12 @@ export async function getSyncStatus(
           documentCount !== null
         ) {
           // If it's an object with a count property or similar
-          actualDocumentCount =
-            (documentCount as any).count || (documentCount as any).length || 0;
+          const obj = documentCount as Record<string, unknown>;
+          const countVal =
+            typeof obj.count === "number" ? obj.count : undefined;
+          const lengthVal =
+            typeof obj.length === "number" ? obj.length : undefined;
+          actualDocumentCount = countVal ?? lengthVal ?? 0;
         } else if (typeof documentCount === "number") {
           actualDocumentCount = documentCount;
         }
@@ -314,7 +321,7 @@ export async function getSyncStatus(
 }
 
 // Legacy functions for backward compatibility
-export async function getGoogleDriveConnection(userId: string) {
+export function getGoogleDriveConnection(userId: string) {
   return getConnection("google-drive", userId);
 }
 
@@ -323,10 +330,10 @@ export async function listGoogleDriveConnections(userId: string) {
   return connections.filter((conn) => conn.provider === "google-drive");
 }
 
-export async function deleteGoogleDriveConnection(connectionId: string) {
+export function deleteGoogleDriveConnection(connectionId: string) {
   return deleteConnection(connectionId);
 }
 
-export async function manualSyncGoogleDrive(userId: string) {
+export function manualSyncGoogleDrive(userId: string) {
   return manualSync("google-drive", userId);
 }

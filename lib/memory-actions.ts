@@ -17,7 +17,7 @@ export type MemoryItem = {
   containerTags: string[];
   createdAt: string;
   updatedAt: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   status: string;
   summary: string;
   title: string;
@@ -86,7 +86,7 @@ export async function getAllMemories(
   });
 
   return {
-    memories: result.memories as any,
+    memories: result.memories as MemoryItem[],
     total: result.pagination.totalItems || 0,
   };
 }

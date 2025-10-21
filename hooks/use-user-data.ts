@@ -6,7 +6,9 @@ import {
   getSubscriptionType,
   isInTrial,
 } from "@/lib/subscription-utils";
-import type { ComprehensiveUserData } from "@/lib/user-data";
+
+const FIVE_MINUTES_MS = 300_000 as const;
+const RETRY_COUNT = 2 as const;
 
 export function useUserData() {
   const {
@@ -20,10 +22,10 @@ export function useUserData() {
     queryFn: getCurrentUser,
     // Keep this aggressively fresh so subscription changes reflect quickly
     staleTime: 0, // Changed from 5s to 0 for immediate updates
-    gcTime: 5 * 60 * 1000,
+    gcTime: FIVE_MINUTES_MS,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    retry: 2,
+    retry: RETRY_COUNT,
   });
 
   // Helper function to check if user should have unlimited access for specific models
@@ -72,10 +74,10 @@ export function useUserData() {
     // Legacy compatibility helpers
     subscriptionData: userData?.polarSubscription
       ? {
-          hasSubscription: true,
+          hasSubscription: true as const,
           subscription: userData.polarSubscription,
         }
-      : { hasSubscription: false },
+      : { hasSubscription: false as const },
   };
 }
 
@@ -109,4 +111,4 @@ export function useSubscriptionStatus() {
 }
 
 // Export the comprehensive type for components that need it
-export type { ComprehensiveUserData };
+export type { ComprehensiveUserData } from "@/lib/user-data";

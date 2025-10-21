@@ -2,6 +2,10 @@ import { tool } from "ai";
 import { z } from "zod";
 import { serverEnv } from "@/env/server";
 
+type ServerSummary = { qualifiedName: string } & Record<string, unknown>;
+type ServerDetails = { deploymentUrl?: string; connections?: unknown };
+type ServersListResponse = { servers?: ServerSummary[]; pagination?: unknown };
+
 export const mcpSearchTool = tool({
   description:
     "Search for mcp servers and get the information about them. VERY IMPORTANT: DO NOT USE THIS TOOL FOR GENERAL WEB SEARCHES, ONLY USE IT FOR MCP SERVER SEARCHES.",
@@ -26,10 +30,11 @@ export const mcpSearchTool = tool({
         );
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as ServersListResponse;
 
+      const servers = data.servers ?? [];
       const detailedServers = await Promise.all(
-        data.servers.map(async (server: any) => {
+        servers.map(async (server: ServerSummary) => {
           const detailResponse = await fetch(
             `https://registry.smithery.ai/servers/${encodeURIComponent(server.qualifiedName)}`,
             {
@@ -44,12 +49,12 @@ export const mcpSearchTool = tool({
             return server;
           }
 
-          const details = await detailResponse.json();
+          const details = (await detailResponse.json()) as ServerDetails;
           return {
             ...server,
             deploymentUrl: details.deploymentUrl,
             connections: details.connections,
-          };
+          } as ServerSummary & ServerDetails;
         })
       );
 

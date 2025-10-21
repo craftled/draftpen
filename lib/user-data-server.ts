@@ -51,8 +51,12 @@ const lightweightAuthCache = new Map<
   string,
   { data: LightweightUserAuth; expiresAt: number }
 >();
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-const LIGHTWEIGHT_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes - shorter for lightweight checks
+const MINUTE_MS = 60_000 as const;
+
+const FIVE_MINUTES = 5 as const;
+const TWO_MINUTES = 2 as const;
+const CACHE_TTL_MS = FIVE_MINUTES * MINUTE_MS; // 5 minutes
+const LIGHTWEIGHT_CACHE_TTL_MS = TWO_MINUTES * MINUTE_MS; // 2 minutes - shorter for lightweight checks
 
 // Custom instructions cache (per-user)
 const customInstructionsCache = new Map<
@@ -63,7 +67,7 @@ const customInstructionsCache = new Map<
     ttl: number;
   }
 >();
-const CUSTOM_INSTRUCTIONS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const CUSTOM_INSTRUCTIONS_CACHE_TTL_MS = FIVE_MINUTES * MINUTE_MS; // 5 minutes
 
 function getCachedUserData(userId: string): ComprehensiveUserData | null {
   const cached = userDataCache.get(userId);
@@ -331,33 +335,35 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
           undefined;
         providerClaims.picture = payload.picture || undefined;
       }
-    } catch (_e) {}
+    } catch (_e) {
+      // Ignore provider token parsing issues; enrichment is best-effort
+    }
 
     // Optionally backfill empty DB fields if we discovered trustworthy values
     try {
-      const updates: Partial<typeof user.$inferInsert> = {} as any;
+      const updates: Partial<typeof user.$inferInsert> = {};
       if (
         (userData.email?.trim?.() === "" || !userData.email) &&
         providerClaims.email
       ) {
-        (updates as any).email = providerClaims.email;
+        updates.email = providerClaims.email;
       }
       if (
         (userData.name?.trim?.() === "" || !userData.name) &&
         providerClaims.name
       ) {
-        (updates as any).name = providerClaims.name;
+        updates.name = providerClaims.name;
       }
       if (
         (userData.image == null || userData.image === "") &&
         providerClaims.picture
       ) {
-        (updates as any).image = providerClaims.picture;
+        updates.image = providerClaims.picture;
       }
       if (Object.keys(updates).length > 0) {
         await maindb
           .update(user)
-          .set({ ...(updates as any), updatedAt: new Date() })
+          .set({ ...updates, updatedAt: new Date() })
           .where(eq(user.id, userId));
       }
     } catch (_e) {}

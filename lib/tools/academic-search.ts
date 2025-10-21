@@ -3,6 +3,9 @@ import Exa from "exa-js";
 import { z } from "zod";
 import { serverEnv } from "@/env/server";
 
+const SUMMARY_PREFIX_RE = /^Summary:\s*/i;
+const TITLE_SUFFIX_BRACKET_RE = /\s\[.*?\]$/;
+
 export const academicSearchTool = tool({
   description: "Search academic papers and research.",
   inputSchema: z.object({
@@ -26,8 +29,8 @@ export const academicSearchTool = tool({
           return acc;
         }
 
-        const cleanSummary = paper.summary.replace(/^Summary:\s*/i, "");
-        const cleanTitle = paper.title?.replace(/\s\[.*?\]$/, "");
+        const cleanSummary = paper.summary.replace(SUMMARY_PREFIX_RE, "");
+        const cleanTitle = paper.title?.replace(TITLE_SUFFIX_BRACKET_RE, "");
 
         acc.push({
           ...paper,

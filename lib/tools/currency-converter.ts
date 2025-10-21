@@ -10,5 +10,8 @@ export const currencyConverterTool = tool({
     amount: z.number().describe("The amount to convert. Default is 1."),
   }),
   execute: async () =>
-    ({ disabled: true, message: "Currency conversion is disabled." }) as any,
+    ({
+      disabled: true,
+      message: "Currency conversion is disabled.",
+    }) as unknown,
 });

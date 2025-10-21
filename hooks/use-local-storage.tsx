@@ -96,7 +96,9 @@ export function useLocalStorage<T>(
           });
           window.dispatchEvent(customEvent);
         }
-      } catch (_error) {}
+      } catch (_error) {
+        // Intentionally ignore write errors (e.g., storage quota, privacy mode)
+      }
     },
     [key, storedValue]
   );

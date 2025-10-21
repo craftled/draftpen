@@ -82,7 +82,9 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
 
     // Check cache first
     const cacheKey = createSubscriptionKey(session.user.id);
-    const cached = subscriptionCache.get(cacheKey);
+    const cached = subscriptionCache.get(
+      cacheKey
+    ) as SubscriptionDetailsResult | null;
     if (cached) {
       // Update pro user status with comprehensive check
       const proStatus = await getComprehensiveProStatus(session.user.id);
@@ -125,8 +127,9 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
       )[0];
 
       if (latestSubscription) {
-        const now = new Date();
-        const isExpired = new Date(latestSubscription.currentPeriodEnd) < now;
+        const currentTime = new Date();
+        const isExpired =
+          new Date(latestSubscription.currentPeriodEnd) < currentTime;
         const isCanceled = latestSubscription.status === "canceled";
 
         const result = {
@@ -146,16 +149,25 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
             trialEnd: latestSubscription.trialEnd,
             organizationId: null,
           },
-          error: isCanceled
-            ? "Subscription has been canceled"
-            : isExpired
-              ? "Subscription has expired"
-              : "Subscription is not active",
-          errorType: (isCanceled
-            ? "CANCELED"
-            : isExpired
-              ? "EXPIRED"
-              : "GENERAL") as "CANCELED" | "EXPIRED" | "GENERAL",
+          // Derived error/status fields
+          ...(() => {
+            if (isCanceled) {
+              return {
+                error: "Subscription has been canceled",
+                errorType: "CANCELED" as const,
+              };
+            }
+            if (isExpired) {
+              return {
+                error: "Subscription has expired",
+                errorType: "EXPIRED" as const,
+              };
+            }
+            return {
+              error: "Subscription is not active",
+              errorType: "GENERAL" as const,
+            };
+          })(),
         };
         subscriptionCache.set(cacheKey, result);
         const proStatus = await getComprehensiveProStatus(session.user.id);

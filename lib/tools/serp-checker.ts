@@ -2,6 +2,34 @@ import { tool } from "ai";
 import { z } from "zod";
 import { serverEnv } from "@/env/server";
 
+const MAX_RESULTS = 100 as const;
+const DEFAULT_RESULTS = 20 as const;
+const RESULTS_PER_PAGE = 10 as const;
+
+type SerperOrganicItem = {
+  title: string;
+  link: string;
+  snippet: string;
+  date?: string;
+  position?: number;
+  sitelinks?: Array<{ title: string; link: string }>;
+};
+
+type SerperResponse = {
+  organic?: SerperOrganicItem[];
+  peopleAlsoAsk?: Array<{
+    question: string;
+    snippet: string;
+    title: string;
+    link: string;
+  }>;
+  relatedSearches?: Array<{ query: string }>;
+};
+
+type PAAItem = NonNullable<SerperResponse["peopleAlsoAsk"]>[number];
+
+type RelatedItem = NonNullable<SerperResponse["relatedSearches"]>[number];
+
 type SerpResult = {
   title: string;
   link: string;
@@ -33,8 +61,8 @@ export const serpCheckerTool = tool({
     num: z
       .number()
       .min(1)
-      .max(100)
-      .default(20)
+      .max(MAX_RESULTS)
+      .default(DEFAULT_RESULTS)
       .optional()
       .describe("Number of organic results to return (default 20, max 100)"),
     country: z
@@ -52,7 +80,7 @@ export const serpCheckerTool = tool({
   }),
   execute: async ({
     query,
-    num = 20,
+    num = DEFAULT_RESULTS,
     country = "us",
     language = "en",
   }: {
@@ -71,8 +99,8 @@ export const serpCheckerTool = tool({
 
     const url = "https://google.serper.dev/search";
 
-    const desired = Math.max(1, Math.min(num, 100));
-    const resultsPerPage = 10; // Serper returns 10 organic results per page
+    const desired = Math.max(1, Math.min(num, MAX_RESULTS));
+    const resultsPerPage = RESULTS_PER_PAGE; // Serper returns 10 organic results per page
     const totalPages = Math.ceil(desired / resultsPerPage);
 
     const makePayload = (page: number) => ({
@@ -104,8 +132,8 @@ export const serpCheckerTool = tool({
 
     const organicPages: Array<{ page: number; items: SerpResult[] }> = [];
 
-    const mapOrganic = (json: any, page: number): SerpResult[] =>
-      (json.organic || []).map((result: any) => ({
+    const mapOrganic = (json: SerperResponse, page: number): SerpResult[] =>
+      (json.organic || []).map((result: SerperOrganicItem) => ({
         title: result.title,
         link: result.link,
         snippet: result.snippet,
@@ -119,7 +147,7 @@ export const serpCheckerTool = tool({
 
     // Fetch remaining pages if needed (page 2..N)
     if (totalPages > 1) {
-      const fetches = [] as Promise<{ page: number; json: any }>[];
+      const fetches = [] as Promise<{ page: number; json: SerperResponse }>[];
       for (let p = 2; p <= totalPages; p++) {
         fetches.push(
           fetch(url, {
@@ -136,7 +164,7 @@ export const serpCheckerTool = tool({
                 `Serper API error (page ${p}): ${res.status} ${res.statusText} ${text}`
               );
             }
-            return { page: p, json: await res.json() };
+            return { page: p, json: (await res.json()) as SerperResponse };
           })
         );
       }
@@ -154,15 +182,17 @@ export const serpCheckerTool = tool({
       .slice(0, desired);
 
     // Extract PAA and Related from the first page only
-    const peopleAlsoAsk = (firstJson.peopleAlsoAsk || []).map((paa: any) => ({
-      question: paa.question,
-      snippet: paa.snippet,
-      title: paa.title,
-      link: paa.link,
-    })) as PeopleAlsoAsk[];
+    const peopleAlsoAsk = (firstJson.peopleAlsoAsk || []).map(
+      (paa: PAAItem) => ({
+        question: paa.question,
+        snippet: paa.snippet,
+        title: paa.title,
+        link: paa.link,
+      })
+    ) as PeopleAlsoAsk[];
 
     const relatedSearches = (firstJson.relatedSearches || []).map(
-      (rs: any) => ({
+      (rs: RelatedItem) => ({
         query: rs.query,
       })
     ) as RelatedSearch[];

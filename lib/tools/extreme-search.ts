@@ -14,6 +14,28 @@ import { modelProvider } from "@/ai/providers";
 import { serverEnv } from "@/env/server";
 import type { ChatMessage } from "../types";
 
+const MAX_EXA_CHARS = 3000 as const;
+const MIN_TITLE_LEN = 10 as const;
+const MAX_TITLE_LEN = 70 as const;
+const TODOS_MIN = 3 as const;
+const TODOS_MAX = 5 as const;
+const PLAN_MIN = 1 as const;
+const PLAN_MAX = 5 as const;
+const MAX_QUERY_LEN = 150 as const;
+const SNIPPET_LEN = 500 as const;
+
+const SEARCH_CATEGORIES = [
+  "news",
+  "company",
+  "research paper",
+  "github",
+  "financial report",
+] as const;
+
+type SearchCategory = (typeof SEARCH_CATEGORIES)[number];
+
+type CodeRunnerResult = { charts?: unknown[] };
+
 const exa = new Exa(serverEnv.EXA_API_KEY);
 const firecrawl = new FirecrawlApp({ apiKey: serverEnv.FIRECRAWL_API_KEY });
 
@@ -27,18 +49,10 @@ type SearchResult = {
 
 export type Research = {
   text: string;
-  toolResults: any[];
+  toolResults: unknown[];
   sources: SearchResult[];
-  charts: any[];
+  charts: unknown[];
 };
-
-enum SearchCategory {
-  NEWS = "news",
-  COMPANY = "company",
-  RESEARCH_PAPER = "research paper",
-  GITHUB = "github",
-  FINANCIAL_REPORT = "financial report",
-}
 
 const searchWeb = async (
   query: string,
@@ -82,7 +96,7 @@ const getContents = async (links: string[]) => {
   try {
     const result = await exa.getContents(links, {
       text: {
-        maxCharacters: 3000,
+        maxCharacters: MAX_EXA_CHARS,
         includeHtmlTags: false,
       },
       livecrawl: "preferred",
@@ -132,14 +146,17 @@ const getContents = async (links: string[]) => {
               url.split("/").pop() ||
               "Retrieved Content",
             url,
-            content: scrapeResponse.markdown.slice(0, 3000), // Match maxCharacters from Exa
+            content: scrapeResponse.markdown.slice(0, MAX_EXA_CHARS), // Match maxCharacters from Exa
             publishedDate:
               (scrapeResponse.metadata?.publishedDate as string) || "",
             favicon: `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=128`,
           });
         } else {
+          // No markdown content returned; skipping this URL for now
         }
-      } catch (_firecrawlError) {}
+      } catch (_firecrawlError) {
+        // Intentionally ignore Firecrawl errors for fallback path
+      }
     }
   }
   return results;
@@ -170,18 +187,18 @@ async function extremeSearch(
           z.object({
             title: z
               .string()
-              .min(10)
-              .max(70)
+              .min(MIN_TITLE_LEN)
+              .max(MAX_TITLE_LEN)
               .describe("A title for the research topic"),
             todos: z
               .array(z.string())
-              .min(3)
-              .max(5)
+              .min(TODOS_MIN)
+              .max(TODOS_MAX)
               .describe("A list of what to research for the given title"),
           })
         )
-        .min(1)
-        .max(5),
+        .min(PLAN_MIN)
+        .max(PLAN_MAX),
     }),
     prompt: `
 Plan out the research for the following topic: ${prompt}.
@@ -219,7 +236,7 @@ Plan Guidelines:
     });
   }
 
-  const toolResults: any[] = [];
+  const toolResults: unknown[] = [];
 
   // Create the autonomous research agent with tools
   const { text } = await generateText({
@@ -297,9 +314,9 @@ ${JSON.stringify(plan)}
           query: z
             .string()
             .describe("The search query to achieve the todo")
-            .max(150),
+            .max(MAX_QUERY_LEN),
           category: z
-            .nativeEnum(SearchCategory)
+            .enum(SEARCH_CATEGORIES)
             .optional()
             .describe("The category of the search if relevant"),
           includeDomains: z
@@ -329,7 +346,7 @@ ${JSON.stringify(plan)}
           allSources.push(...results);
 
           if (dataStream) {
-            results.forEach(async (source) => {
+            for (const source of results) {
               dataStream.write({
                 type: "data-extreme_search",
                 data: {
@@ -342,7 +359,7 @@ ${JSON.stringify(plan)}
                   },
                 },
               });
-            });
+            }
           }
           // Get full content for the top results
           if (results.length > 0) {
@@ -369,7 +386,7 @@ ${JSON.stringify(plan)}
               if (contentsResults && contentsResults.length > 0) {
                 // For each content result, add a content annotation
                 if (dataStream) {
-                  contentsResults.forEach((content) => {
+                  for (const content of contentsResults) {
                     dataStream.write({
                       type: "data-extreme_search",
                       data: {
@@ -378,12 +395,12 @@ ${JSON.stringify(plan)}
                         content: {
                           title: content.title || "",
                           url: content.url,
-                          text: `${(content.content || "").slice(0, 500)}...`, // Truncate for annotation
+                          text: `${(content.content || "").slice(0, SNIPPET_LEN)}...`, // Truncate for annotation
                           favicon: content.favicon || "",
                         },
                       },
                     });
-                  });
+                  }
                 }
                 // Update results with full content, but keep original results as fallback
                 results = contentsResults.map((content) => {
@@ -401,9 +418,10 @@ ${JSON.stringify(plan)}
                     favicon: content.favicon || originalResult?.favicon || "",
                   };
                 }) as SearchResult[];
-              } else {
               }
-            } catch (_error) {}
+            } catch (_error) {
+              // Ignore content retrieval errors in this stage
+            }
           }
 
           // Mark query as completed
@@ -446,16 +464,17 @@ ${JSON.stringify(plan)}
   }
 
   const chartResults = toolResults.filter(
-    (result) =>
-      result.toolName === "codeRunner" &&
-      typeof result.result === "object" &&
-      result.result !== null &&
-      "charts" in result.result
+    (tr) =>
+      tr.toolName === "codeRunner" &&
+      typeof tr.result === "object" &&
+      tr.result !== null &&
+      "charts" in tr.result
   );
 
-  const charts = chartResults.flatMap(
-    (result) => (result.result as any).charts || []
-  );
+  const charts = chartResults.flatMap((res) => {
+    const value = res.result as CodeRunnerResult;
+    return value.charts ?? [];
+  });
 
   return {
     text,
@@ -464,7 +483,7 @@ ${JSON.stringify(plan)}
       new Map(
         allSources.map((s) => [
           s.url,
-          { ...s, content: `${s.content.slice(0, 3000)}...` },
+          { ...s, content: `${s.content.slice(0, MAX_EXA_CHARS)}...` },
         ])
       ).values()
     ),
