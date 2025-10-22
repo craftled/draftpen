@@ -483,10 +483,12 @@ const LoadingState: React.FC<{
   args: MultiSearchArgs;
 }> = ({ queries, annotations, args }) => {
   const _completedCount = annotations.length;
-  const totalResults = annotations.reduce(
-    (sum, a) => sum + a.data.resultsCount,
-    0
-  );
+  const totalResults = annotations.reduce((sum, annotation) => {
+    const data = annotation.data as
+      | DataQueryCompletionPart["data"]
+      | undefined;
+    return sum + (data?.resultsCount ?? 0);
+  }, 0);
   const loadingQueryTagsRef = React.useRef<HTMLDivElement>(null);
   const loadingSkeletonRef = React.useRef<HTMLDivElement>(null);
 
@@ -577,10 +579,14 @@ const LoadingState: React.FC<{
                 ref={loadingQueryTagsRef}
               >
                 {queries.map((query, i) => {
-                  const isCompleted = annotations.some(
-                    (a) =>
-                      a.data.query === query && a.data.status === "completed"
-                  );
+                  const isCompleted = annotations.some((annotation) => {
+                    const data = annotation.data as
+                      | DataQueryCompletionPart["data"]
+                      | undefined;
+                    return (
+                      data?.query === query && data?.status === "completed"
+                    );
+                  });
                   const currentQuality =
                     (args.quality ?? ["default"])[i] || "default";
                   return (

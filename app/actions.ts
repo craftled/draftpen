@@ -291,6 +291,7 @@ const groupTools = {
 
   memory: ["datetime", "search_memories", "add_memory"] as const,
   connectors: ["connectors_search", "datetime"] as const,
+  screenshot: ["screenshot_capture", "datetime"] as const,
   keywords: ["keyword_research", "datetime"] as const,
   serp: ["serp_checker", "datetime"] as const,
   // Add legacy mapping for backward compatibility
@@ -1156,6 +1157,39 @@ $$
   - Maintain accuracy to the source documents
   - Use the document content to provide comprehensive answers`,
 
+  screenshot: `
+  You are Draftpen's Screenshot Assistant powered by ScreenshotOne.
+  Your role is to capture live screenshots of public webpages and help users understand what each capture shows.
+  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
+
+  ### CRITICAL INSTRUCTION
+  - ⚠️ Run the \`screenshot_capture\` tool immediately whenever a user asks for a screenshot or provides a URL to capture.
+  - Do *not* respond with descriptions until after the tool has returned.
+  - Never attempt to guess what the page looks like without an actual screenshot.
+  - Reject requests for private networks, localhost, or non-HTTP(S) URLs.
+
+  ### Tool Guidelines
+  - The \`url\` parameter is required and must be a valid HTTP or HTTPS URL.
+  - Default to capturing the full page unless the user specifies a CSS selector or viewport.
+  - Use \`delay\` (0-10 seconds) when the user mentions dynamic content or page overlays.
+  - Use \`selector\` only when the user wants a specific element.
+  - Enable \`darkMode\`, tweak \`deviceScaleFactor\`, or change \`format\` only when asked.
+  - Return data URLs only if explicitly requested; otherwise provide the hosted URL.
+
+  ### Response Guidelines
+  - After receiving the tool result, briefly summarize (1-2 sentences) what is visible in the screenshot.
+  - Mention noteworthy interface elements, dialogs, or errors shown in the capture.
+  - If the screenshot failed, explain why and suggest a retry with different options (e.g., longer delay).
+  - Provide the screenshot using markdown image syntax: \`![Alt text](SCREENSHOT_URL)\`.
+  - Cite the original URL in parentheses when applicable.
+
+  ### Content Guidelines
+  - Stay objective and describe only what is present in the screenshot.
+  - Call out timestamps, notifications, or warnings the user should notice.
+  - Avoid speculation about hidden or off-screen content.
+  - Keep the tone concise, professional, and helpful.
+  `,
+
   keywords: `
   You are a Keyword Research Assistant powered by DataForSEO, specialized in finding keyword ideas with search volume and difficulty metrics.
   The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
@@ -1252,7 +1286,12 @@ export async function getGroupConfig(groupId: LegacyGroupId = "web") {
   "use server";
 
   // Check if the user is authenticated for memory, buddy, or connectors group
-  if (groupId === "memory" || groupId === "buddy" || groupId === "connectors") {
+  if (
+    groupId === "memory" ||
+    groupId === "buddy" ||
+    groupId === "connectors" ||
+    groupId === "screenshot"
+  ) {
     const user = await getCurrentUser();
     if (!user) {
       // Redirect to web group if user is not authenticated
@@ -1261,6 +1300,10 @@ export async function getGroupConfig(groupId: LegacyGroupId = "web") {
       // Check if user has Pro access for connectors
       if (!user.isProUser) {
         // Redirect to web group if user is not Pro
+        groupId = "web";
+      }
+    } else if (groupId === "screenshot") {
+      if (!user.isProUser) {
         groupId = "web";
       }
     } else if (groupId === "buddy") {

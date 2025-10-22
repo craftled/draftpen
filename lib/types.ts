@@ -108,6 +108,9 @@ type codeContextTool = {
 type keywordResearch = InferUITool<
   typeof import("@/lib/tools")["keywordResearchTool"]
 >;
+type screenshotCapture = InferUITool<
+  typeof import("@/lib/tools")["screenshotTool"]
+>;
 
 // type mcpSearchTool = InferUITool<typeof mcpSearchTool>;
 
@@ -134,6 +137,7 @@ export type ChatTools = {
   connectors_search: connectorsSearch;
   search_memories: createMemoryTools;
   add_memory: addMemoryTools;
+  screenshot_capture: screenshotCapture;
 
   code_context: codeContextTool;
   keyword_research: keywordResearch;

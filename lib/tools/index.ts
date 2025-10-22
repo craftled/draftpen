@@ -13,6 +13,7 @@ export {
   createMemoryTools,
   type SearchMemoryTool,
 } from "./supermemory";
+export { screenshotTool } from "./screenshot";
 export { textTranslateTool } from "./text-translate";
 export { webSearchTool } from "./web-search";
 export { youtubeSearchTool } from "./youtube-search";

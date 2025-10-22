@@ -21,6 +21,7 @@ To the open-source community and [Scira](https://github.com/zaidmukaddam/scira) 
 - **First-party search tools**: Run web, academic, YouTube, and Reddit lookups via Parallel AI, Firecrawl, and Exa with automatic deduping and streaming citations.
 - **Keyword research**: Get real-time keyword data with search volume, CPC, and difficulty metrics powered by DataForSEO's Google Ads API—perfect for SEO content planning.
 - **Extreme search mode**: Orchestrate multi-step investigations that branch into additional tool calls when queries demand deeper context.
+- **Screenshot mode**: Capture live webpage screenshots with configurable delays, selectors, and dark mode using ScreenshotOne.
 - **Inline utilities**: Translate text, pull date/time context, and fetch code-aware context blocks without leaving the conversation.
 
 ### Knowledge connectors & memory
@@ -138,6 +139,10 @@ OPENAI_API_KEY=xxxx
 EXA_API_KEY=xxxx
 PARALLEL_API_KEY=xxxx
 FIRECRAWL_API_KEY=xxxx
+
+SCREENSHOTONE_ACCESS_KEY=xxxx
+# Optional but recommended for signed URLs
+SCREENSHOTONE_SECRET_KEY=xxxx
 
 # Optional: For keyword research feature
 DATAFORSEO_LOGIN=your-email@example.com

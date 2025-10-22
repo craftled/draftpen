@@ -49,6 +49,7 @@ import {
   extremeSearchTool,
   greetingTool,
   keywordResearchTool,
+  screenshotTool,
   // mcpSearchTool,
   redditSearchTool,
   retrieveTool,
@@ -395,6 +396,7 @@ export async function POST(req: Request) {
             greeting: greetingTool(timezone),
             keyword_research: keywordResearchTool,
             serp_checker: serpCheckerTool,
+            screenshot_capture: screenshotTool,
           };
 
           if (!user) {

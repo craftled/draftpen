@@ -2,6 +2,7 @@
 
 import {
   AtomicPowerIcon,
+  Camera01Icon,
   ChattingIcon,
   ConnectIcon,
   Database02Icon,
@@ -29,6 +30,7 @@ export type SearchGroupId =
   | "extreme"
   | "memory"
   | "connectors"
+  | "screenshot"
   | "keywords"
   | "serp";
 
@@ -71,6 +73,15 @@ export function getSearchGroups(searchProvider: SearchProvider = "parallel") {
       name: "Connectors",
       description: "Search Google Drive, Notion and OneDrive documents",
       icon: ConnectIcon,
+      show: true,
+      requireAuth: true,
+      requirePro: true,
+    },
+    {
+      id: "screenshot" as const,
+      name: "Screenshot",
+      description: "Capture live webpage screenshots with ScreenshotOne",
+      icon: Camera01Icon,
       show: true,
       requireAuth: true,
       requirePro: true,

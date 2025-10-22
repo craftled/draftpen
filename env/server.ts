@@ -26,6 +26,8 @@ export const serverEnv = createEnv({
     QSTASH_TOKEN: z.string().min(1),
     RESEND_API_KEY: z.string().min(1),
     SUPERMEMORY_API_KEY: z.string().min(1),
+    SCREENSHOTONE_ACCESS_KEY: z.string().min(1).optional(),
+    SCREENSHOTONE_SECRET_KEY: z.string().min(1).optional(),
     DATAFORSEO_LOGIN: z.string().min(1).optional(),
     DATAFORSEO_PASSWORD: z.string().min(1).optional(),
     SERPER_API_KEY: z.string().min(1).optional(),

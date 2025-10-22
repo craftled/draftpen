@@ -1186,10 +1186,10 @@ const ExtremeSearchComponent = ({
 
       if (researchData?.research?.toolResults) {
         const webSearchResults = researchData.research.toolResults.filter(
-          (result) => result.toolName === "webSearch"
+          (result: any) => result.toolName === "webSearch"
         );
 
-        return webSearchResults.map((result, index) => {
+        return webSearchResults.map((result: any, index: number) => {
           const query =
             result.args?.query || result.input?.query || `Query ${index + 1}`;
 
@@ -1299,10 +1299,10 @@ const ExtremeSearchComponent = ({
 
       if (researchData?.research?.toolResults) {
         const codeResults = researchData.research.toolResults.filter(
-          (result) => result.toolName === "codeRunner"
+          (result: any) => result.toolName === "codeRunner"
         );
 
-        return codeResults.map((result, index) => {
+        return codeResults.map((result: any, index: number) => {
           const title =
             result.args?.title ||
             result.input?.title ||
@@ -1480,8 +1480,8 @@ const ExtremeSearchComponent = ({
 
       if (research?.toolResults) {
         return research.toolResults
-          .filter((result) => result.toolName === "webSearch")
-          .flatMap((result) =>
+          .filter((result: any) => result.toolName === "webSearch")
+          .flatMap((result: any) =>
             (result.result || result.output || []).map((source: any) => ({
               title: source.title || "",
               url: source.url || "",

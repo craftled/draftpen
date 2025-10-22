@@ -35,7 +35,15 @@ import {
 import Image from "next/image";
 // Tool-specific components (lazy loaded)
 import type React from "react";
-import { lazy, memo, Suspense, useEffect, useRef, useState } from "react";
+import {
+  Fragment,
+  lazy,
+  memo,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import { getModelConfig } from "@/ai/providers";
@@ -74,6 +82,7 @@ import {
 } from "@/components/ui/tooltip";
 import type {
   ChatMessage,
+  ChatTools,
   CodeContextToolInput,
   CodeContextToolOutput,
   CustomUIDataTypes,
@@ -137,6 +146,172 @@ const ComponentLoader = () => (
     />
   </div>
 );
+
+type ScreenshotCaptureOutput = ChatTools["screenshot_capture"]["output"];
+
+const formatFileSize = (bytes: number | undefined): string | null => {
+  if (!bytes || !Number.isFinite(bytes)) {
+    return null;
+  }
+
+  const units = ["B", "KB", "MB", "GB"] as const;
+  let value = bytes;
+  let index = 0;
+
+  while (value >= 1024 && index < units.length - 1) {
+    value /= 1024;
+    index += 1;
+  }
+
+  const formatted =
+    value >= 10 || index === 0 ? value.toFixed(0) : value.toFixed(1);
+  return `${formatted}${units[index]}`;
+};
+
+const ScreenshotResultCard: React.FC<{ result: ScreenshotCaptureOutput }> = ({
+  result,
+}) => {
+  if (!result) {
+    return (
+      <div className="rounded-md border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
+        Screenshot result unavailable.
+      </div>
+    );
+  }
+
+  if (!result.success || !result.screenshotUrl) {
+    const maybeError =
+      typeof (result as { error?: unknown }).error === "string"
+        ? (result as { error?: string }).error
+        : null;
+    return (
+      <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-900/20 dark:text-red-200">
+        {maybeError || "Failed to capture screenshot. Please try again."}
+      </div>
+    );
+  }
+
+  const formatLabel = result.format ? result.format.toUpperCase() : null;
+  const sizeLabel = formatFileSize(result.bytes);
+  const capturedAtLabel = (() => {
+    if (!result.capturedAt) {
+      return null;
+    }
+    const captured = new Date(result.capturedAt);
+    if (Number.isNaN(captured.getTime())) {
+      return null;
+    }
+    return captured.toLocaleString();
+  })();
+
+  const sourceHost = (() => {
+    if (!result.sourceUrl) {
+      return null;
+    }
+    try {
+      return new URL(result.sourceUrl).host;
+    } catch {
+      return result.sourceUrl;
+    }
+  })();
+
+  const optionBadges: string[] = [];
+  if (result.options?.fullPage) {
+    optionBadges.push("Full page");
+  }
+  if ((result.options?.delay ?? 0) > 0) {
+    optionBadges.push(`Delay ${result.options?.delay}s`);
+  }
+  if (result.options?.selector) {
+    optionBadges.push(`Selector ${result.options.selector}`);
+  }
+  if (result.options?.deviceScaleFactor) {
+    optionBadges.push(`Scale ×${result.options.deviceScaleFactor}`);
+  }
+  if (result.options?.darkMode) {
+    optionBadges.push("Dark mode");
+  }
+  if (result.options?.waitUntil) {
+    optionBadges.push(`Wait ${result.options.waitUntil}`);
+  }
+
+  const metadataItems: React.ReactNode[] = [];
+
+  if (sourceHost && result.sourceUrl) {
+    metadataItems.push(
+      <a
+        className="truncate font-medium text-primary hover:underline"
+        href={result.sourceUrl}
+        key="source"
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        {sourceHost}
+      </a>
+    );
+  }
+
+  if (capturedAtLabel) {
+    metadataItems.push(
+      <span key="captured">{capturedAtLabel}</span>
+    );
+  }
+
+  if (formatLabel) {
+    metadataItems.push(<span key="format">{formatLabel}</span>);
+  }
+
+  if (sizeLabel) {
+    metadataItems.push(<span key="size">{sizeLabel}</span>);
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="overflow-hidden rounded-lg border border-border/60 bg-background shadow-sm">
+        <img
+          alt={
+            sourceHost
+              ? `Screenshot of ${sourceHost}`
+              : "Screenshot of requested page"
+          }
+          className="h-auto w-full bg-muted object-contain"
+          loading="lazy"
+          src={result.screenshotUrl}
+        />
+      </div>
+
+      {metadataItems.length > 0 && (
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+          {metadataItems.map((item, index) => (
+            <Fragment key={index}>
+              {index > 0 && <span aria-hidden="true">•</span>}
+              {item}
+            </Fragment>
+          ))}
+        </div>
+      )}
+
+      {optionBadges.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1">
+          {optionBadges.map((badge) => (
+            <span
+              className="rounded-full bg-muted px-2 py-0.5 text-[11px] uppercase tracking-wide text-muted-foreground"
+              key={badge}
+            >
+              {badge}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {result.kind === "inline" && (
+        <div className="rounded-md border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900 dark:border-yellow-900/50 dark:bg-yellow-900/10 dark:text-yellow-200">
+          Provided as an inline data URL. Save the file if you need a persistent copy.
+        </div>
+      )}
+    </div>
+  );
+};
 
 type MessagePartRendererProps = {
   part: ChatMessage["parts"][number];
@@ -589,7 +764,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     <MultiSearch
                       annotations={annotations as DataQueryCompletionPart[]}
                       args={(part.input as any) ?? {}}
-                      result={part.output || null}
+                      result={(part.output as any) || null}
                     />
                   </Suspense>
                 );
@@ -622,6 +797,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   </div>
                 );
               case "output-available": {
+                const datetimeOutput =
+                  (part.output as Record<string, unknown> | null) ?? null;
+
                 // Live Clock component that updates every second
                 const LiveClock = memo(() => {
                   const [time, setTime] = useState(() => new Date());
@@ -652,7 +830,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
 
                   // Format the time according to the specified timezone
                   const timezone =
-                    part.output.timezone ||
+                    (datetimeOutput?.timezone as string | undefined) ||
                     new Intl.DateTimeFormat().resolvedOptions().timeZone;
                   const formatter = new Intl.DateTimeFormat("en-US", {
                     hour: "numeric",
@@ -724,37 +902,49 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                                   className="h-3 w-3 text-blue-500"
                                   weight="regular"
                                 />
-                                {part.output.timezone ||
+                                {(datetimeOutput?.timezone as string | undefined) ||
                                   new Intl.DateTimeFormat().resolvedOptions()
                                     .timeZone}
                               </div>
                             </div>
                             <LiveClock />
                             <p className="mt-2 text-neutral-500 text-sm dark:text-neutral-400">
-                              {part.output.formatted?.date}
+                              {(
+                                datetimeOutput?.formatted as
+                                  | { date?: string }
+                                  | undefined
+                              )?.date || null}
                             </p>
                           </div>
 
                           {/* Compact Technical Details */}
                           <div className="grid grid-cols-2 gap-3 text-xs">
-                            {part.output.formatted?.iso_local && (
+                            {(
+                              datetimeOutput?.formatted as
+                                | { iso_local?: string }
+                                | undefined
+                            )?.iso_local && (
                               <div className="rounded bg-neutral-50 p-3 dark:bg-neutral-900">
                                 <div className="mb-1 text-neutral-500 dark:text-neutral-400">
                                   Local
                                 </div>
                                 <div className="font-mono text-[11px] text-neutral-700 dark:text-neutral-300">
-                                  {part.output.formatted.iso_local}
+                                  {(
+                                    datetimeOutput?.formatted as
+                                      | { iso_local?: string }
+                                      | undefined
+                                  )?.iso_local}
                                 </div>
                               </div>
                             )}
 
-                            {part.output.timestamp && (
+                            {(datetimeOutput?.timestamp as string | undefined) && (
                               <div className="rounded bg-neutral-50 p-3 dark:bg-neutral-900">
                                 <div className="mb-1 text-neutral-500 dark:text-neutral-400">
                                   Timestamp
                                 </div>
                                 <div className="font-mono text-[11px] text-neutral-700 dark:text-neutral-300">
-                                  {part.output.timestamp}
+                                  {datetimeOutput?.timestamp as string}
                                 </div>
                               </div>
                             )}
@@ -823,8 +1013,8 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   <TranslationTool
                     args={part.input}
                     key={`${messageIndex}-${partIndex}-tool`}
-                    result={part.output}
-                  />
+                      result={part.output as any}
+                    />
                 );
             }
             break;
@@ -854,7 +1044,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   <CodeContextTool
                     args={part.input as CodeContextToolInput}
                     key={`${messageIndex}-${partIndex}-tool`}
-                    result={part.output}
+                    result={part.output as CodeContextToolOutput}
                   />
                 );
             }
@@ -888,7 +1078,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   >
                     <AcademicPapersCard
                       results={
-                        part.output.results?.map((result: any) => ({
+                        ((part.output as any)?.results ?? []).map((result: any) => ({
                           ...result,
                           title:
                             result.title ||
@@ -937,7 +1127,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                         maxResults: (part.input as any)?.maxResults || 10,
                         timeRange: (part.input as any)?.timeRange || "week",
                       }}
-                      result={part.output}
+                      result={part.output as any}
                     />
                   </Suspense>
                 );
@@ -970,7 +1160,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     fallback={<ComponentLoader />}
                     key={`${messageIndex}-${partIndex}-tool`}
                   >
-                    <YouTubeSearchResults results={part.output} />
+                    <YouTubeSearchResults results={part.output as any} />
                   </Suspense>
                 );
             }
@@ -1020,7 +1210,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                       <ToolInput input={part.input} />
                       <ToolOutput
                         errorText={part.errorText}
-                        output={part.output}
+                        output={part.output as any}
                       />
                     </ToolContent>
                   </Tool>
@@ -1045,8 +1235,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   />
                 );
               case "output-available": {
+                const output = part.output as any;
                 // Handle error responses
-                if (!part.output.success) {
+                if (!(output?.success ?? false)) {
                   return (
                     <div className="my-4 w-full rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
                       <div className="p-4">
@@ -1059,7 +1250,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                               Memory search failed
                             </h3>
                             <p className="mt-1 text-red-700 text-xs dark:text-red-300">
-                              {part.output.error}
+                              {output?.error || "Unable to search memories right now."}
                             </p>
                           </div>
                         </div>
@@ -1068,8 +1259,11 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   );
                 }
 
-                const { results, count } = part.output;
-                if (!results || results.length === 0) {
+                const results = (output?.results as any[]) ?? [];
+                const count =
+                  typeof output?.count === "number" ? output.count : results.length;
+
+                if (results.length === 0) {
                   return (
                     <div className="my-4 w-full rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
                       <div className="p-4">
@@ -1150,8 +1344,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   />
                 );
               case "output-available": {
+                const output = part.output as any;
                 // Handle error responses
-                if (!part.output.success) {
+                if (!(output?.success ?? false)) {
                   return (
                     <div className="my-4 w-full rounded-lg border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
                       <div className="p-4">
@@ -1164,7 +1359,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                               Failed to add memory
                             </h3>
                             <p className="mt-1 text-red-700 text-xs dark:text-red-300">
-                              {part.output.error}
+                              {output?.error || "Unable to add memory right now."}
                             </p>
                           </div>
                         </div>
@@ -1173,7 +1368,15 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   );
                 }
 
-                const { memory: addedMemory } = part.output;
+                const addedMemory =
+                  (output?.memory as
+                    | {
+                        title?: string;
+                        summary?: string;
+                        content?: string;
+                        type?: string;
+                      }
+                    | undefined) || undefined;
                 return (
                   <div className="my-4 w-full overflow-hidden rounded-2xl border border-green-200 bg-green-50 shadow-sm dark:border-green-800 dark:bg-green-950">
                     <div className="px-4 py-3">
@@ -1227,14 +1430,46 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   </div>
                 );
               }
-            }
-            break;
+          }
+          break;
 
-          case "tool-connectors_search":
-            switch (part.state) {
-              case "input-streaming":
-                return (
-                  <div
+        case "tool-screenshot_capture":
+          switch (part.state) {
+            case "input-streaming":
+              return (
+                <div
+                  className="text-neutral-500 text-sm"
+                  key={`${messageIndex}-${partIndex}-tool`}
+                >
+                  Capturing screenshot...
+                </div>
+              );
+            case "input-available":
+              return (
+                <div
+                  className="text-neutral-500 text-sm"
+                  key={`${messageIndex}-${partIndex}-tool`}
+                >
+                  Processing screenshot request...
+                </div>
+              );
+            case "output-available":
+              return (
+                <Suspense
+                  fallback={<ComponentLoader />}
+                  key={`${messageIndex}-${partIndex}-tool`}
+                >
+                  <ScreenshotResultCard result={part.output as any} />
+                </Suspense>
+              );
+          }
+          break;
+
+        case "tool-connectors_search":
+          switch (part.state) {
+            case "input-streaming":
+              return (
+                <div
                     className="text-neutral-500 text-sm"
                     key={`${messageIndex}-${partIndex}-tool`}
                   >
@@ -1262,9 +1497,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     key={`${messageIndex}-${partIndex}-tool`}
                   >
                     <ConnectorsSearchResults
-                      query={part.output?.query || ""}
-                      results={part.output?.results || []}
-                      totalResults={part.output?.count || 0}
+                      query={((part.output as any)?.query as string) || ""}
+                      results={((part.output as any)?.results as any[]) || []}
+                      totalResults={Number((part.output as any)?.count ?? 0)}
                     />
                   </Suspense>
                 );
@@ -1290,10 +1525,10 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     key={`${messageIndex}-${partIndex}-tool`}
                   >
                     <CurrencyConverter
-                      result={part.output}
-                      toolInvocation={{
-                        input: part.input,
-                        result: part.output,
+                    result={part.output as any}
+                    toolInvocation={{
+                      input: part.input,
+                      result: part.output as any,
                       }}
                     />
                   </Suspense>
@@ -1314,6 +1549,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case "input-available":
               case "output-available":
+                const output = part.output as any;
                 return (
                   <div
                     className="w-full space-y-3 overflow-hidden"
@@ -1323,18 +1559,19 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                       <CodeInterpreterView
                         code={(part.input as any)?.code}
                         error={
-                          part.output && "error" in part.output
-                            ? String(part.output.error)
+                          output && typeof output === "object" && "error" in output
+                            ? String(output.error)
                             : undefined
                         }
                         language="python"
-                        output={part.output?.message}
+                        output={output?.message}
                         status={
-                          part.output &&
-                          "error" in part.output &&
-                          part.output.error
+                          output &&
+                          typeof output === "object" &&
+                          "error" in output &&
+                          output.error
                             ? "error"
-                            : part.output
+                            : output
                               ? "completed"
                               : "running"
                         }
@@ -1342,10 +1579,10 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                       />
                     </Suspense>
 
-                    {part.output?.chart && (
+                    {output?.chart && (
                       <div className="overflow-x-auto pt-1">
                         <Suspense fallback={<ComponentLoader />}>
-                          <InteractiveChart chart={part.output.chart} />
+                          <InteractiveChart chart={output.chart} />
                         </Suspense>
                       </div>
                     )}
@@ -1407,22 +1644,27 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   </div>
                 );
               case "output-available": {
+                const output = part.output as any;
                 // Handle error responses
                 if (
-                  (part.output &&
-                    "error" in part.output &&
-                    part.output.error) ||
-                  (part.output.results?.[0] &&
-                    "error" in part.output.results[0] &&
-                    part.output.results[0].error)
+                  (output &&
+                    typeof output === "object" &&
+                    "error" in output &&
+                    output.error) ||
+                  (output?.results?.[0] &&
+                    typeof output.results[0] === "object" &&
+                    "error" in output.results[0] &&
+                    output.results[0].error)
                 ) {
                   const errorMessage = String(
-                    (part.output &&
-                      "error" in part.output &&
-                      part.output.error) ||
-                      (part.output.results?.[0] &&
-                        "error" in part.output.results[0] &&
-                        part.output.results[0].error)
+                    (output &&
+                      typeof output === "object" &&
+                      "error" in output &&
+                      output.error) ||
+                      (output?.results?.[0] &&
+                        typeof output.results[0] === "object" &&
+                        "error" in output.results[0] &&
+                        output.results[0].error)
                   );
                   return (
                     <div
@@ -1447,7 +1689,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 }
 
                 // Handle no content
-                if (!part.output.results || part.output.results.length === 0) {
+                if (!output?.results || output.results.length === 0) {
                   return (
                     <div
                       className="my-4 rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-500 dark:bg-amber-950/50"
@@ -1466,7 +1708,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 }
 
                 // Beautiful, sophisticated rendering for Exa AI retrieval
-                const result = part.output;
+                const result = output;
                 return (
                   <div
                     className="my-4 overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900"
@@ -1674,6 +1916,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   />
                 );
               case "output-available":
+                const output = part.output as any;
                 return (
                   <div
                     className="group my-2 rounded-md border border-neutral-200/60 bg-white/50 backdrop-blur-sm transition-all duration-200 hover:border-neutral-300 dark:border-neutral-700/60 dark:bg-neutral-900/50 dark:hover:border-neutral-600"
@@ -1681,29 +1924,29 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   >
                     <div className="p-3">
                       <div className="flex items-start gap-3">
-                        {part.output.timeEmoji && (
+                        {output?.timeEmoji && (
                           <div className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-md bg-neutral-600">
                             <span className="text-xs">
-                              {part.output.timeEmoji}
+                              {output.timeEmoji}
                             </span>
                           </div>
                         )}
                         <div className="min-w-0 flex-1 space-y-2">
                           <div className="flex items-center gap-2 text-xs">
                             <span className="font-medium text-neutral-900 dark:text-neutral-100">
-                              {part.output.greeting}
+                              {output?.greeting}
                             </span>
                             <span className="text-neutral-400">•</span>
                             <span className="text-neutral-500 dark:text-neutral-400">
-                              {part.output.dayOfWeek}
+                              {output?.dayOfWeek}
                             </span>
                           </div>
                           <div className="text-neutral-700 text-sm leading-relaxed dark:text-neutral-300">
-                            {part.output.professionalMessage}
+                            {output?.professionalMessage}
                           </div>
-                          {part.output.helpfulTip && (
+                          {output?.helpfulTip && (
                             <div className="text-neutral-500 text-xs dark:text-neutral-400">
-                              {part.output.helpfulTip}
+                              {output.helpfulTip}
                             </div>
                           )}
                         </div>

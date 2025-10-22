@@ -464,14 +464,14 @@ ${JSON.stringify(plan)}
   }
 
   const chartResults = toolResults.filter(
-    (tr) =>
+    (tr: any) =>
       tr.toolName === "codeRunner" &&
       typeof tr.result === "object" &&
       tr.result !== null &&
       "charts" in tr.result
   );
 
-  const charts = chartResults.flatMap((res) => {
+  const charts = chartResults.flatMap((res: any) => {
     const value = res.result as CodeRunnerResult;
     return value.charts ?? [];
   });

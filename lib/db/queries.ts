@@ -969,7 +969,12 @@ export async function getLookoutRunStats({ id }: { id: string }) {
       return null;
     }
 
-    const runHistory = (lookout.runHistory as unknown[]) || [];
+    const runHistory =
+      (lookout.runHistory as Array<{
+        status?: string;
+        duration?: number;
+        runAt?: string;
+      }>) || [];
 
     const MS_PER_SECOND = 1000 as const;
     const SECONDS_PER_MINUTE = 60 as const;
@@ -978,7 +983,7 @@ export async function getLookoutRunStats({ id }: { id: string }) {
     const DAY_MS =
       HOURS_PER_DAY * MINUTES_PER_HOUR * SECONDS_PER_MINUTE * MS_PER_SECOND;
     const DAYS_PER_WEEK = 7 as const;
-    const WEEK_MS = (DAYS_PER_WEEK * DAY_MS) as const;
+    const WEEK_MS = DAYS_PER_WEEK * DAY_MS;
 
     return {
       totalRuns: runHistory.length,
@@ -988,9 +993,16 @@ export async function getLookoutRunStats({ id }: { id: string }) {
       averageDuration:
         runHistory.reduce((sum, run) => sum + (run.duration || 0), 0) /
           runHistory.length || 0,
-      lastWeekRuns: runHistory.filter(
-        (run) => new Date(run.runAt) > new Date(Date.now() - WEEK_MS)
-      ).length,
+      lastWeekRuns: runHistory.filter((run) => {
+        if (!run.runAt) {
+          return false;
+        }
+        const runDate = new Date(run.runAt);
+        if (Number.isNaN(runDate.getTime())) {
+          return false;
+        }
+        return runDate > new Date(Date.now() - WEEK_MS);
+      }).length,
     };
   } catch (_error) {
     return null;

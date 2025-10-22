@@ -59,11 +59,11 @@ export const retrieveTool = tool({
 
       try {
         // Try Exa AI first
-        result = await exa.getContents([url], {
+        result = (await exa.getContents([url], {
           text: true,
           summary: include_summary ? true : undefined,
           livecrawl: live_crawl,
-        });
+        })) as unknown as ExaResult;
 
         // Check if Exa returned results
         if (
@@ -128,9 +128,11 @@ export const retrieveTool = tool({
       }
 
       // Return Exa results if successful
+      const items = (result?.results as ExaContentItem[] | undefined) ?? [];
+
       return {
         base_url: url,
-        results: result?.results.map((item) => ({
+        results: items.map((item) => ({
           url: item.url,
           content: item.text ?? item.summary ?? "",
           title: item.title || item.url.split("/").pop() || "Retrieved Content",
