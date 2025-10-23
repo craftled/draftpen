@@ -238,14 +238,62 @@ export const auth = betterAuth({
                         }
                       }
 
+                      const pricesArray = Array.isArray(
+                        (data as { prices?: unknown }).prices
+                      )
+                        ? ((data as { prices: unknown[] }).prices as Array<
+                            Partial<{
+                              price_amount?: number;
+                              priceCurrency?: string;
+                            }>
+                          >)
+                        : [];
+                      const primaryPrice = pricesArray[0] ?? null;
+                      const normalizedAmount =
+                        typeof data.amount === "number"
+                          ? data.amount
+                          : typeof primaryPrice?.price_amount === "number"
+                          ? primaryPrice.price_amount
+                          : typeof (primaryPrice as { priceAmount?: number })
+                              ?.priceAmount === "number"
+                          ? (primaryPrice as { priceAmount?: number })
+                              .priceAmount ?? 0
+                          : 0;
+                      const normalizedCurrency =
+                        typeof data.currency === "string" && data.currency
+                          ? data.currency
+                          : typeof primaryPrice?.price_currency === "string" &&
+                            primaryPrice.price_currency
+                          ? primaryPrice.price_currency
+                          : typeof (primaryPrice as { priceCurrency?: string })
+                              ?.priceCurrency === "string" &&
+                            (primaryPrice as { priceCurrency?: string })
+                              .priceCurrency
+                          ? (
+                              primaryPrice as { priceCurrency?: string }
+                            ).priceCurrency
+                          : "USD";
+                      const recurringIntervalCount =
+                        typeof (data as { recurringIntervalCount?: number })
+                          .recurringIntervalCount === "number" &&
+                        Number.isInteger(
+                          (data as { recurringIntervalCount?: number })
+                            .recurringIntervalCount
+                        )
+                          ? (
+                              data as { recurringIntervalCount?: number }
+                            ).recurringIntervalCount ?? 1
+                          : 1;
+
                       // STEP 2: Build subscription data
                       const subscriptionData = {
                         id: data.id,
                         createdAt: new Date(data.createdAt),
                         modifiedAt: safeParseDate(data.modifiedAt),
-                        amount: data.amount,
-                        currency: data.currency,
+                        amount: normalizedAmount,
+                        currency: normalizedCurrency,
                         recurringInterval: data.recurringInterval,
+                        recurringIntervalCount,
                         status: data.status,
                         currentPeriodStart:
                           safeParseDate(data.currentPeriodStart) || new Date(),
@@ -289,6 +337,8 @@ export const auth = betterAuth({
                         amount: subscriptionData.amount,
                         currency: subscriptionData.currency,
                         recurringInterval: subscriptionData.recurringInterval,
+                        recurringIntervalCount:
+                          subscriptionData.recurringIntervalCount,
                         status: subscriptionData.status,
                         currentPeriodStart: subscriptionData.currentPeriodStart,
                         currentPeriodEnd: subscriptionData.currentPeriodEnd,

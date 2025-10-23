@@ -24,6 +24,7 @@ export type SubscriptionDetails = {
   amount: number;
   currency: string;
   recurringInterval: string;
+  recurringIntervalCount: number;
   currentPeriodStart: Date;
   currentPeriodEnd: Date;
   cancelAtPeriodEnd: boolean;
@@ -141,6 +142,7 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
             amount: latestSubscription.amount,
             currency: latestSubscription.currency,
             recurringInterval: latestSubscription.recurringInterval,
+            recurringIntervalCount: latestSubscription.recurringIntervalCount,
             currentPeriodStart: latestSubscription.currentPeriodStart,
             currentPeriodEnd: latestSubscription.currentPeriodEnd,
             cancelAtPeriodEnd: latestSubscription.cancelAtPeriodEnd,
@@ -192,6 +194,7 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
         amount: activeSubscription.amount,
         currency: activeSubscription.currency,
         recurringInterval: activeSubscription.recurringInterval,
+        recurringIntervalCount: activeSubscription.recurringIntervalCount,
         currentPeriodStart: activeSubscription.currentPeriodStart,
         currentPeriodEnd: activeSubscription.currentPeriodEnd,
         cancelAtPeriodEnd: activeSubscription.cancelAtPeriodEnd,

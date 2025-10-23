@@ -1227,6 +1227,19 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
   const [isManagingSubscription, setIsManagingSubscription] = useState(false);
   const isMobile = useMediaQuery("(max-width: 768px)");
 
+  const formatIntervalLabel = (interval: string, count: number) => {
+    const normalized = interval.toLowerCase();
+    if (count <= 1) {
+      return normalized;
+    }
+    return `${count} ${normalized}${count > 1 ? "s" : ""}`;
+  };
+
+  const formatRecurringAmount = (amount: number, interval: string, count: number) => {
+    const dollars = (amount / 100).toFixed(2);
+    return `$${dollars}/${formatIntervalLabel(interval, count)}`;
+  };
+
   useEffect(() => {
     const fetchPolarOrders = async () => {
       try {
@@ -1350,13 +1363,23 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
                           subscription.currentPeriodEnd
                         ).toLocaleDateString()}
                       </span>
-                      <span>Then $99/month</span>
+                      <span>
+                        Then{" "}
+                        {formatRecurringAmount(
+                          subscription.amount,
+                          subscription.recurringInterval,
+                          subscription.recurringIntervalCount ?? 1
+                        )}
+                      </span>
                     </>
                   ) : (
                     <>
                       <span>
-                        ${(subscription.amount / 100).toFixed(2)}/
-                        {subscription.recurringInterval}
+                        {formatRecurringAmount(
+                          subscription.amount,
+                          subscription.recurringInterval,
+                          subscription.recurringIntervalCount ?? 1
+                        )}
                       </span>
                       <span>
                         Next billing:{" "}
@@ -1464,62 +1487,80 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
             {/* Show Polar orders */}
             {orders?.result?.items &&
               orders.result.items.length > 0 &&
-              orders.result.items.slice(0, 3).map((order: any) => (
-                <div
-                  className={cn(
-                    "rounded-lg bg-muted/30",
-                    isMobile ? "p-2.5" : "p-3"
-                  )}
-                  key={order.id}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="min-w-0 flex-1">
-                      <p
-                        className={cn(
-                          "truncate font-medium",
-                          isMobile ? "text-xs" : "text-sm"
-                        )}
-                      >
-                        {order.product?.name || "Subscription"}
-                      </p>
-                      <div className="flex items-center gap-2">
+              orders.result.items.slice(0, 3).map((order: any) => {
+                const amountCents =
+                  typeof order.totalAmount === "number"
+                    ? order.totalAmount
+                    : typeof order.netAmount === "number"
+                    ? order.netAmount
+                    : 0;
+                const currencyCode =
+                  typeof order.currency === "string" && order.currency
+                    ? order.currency.toUpperCase()
+                    : "USD";
+                const primaryLabel =
+                  order?.items?.[0]?.label ||
+                  order.product?.name ||
+                  "Subscription";
+                const isRecurring = Boolean(order.subscriptionId);
+
+                return (
+                  <div
+                    className={cn(
+                      "rounded-lg bg-muted/30",
+                      isMobile ? "p-2.5" : "p-3"
+                    )}
+                    key={order.id}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="min-w-0 flex-1">
                         <p
                           className={cn(
-                            "text-muted-foreground",
-                            isMobile ? "text-[10px]" : "text-xs"
+                            "truncate font-medium",
+                            isMobile ? "text-xs" : "text-sm"
                           )}
                         >
-                          {new Date(order.createdAt).toLocaleDateString()}
+                          {primaryLabel}
                         </p>
-                        <Badge
-                          className="px-1 py-0 text-[8px]"
-                          variant="secondary"
+                        <div className="flex items-center gap-2">
+                          <p
+                            className={cn(
+                              "text-muted-foreground",
+                              isMobile ? "text-[10px]" : "text-xs"
+                            )}
+                          >
+                            {new Date(order.createdAt).toLocaleDateString()}
+                          </p>
+                          <Badge
+                            className="px-1 py-0 text-[8px]"
+                            variant="secondary"
+                          >
+                            🌍 {currencyCode}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span
+                          className={cn(
+                            "block font-semibold",
+                            isMobile ? "text-xs" : "text-sm"
+                          )}
                         >
-                          🌍 USD
-                        </Badge>
+                          ${(amountCents / 100).toFixed(2)}
+                        </span>
+                        <span
+                          className={cn(
+                            "text-muted-foreground",
+                            isMobile ? "text-[9px]" : "text-xs"
+                          )}
+                        >
+                          {isRecurring ? "recurring" : "one-time"}
+                        </span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <span
-                        className={cn(
-                          "block font-semibold",
-                          isMobile ? "text-xs" : "text-sm"
-                        )}
-                      >
-                        ${(order.totalAmount / 100).toFixed(2)}
-                      </span>
-                      <span
-                        className={cn(
-                          "text-muted-foreground",
-                          isMobile ? "text-[9px]" : "text-xs"
-                        )}
-                      >
-                        recurring
-                      </span>
-                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
 
             {/* Show message if no billing history */}
             {(!orders?.result?.items || orders.result.items.length === 0) && (

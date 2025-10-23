@@ -19,6 +19,7 @@ type SubscriptionDetails = {
   amount: number;
   currency: string;
   recurringInterval: string;
+  recurringIntervalCount: number;
   currentPeriodStart: Date;
   currentPeriodEnd: Date;
   cancelAtPeriodEnd: boolean;

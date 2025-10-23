@@ -115,6 +115,9 @@ export const subscription = pgTable("subscription", {
   amount: integer("amount").notNull(),
   currency: text("currency").notNull(),
   recurringInterval: text("recurringInterval").notNull(),
+  recurringIntervalCount: integer("recurringIntervalCount")
+    .notNull()
+    .default(1),
   status: text("status").notNull(),
   currentPeriodStart: timestamp("currentPeriodStart").notNull(),
   currentPeriodEnd: timestamp("currentPeriodEnd").notNull(),

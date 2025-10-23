@@ -27,6 +27,7 @@ export type ComprehensiveUserData = {
     amount: number;
     currency: string;
     recurringInterval: string;
+    recurringIntervalCount: number;
     currentPeriodStart: Date;
     currentPeriodEnd: Date;
     cancelAtPeriodEnd: boolean;
@@ -295,6 +296,8 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
         subscriptionAmount: subscription.amount,
         subscriptionCurrency: subscription.currency,
         subscriptionRecurringInterval: subscription.recurringInterval,
+        subscriptionRecurringIntervalCount:
+          subscription.recurringIntervalCount,
         subscriptionCurrentPeriodStart: subscription.currentPeriodStart,
         subscriptionCurrentPeriodEnd: subscription.currentPeriodEnd,
         subscriptionCancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
@@ -378,6 +381,7 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
         amount: row.subscriptionAmount!,
         currency: row.subscriptionCurrency!,
         recurringInterval: row.subscriptionRecurringInterval!,
+        recurringIntervalCount: row.subscriptionRecurringIntervalCount ?? 1,
         currentPeriodStart: row.subscriptionCurrentPeriodStart!,
         currentPeriodEnd: row.subscriptionCurrentPeriodEnd!,
         cancelAtPeriodEnd: row.subscriptionCancelAtPeriodEnd!,
@@ -464,6 +468,7 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
         amount: activePolarSubscription.amount,
         currency: activePolarSubscription.currency,
         recurringInterval: activePolarSubscription.recurringInterval,
+        recurringIntervalCount: activePolarSubscription.recurringIntervalCount,
         currentPeriodStart: activePolarSubscription.currentPeriodStart,
         currentPeriodEnd: activePolarSubscription.currentPeriodEnd,
         cancelAtPeriodEnd: activePolarSubscription.cancelAtPeriodEnd,
