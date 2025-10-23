@@ -64,6 +64,15 @@ const _isValidUrl = (str: string) => {
   }
 };
 
+const _isVercelBlobUrl = (str: string) => {
+  try {
+    const u = new URL(str);
+    return u.hostname.endsWith(".public.blob.vercel-storage.com");
+  } catch {
+    return false;
+  }
+};
+
 type CodeBlockProps = {
   language: string | undefined;
   children: string;
@@ -735,6 +744,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(
         link: 0,
         text: 0,
         hr: 0,
+        image: 0,
       };
 
       return (type: keyof typeof counters, content?: string) => {
@@ -934,6 +944,38 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(
             typeof code === "string" ? code : String(code || "");
           const key = getElementKey("code", codeString);
           return <InlineCode code={codeString} elementKey={key} key={key} />;
+        },
+        image(href, title, text) {
+          const src = typeof href === "string" ? href : String(href || "");
+          const altText =
+            typeof text === "string"
+              ? text
+              : typeof title === "string"
+                ? title
+                : "";
+
+          if (_isVercelBlobUrl(src)) {
+            const key = getElementKey("image", src + altText);
+            return (
+              <span className="my-4 block" key={key}>
+                <Image
+                  alt={altText || "Screenshot"}
+                  height={700}
+                  sizes="100vw"
+                  src={src}
+                  style={{ width: "100%", height: "auto" }}
+                  unoptimized
+                  width={1400}
+                />
+              </span>
+            );
+          }
+
+          const key = getElementKey("image", src + altText);
+          return (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img alt={altText} key={key} src={src} />
+          );
         },
         link(href, text) {
           const key = getElementKey("link", href);

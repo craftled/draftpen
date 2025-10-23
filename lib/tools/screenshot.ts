@@ -1,15 +1,17 @@
-import { put } from "@vercel/blob";
-import { tool } from "ai";
 import { Buffer } from "node:buffer";
 import { createHmac, randomUUID } from "node:crypto";
+import { put } from "@vercel/blob";
+import { tool } from "ai";
 import { z } from "zod";
 import { serverEnv } from "@/env/server";
 
 const SCREENSHOT_ENDPOINT = "https://api.screenshotone.com/take";
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8MB safety cap
 const REQUEST_TIMEOUT_MS = 60_000;
-const DEFAULT_VIEWPORT_WIDTH = 1280;
-const DEFAULT_VIEWPORT_HEIGHT = 720;
+const DEFAULT_VIEWPORT_WIDTH = 1400;
+const DEFAULT_VIEWPORT_HEIGHT = 700;
+const DEFAULT_SAFARI_UA =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15";
 
 const WAIT_UNTIL_MAP = {
   load: "load",
@@ -94,8 +96,7 @@ const fetchScreenshot = async (url: string): Promise<ArrayBuffer> => {
     if (buffer.byteLength > MAX_IMAGE_BYTES) {
       throw new Error(
         `Screenshot exceeds size limit (${(
-          buffer.byteLength /
-          (1024 * 1024)
+          buffer.byteLength / (1024 * 1024)
         ).toFixed(1)}MB)`
       );
     }
@@ -190,7 +191,9 @@ export const screenshotTool = tool({
       throw new Error("Only HTTP and HTTPS URLs are supported");
     }
     if (isPrivateHostname(parsedUrl.hostname)) {
-      throw new Error("Capturing screenshots of private or local URLs is not allowed");
+      throw new Error(
+        "Capturing screenshots of private or local URLs is not allowed"
+      );
     }
 
     const params = new URLSearchParams();
@@ -200,13 +203,17 @@ export const screenshotTool = tool({
     params.set("block_ads", "true");
     params.set("block_cookie_banners", "true");
     params.set("omit_background", "false");
-    params.set("viewport_width", String(input.viewportWidth ?? DEFAULT_VIEWPORT_WIDTH));
+    params.set(
+      "viewport_width",
+      String(input.viewportWidth ?? DEFAULT_VIEWPORT_WIDTH)
+    );
     params.set(
       "viewport_height",
       String(input.viewportHeight ?? DEFAULT_VIEWPORT_HEIGHT)
     );
 
-    params.set("full_page", input.fullPage === false ? "false" : "true");
+    // Default to viewport-only screenshots for blog imagery
+    params.set("full_page", input.fullPage === true ? "true" : "false");
 
     if (typeof input.delay === "number") {
       params.set("delay", input.delay.toString());
@@ -216,9 +223,7 @@ export const screenshotTool = tool({
       params.set("selector", input.selector);
     }
 
-    if (typeof input.deviceScaleFactor === "number") {
-      params.set("device_scale_factor", input.deviceScaleFactor.toString());
-    }
+    params.set("device_scale_factor", String(input.deviceScaleFactor ?? 2));
 
     if (input.darkMode) {
       params.set("dark_mode", "true");
@@ -227,6 +232,9 @@ export const screenshotTool = tool({
     if (input.waitUntil) {
       params.set("wait_for_event", WAIT_UNTIL_MAP[input.waitUntil]);
     }
+
+    // Emulate Mac Safari via user agent (ScreenshotOne runs on Chromium; UA spoofing is supported)
+    params.set("user_agent", DEFAULT_SAFARI_UA);
 
     const requestUrl = buildSignedUrl(params, secretKey);
     let screenshotBuffer: ArrayBuffer;
@@ -263,7 +271,7 @@ export const screenshotTool = tool({
           fullPage: Boolean(input.fullPage),
           delay: input.delay ?? 0,
           selector: input.selector ?? null,
-          deviceScaleFactor: input.deviceScaleFactor ?? null,
+          deviceScaleFactor: input.deviceScaleFactor ?? 2,
           darkMode: Boolean(input.darkMode),
           waitUntil: input.waitUntil ?? null,
         },
@@ -290,7 +298,7 @@ export const screenshotTool = tool({
         fullPage: Boolean(input.fullPage),
         delay: input.delay ?? 0,
         selector: input.selector ?? null,
-        deviceScaleFactor: input.deviceScaleFactor ?? null,
+        deviceScaleFactor: input.deviceScaleFactor ?? 2,
         darkMode: Boolean(input.darkMode),
         waitUntil: input.waitUntil ?? null,
       },
