@@ -1290,16 +1290,17 @@ export function ChatHistoryButton({
 }) {
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          aria-label="Chat History"
-          className={`${buttonVariants({ variant: "ghost", size: "icon" })} !p-0 !m-0 size-6 rounded-full hover:bg-muted`}
-          onClick={onClickAction}
-          type="button"
-        >
-          <HugeiconsIcon className="size-6" icon={SearchList02Icon} />
-          <span className="sr-only">Chat History</span>
-        </button>
+      <TooltipTrigger
+        aria-label="Chat History"
+        className={cn(
+          buttonVariants({ variant: "ghost", size: "icon" }),
+          "!m-0 !p-0 size-6 rounded-full hover:bg-muted"
+        )}
+        onClick={onClickAction}
+        type="button"
+      >
+        <HugeiconsIcon className="size-6" icon={SearchList02Icon} />
+        <span className="sr-only">Chat History</span>
       </TooltipTrigger>
       <TooltipContent side="bottom" sideOffset={4}>
         Chat History
