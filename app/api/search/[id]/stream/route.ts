@@ -77,9 +77,7 @@ async function handleStreamResumption(
     return new Response(emptyDataStream, { status: 200 });
   }
 
-  const restoredStream = createRestoredStream(
-    mostRecentMessage as ChatMessage
-  );
+  const restoredStream = createRestoredStream(mostRecentMessage as ChatMessage);
   return new Response(
     restoredStream.pipeThrough(new JsonToSseTransformStream()),
     { status: 200 }

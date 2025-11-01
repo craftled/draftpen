@@ -119,7 +119,7 @@ export async function POST(req: Request) {
     while (!lookout && retryCount < maxRetries) {
       lookout = await getLookoutById({ id: lookoutId });
       if (!lookout) {
-        retryCount++;
+        retryCount += 1;
         if (retryCount < maxRetries) {
           await new Promise((resolve) =>
             setTimeout(resolve, retryCount * BACKOFF_BASE_MS)

@@ -306,11 +306,6 @@ export async function GET(
             data: interFontData,
             style: "normal",
           },
-          {
-            name: "BeVietnamPro",
-            data: beVietnamProFontData,
-            style: "normal",
-          },
         ],
       }
     );

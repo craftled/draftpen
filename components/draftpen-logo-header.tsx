@@ -9,7 +9,7 @@ export const DraftpenLogoHeader = () => (
       src="/draftpen.svg"
       width={20}
     />
-    <h2 className="font-sans font-normal text-foreground text-base dark:text-foreground">
+    <h2 className="font-normal font-sans text-base text-foreground dark:text-foreground">
       Draftpen
     </h2>
   </div>

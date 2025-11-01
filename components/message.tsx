@@ -726,7 +726,7 @@ export const Message: React.FC<MessageProps> = ({
                       if (part.type === "text") {
                         return (
                           <div
-                            className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert [&>*]:!font-sans prose-p:my-1 prose-pre:my-1 mt-2 prose-p:mt-0 max-w-none font-sans font-normal prose-code:before:hidden prose-code:after:hidden sm:prose-p:my-2 sm:prose-pre:my-2 sm:prose-p:mt-0 ${getDynamicFontSize(part.text)} relative overflow-hidden text-foreground dark:text-foreground ${
+                            className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert [&>*]:!font-sans prose-p:my-1 prose-pre:my-1 mt-2 prose-p:mt-0 max-w-none font-normal font-sans prose-code:before:hidden prose-code:after:hidden sm:prose-p:my-2 sm:prose-pre:my-2 sm:prose-p:mt-0 ${getDynamicFontSize(part.text)} relative overflow-hidden text-foreground dark:text-foreground ${
                               !isExpanded && exceedsMaxHeight
                                 ? "max-h-[120px]"
                                 : ""

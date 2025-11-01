@@ -75,6 +75,7 @@ export function ShareButton({
               icon={Share03Icon}
               size={14}
               strokeWidth={2}
+              suppressHydrationWarning
             />
             <span className="font-medium text-muted-foreground text-sm">
               Share
@@ -111,6 +112,7 @@ export function ShareButton({
       onClick: handleClick,
       disabled,
       className,
+      type: "button" as const,
     };
 
     switch (variant) {

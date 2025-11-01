@@ -13,6 +13,10 @@ import {
   formatTime12Hour,
 } from "../utils/time-utils";
 
+const MIN_HOUR = 1;
+const MAX_HOUR = 12;
+const MINUTE_OPTIONS = ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"] as const;
+
 type TimePickerProps = {
   value: string;
   onChange: (value: string) => void;
@@ -42,23 +46,10 @@ export function TimePicker({
   const currentMinute = now.getMinutes();
 
   // Generate hour:minute options
-  const generateHourMinuteOptions = () => {
-    const options = [];
-    for (let hour = 1; hour <= 12; hour++) {
-      for (const minute of [
-        "00",
-        "05",
-        "10",
-        "15",
-        "20",
-        "25",
-        "30",
-        "35",
-        "40",
-        "45",
-        "50",
-        "55",
-      ]) {
+  const generateHourMinuteOptions = (): Array<{ value: string; label: string }> => {
+    const options: Array<{ value: string; label: string }> = [];
+    for (let hour = MIN_HOUR; hour <= MAX_HOUR; hour++) {
+      for (const minute of MINUTE_OPTIONS) {
         options.push({
           value: `${hour}:${minute}`,
           label: `${hour}:${minute}`,

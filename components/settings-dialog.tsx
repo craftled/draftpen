@@ -105,7 +105,6 @@ import {
   type MemoryItem,
 } from "@/lib/memory-actions";
 import { cn } from "@/lib/utils";
-import { SciraLogo } from "./logos/scira-logo";
 
 type SettingsDialogProps = {
   open: boolean;
@@ -2486,7 +2485,13 @@ export function SettingsDialog({
             {/* Header - more compact */}
             <DrawerHeader className="shrink-0 px-4 pt-3 pb-2">
               <DrawerTitle className="flex items-center gap-2 font-medium text-base">
-                <SciraLogo className="size-6" />
+                <Image
+                  alt="Draftpen"
+                  className="size-6"
+                  height={24}
+                  src="/draftpen.svg"
+                  width={24}
+                />
                 Settings
               </DrawerTitle>
             </DrawerHeader>
@@ -2552,7 +2557,13 @@ export function SettingsDialog({
       <DialogContent className="!max-w-4xl !w-full !p-0 max-h-[85vh] gap-0 overflow-hidden">
         <DialogHeader className="!m-0 p-4">
           <DialogTitle className="flex items-center gap-2 font-medium text-xl tracking-normal">
-            <SciraLogo className="size-6" color="currentColor" />
+            <Image
+              alt="Draftpen"
+              className="size-6"
+              height={24}
+              src="/draftpen.svg"
+              width={24}
+            />
             Settings
           </DialogTitle>
         </DialogHeader>

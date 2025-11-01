@@ -87,9 +87,13 @@ const NavigationMenu = memo(() => {
       <Tooltip>
         <TooltipTrigger asChild>
           <DropdownMenuTrigger asChild>
-            <div className="!size-6 !p-0 !m-0 flex cursor-pointer items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-accent-foreground">
+            <Button
+              className="!size-6 !p-0 !m-0 flex cursor-pointer items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-accent-foreground"
+              type="button"
+              variant="ghost"
+            >
               <SettingsIcon ref={settingsIconRef} size={18} />
-            </div>
+            </Button>
           </DropdownMenuTrigger>
         </TooltipTrigger>
         <TooltipContent side="bottom" sideOffset={4}>

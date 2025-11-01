@@ -17,9 +17,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Navbar } from "./navbar";
+import type { ComprehensiveUserData } from "@/lib/user-data-server";
 
 type ProUpgradeScreenProps = {
-  user: any;
+  user: ComprehensiveUserData | null;
   isProUser: boolean;
   isProStatusLoading: boolean;
 };

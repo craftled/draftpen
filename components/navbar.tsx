@@ -2,11 +2,19 @@
 
 import { GlobeHemisphereWestIcon, PlusIcon } from "@phosphor-icons/react";
 import { Clock } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { memo, useEffect, useMemo, useState } from "react";
 import { ChatHistoryButton } from "@/components/chat-history-dialog";
-import { ShareButton } from "@/components/share";
+
+// Dynamically import ShareButton with SSR disabled to prevent hydration mismatches
+const ShareButtonNoSSR = dynamic(
+  () =>
+    import("@/components/share").then((mod) => ({ default: mod.ShareButton })),
+  { ssr: false }
+);
+
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Tooltip,
@@ -163,7 +171,7 @@ const Navbar = memo(
           {chatId &&
             (user && isOwner ? (
               /* Authenticated chat owners get share functionality */
-              <ShareButton
+              <ShareButtonNoSSR
                 chatId={chatId}
                 className="mr-1"
                 disabled={false}

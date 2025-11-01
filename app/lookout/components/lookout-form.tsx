@@ -38,8 +38,24 @@ type LookoutFormProps = {
   totalLookouts: number;
   canCreateMore: boolean;
   canCreateDailyMore: boolean;
-  createLookout: any;
-  updateLookout: any;
+  createLookout: (params: {
+    title: string;
+    prompt: string;
+    frequency: "once" | "daily" | "weekly" | "monthly";
+    time: string;
+    timezone: string;
+    date?: string;
+    onSuccess?: () => void;
+  }) => void;
+  updateLookout: (params: {
+    id: string;
+    title: string;
+    prompt: string;
+    frequency: "once" | "daily" | "weekly" | "monthly";
+    time: string;
+    timezone: string;
+    onSuccess?: () => void;
+  }) => void;
 };
 
 export function LookoutForm({
@@ -81,6 +97,16 @@ export function LookoutForm({
     isMutating ||
     (!editingLookout && selectedFrequency === "daily" && !canCreateDailyMore) ||
     !(editingLookout || canCreateMore);
+
+  const getButtonText = () => {
+    if (editingLookout) {
+      return isMutating ? "Updating..." : "Update";
+    }
+    if (selectedFrequency === "once") {
+      return "Create Task";
+    }
+    return "Create";
+  };
 
   return (
     <form action={handleSubmit} className="space-y-4">
@@ -284,7 +310,7 @@ export function LookoutForm({
                     color={
                       activeDailyLookouts >= LOOKOUT_LIMITS.DAILY_LOOKOUTS
                         ? "danger"
-                        : activeDailyLookouts >= 4
+                        : activeDailyLookouts >= LOOKOUT_LIMITS.WARNING_THRESHOLD_DAILY
                           ? "warning"
                           : "success"
                     }
@@ -299,7 +325,7 @@ export function LookoutForm({
                     color={
                       totalLookouts >= LOOKOUT_LIMITS.TOTAL_LOOKOUTS
                         ? "danger"
-                        : totalLookouts >= 8
+                        : totalLookouts >= LOOKOUT_LIMITS.WARNING_THRESHOLD_TOTAL
                           ? "warning"
                           : "primary"
                     }
@@ -325,13 +351,7 @@ export function LookoutForm({
           size="sm"
           type="submit"
         >
-          {editingLookout
-            ? isMutating
-              ? "Updating..."
-              : "Update"
-            : selectedFrequency === "once"
-              ? "Create Task"
-              : "Create"}
+          {getButtonText()}
         </Button>
       </div>
     </form>

@@ -49,7 +49,7 @@ export const PostMessageUpgradeDialog = React.memo(
             <div className="absolute right-6 bottom-6 left-6">
               <div className="mb-3" />
               <DialogTitle className="mb-2 flex items-center gap-3 text-white">
-                <span className="flex items-center gap-2 font-sans font-medium text-4xl">
+                <span className="flex items-center gap-2 font-medium font-sans text-4xl">
                   scira
                   <ProBadge className="!text-white !bg-white/20 !ring-white/30 !tracking-normal font-light text-xl" />
                 </span>

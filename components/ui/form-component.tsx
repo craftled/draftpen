@@ -1167,7 +1167,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
             </DrawerTrigger>
             <DrawerContent className="flex max-h-[80vh] min-h-[60vh] flex-col">
               <DrawerHeader className="flex-shrink-0 pb-4">
-                <DrawerTitle className="flex items-center gap-2 text-left font-sans font-medium text-lg">
+                <DrawerTitle className="flex items-center gap-2 text-left font-medium font-sans text-lg">
                   <HugeiconsIcon
                     color="currentColor"
                     icon={CpuIcon}

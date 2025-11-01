@@ -523,17 +523,41 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     <TooltipTrigger asChild>
                       <Button
                         className="size-8 rounded-full p-0"
-                        onClick={() => {
-                          navigator.clipboard.writeText(part.text);
-                          toast.success("Copied to clipboard");
+                        onClick={async () => {
+                          if (
+                            typeof navigator !== "undefined" &&
+                            navigator.clipboard
+                          ) {
+                            try {
+                              await navigator.clipboard.writeText(part.text);
+                              toast.success("Copied to clipboard");
+                            } catch {
+                              // Fallback for older browsers
+                              const textArea =
+                                document.createElement("textarea");
+                              textArea.value = part.text;
+                              textArea.style.position = "fixed";
+                              textArea.style.left = "-999999px";
+                              document.body.appendChild(textArea);
+                              textArea.select();
+                              try {
+                                document.execCommand("copy");
+                                toast.success("Copied to clipboard");
+                              } catch {
+                                toast.error("Failed to copy");
+                              }
+                              document.body.removeChild(textArea);
+                            }
+                          }
                         }}
                         size="icon"
+                        type="button"
                         variant="ghost"
                       >
                         <HugeiconsIcon
                           color="currentColor"
                           icon={Copy01Icon}
-                          size={32}
+                          size={20}
                           strokeWidth={2}
                         />
                       </Button>
@@ -2114,9 +2138,31 @@ const CodeContextTool: React.FC<CodeContextToolProps> = ({ args, result }) => {
                 {/* Copy button */}
                 <Button
                   className="h-6 w-6 p-0 hover:bg-neutral-100 dark:hover:bg-neutral-800"
-                  onClick={() => {
-                    navigator.clipboard.writeText(responseText);
-                    toast.success("Code context copied to clipboard");
+                  onClick={async () => {
+                    if (
+                      typeof navigator !== "undefined" &&
+                      navigator.clipboard
+                    ) {
+                      try {
+                        await navigator.clipboard.writeText(responseText);
+                        toast.success("Code context copied to clipboard");
+                      } catch {
+                        // Fallback for older browsers
+                        const textArea = document.createElement("textarea");
+                        textArea.value = responseText;
+                        textArea.style.position = "fixed";
+                        textArea.style.left = "-999999px";
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        try {
+                          document.execCommand("copy");
+                          toast.success("Code context copied to clipboard");
+                        } catch {
+                          toast.error("Failed to copy");
+                        }
+                        document.body.removeChild(textArea);
+                      }
+                    }
                   }}
                   size="icon"
                   variant="ghost"
@@ -2327,6 +2373,7 @@ const TranslationTool: React.FC<{ args: any; result: any }> = ({
                 )}
                 disabled={isGeneratingAudio}
                 onClick={handlePlayPause}
+                type="button"
               >
                 {isGeneratingAudio ? (
                   <Loader2 className="h-2.5 w-2.5 animate-spin" />

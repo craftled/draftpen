@@ -718,7 +718,7 @@ const ChatInterface = memo(
             {status === "ready" && messages.length === 0 && (
               <div className="m-0 mb-2 text-center">
                 <div className="inline-flex items-center gap-3">
-                  <h1 className="!mb-0 font-sans font-light text-4xl text-foreground tracking-tighter sm:text-5xl dark:text-foreground">
+                  <h1 className="!mb-0 font-light font-sans text-4xl text-foreground tracking-tighter sm:text-5xl dark:text-foreground">
                     Draftpen
                   </h1>
                   {isUserPro && (

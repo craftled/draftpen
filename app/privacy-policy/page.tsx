@@ -40,7 +40,7 @@ export default function PrivacyPage() {
             {/* Logo */}
             <motion.div className="text-center" variants={item}>
               <Link
-                className="inline-flex items-center gap-3 font-sans font-bold"
+                className="inline-flex items-center gap-3 font-bold font-sans"
                 href="/"
               >
                 <div className="relative flex h-14 w-14 items-center justify-center rounded-full border bg-background/90 shadow-sm">

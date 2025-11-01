@@ -207,6 +207,8 @@ export const exampleLookouts = getRandomExamples(3);
 export const LOOKOUT_LIMITS = {
   TOTAL_LOOKOUTS: 10,
   DAILY_LOOKOUTS: 5,
+  WARNING_THRESHOLD_DAILY: 4,
+  WARNING_THRESHOLD_TOTAL: 8,
 } as const;
 
 export const DEFAULT_FORM_VALUES = {

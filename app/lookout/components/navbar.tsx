@@ -5,9 +5,10 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { UserProfile } from "@/components/user-profile";
+import type { ComprehensiveUserData } from "@/lib/user-data-server";
 
 type NavbarProps = {
-  user: any;
+  user: ComprehensiveUserData | null;
   isProUser: boolean;
   isProStatusLoading: boolean;
   showProBadge?: boolean;
