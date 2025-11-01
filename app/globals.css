@@ -1,9 +1,9 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
-@plugin 'tailwind-scrollbar';
-@import "tw-animate-css";
+@plugin "tailwind-scrollbar";
 @plugin "@tailwindcss/typography";
 
 /* Line clamp utilities */
@@ -68,9 +68,6 @@
     position: absolute;
     right: 0;
   }
-}
-
-@layer utilities {
 }
 
 @layer base {
@@ -306,6 +303,7 @@ body {
 @media screen and (max-width: 1024px) {
   /* Fix for iOS viewport height issues */
   .h-screen {
+    /* biome-ignore lint/suspicious/noDuplicateProperties: Intentional fallback for older browsers */
     height: 100vh;
     height: 100dvh; /* Dynamic viewport height for better mobile support */
   }

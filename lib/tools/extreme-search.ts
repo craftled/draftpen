@@ -60,9 +60,10 @@ const searchWeb = async (
   include_domains?: string[]
 ) => {
   try {
-    const { results } = await exa.searchAndContents(query, {
+    const { results } = await exa.search(query, {
       numResults: 8,
       type: "auto",
+      contents: { text: true },
       ...(category
         ? {
             category: category as SearchCategory,

@@ -1235,7 +1235,11 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
     return `${count} ${normalized}${count > 1 ? "s" : ""}`;
   };
 
-  const formatRecurringAmount = (amount: number, interval: string, count: number) => {
+  const formatRecurringAmount = (
+    amount: number,
+    interval: string,
+    count: number
+  ) => {
     const dollars = (amount / 100).toFixed(2);
     return `$${dollars}/${formatIntervalLabel(interval, count)}`;
   };
@@ -1492,8 +1496,8 @@ function SubscriptionSection({ subscriptionData, isProUser, user }: any) {
                   typeof order.totalAmount === "number"
                     ? order.totalAmount
                     : typeof order.netAmount === "number"
-                    ? order.netAmount
-                    : 0;
+                      ? order.netAmount
+                      : 0;
                 const currencyCode =
                   typeof order.currency === "string" && order.currency
                     ? order.currency.toUpperCase()

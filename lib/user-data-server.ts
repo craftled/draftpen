@@ -296,8 +296,7 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
         subscriptionAmount: subscription.amount,
         subscriptionCurrency: subscription.currency,
         subscriptionRecurringInterval: subscription.recurringInterval,
-        subscriptionRecurringIntervalCount:
-          subscription.recurringIntervalCount,
+        subscriptionRecurringIntervalCount: subscription.recurringIntervalCount,
         subscriptionCurrentPeriodStart: subscription.currentPeriodStart,
         subscriptionCurrentPeriodEnd: subscription.currentPeriodEnd,
         subscriptionCancelAtPeriodEnd: subscription.cancelAtPeriodEnd,

@@ -14,12 +14,14 @@ export const academicSearchTool = tool({
   execute: async ({ query }: { query: string }) => {
     const exa = new Exa(serverEnv.EXA_API_KEY as string);
 
-    const result = await exa.searchAndContents(query, {
+    const result = await exa.search(query, {
       type: "auto",
       numResults: 20,
       category: "research paper",
-      summary: {
-        query: "Abstract of the Paper",
+      contents: {
+        summary: {
+          query: "Abstract of the Paper",
+        },
       },
     });
 

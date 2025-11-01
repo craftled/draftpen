@@ -13,6 +13,79 @@ import { getStreamContext } from "../../route";
 
 const RESUME_THRESHOLD_SECONDS = 15 as const;
 
+function createEmptyDataStream() {
+  return createUIMessageStream<ChatMessage>({
+    execute: () => {
+      /* no-op: used to initialize a resumable empty stream */
+    },
+  });
+}
+
+function createRestoredStream(message: ChatMessage) {
+  return createUIMessageStream<ChatMessage>({
+    execute: ({ writer }) => {
+      writer.write({
+        type: "data-appendMessage",
+        data: JSON.stringify(message),
+        transient: true,
+      });
+    },
+  });
+}
+
+async function validateChatAccess(
+  chatId: string,
+  session: { user: { id: string } }
+): Promise<Chat> {
+  let chat: Chat;
+  try {
+    chat = await getChatById({ id: chatId });
+  } catch {
+    throw new ChatSDKError("not_found:chat");
+  }
+
+  if (!chat) {
+    throw new ChatSDKError("not_found:chat");
+  }
+
+  if (chat.visibility === "private" && chat.userId !== session.user.id) {
+    throw new ChatSDKError("forbidden:chat");
+  }
+
+  return chat;
+}
+
+async function handleStreamResumption(
+  chatId: string,
+  resumeRequestedAt: Date,
+  emptyDataStream: ReadableStream
+) {
+  const messages = await getMessagesByChatId({ id: chatId });
+  const mostRecentMessage = messages.at(-1);
+
+  if (!mostRecentMessage || mostRecentMessage.role !== "assistant") {
+    return new Response(emptyDataStream, { status: 200 });
+  }
+
+  const messageCreatedAt = new Date(mostRecentMessage.createdAt);
+  const secondsSinceMessage = differenceInSeconds(
+    resumeRequestedAt,
+    messageCreatedAt
+  );
+
+  if (secondsSinceMessage > RESUME_THRESHOLD_SECONDS) {
+    return new Response(emptyDataStream, { status: 200 });
+  }
+
+  const restoredStream = createRestoredStream(
+    mostRecentMessage as ChatMessage
+  );
+  return new Response(
+    restoredStream.pipeThrough(new JsonToSseTransformStream()),
+    { status: 200 }
+  );
+}
+
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -36,23 +109,13 @@ export async function GET(
     return new ChatSDKError("unauthorized:chat").toResponse();
   }
 
-  let chat: Chat;
-  if (!chatId) {
-    return new ChatSDKError("bad_request:api").toResponse();
-  }
-
   try {
-    chat = await getChatById({ id: chatId });
-  } catch {
-    return new ChatSDKError("not_found:chat").toResponse();
-  }
-
-  if (!chat) {
-    return new ChatSDKError("not_found:chat").toResponse();
-  }
-
-  if (chat.visibility === "private" && chat.userId !== session.user.id) {
-    return new ChatSDKError("forbidden:chat").toResponse();
+    await validateChatAccess(chatId, session);
+  } catch (error) {
+    if (error instanceof ChatSDKError) {
+      return error.toResponse();
+    }
+    throw error;
   }
 
   const streamIds = await getStreamIdsByChatId({ chatId });
@@ -67,11 +130,7 @@ export async function GET(
     return new ChatSDKError("not_found:stream").toResponse();
   }
 
-  const emptyDataStream = createUIMessageStream<ChatMessage>({
-    execute: () => {
-      /* no-op: used to initialize a resumable empty stream */
-    },
-  });
+  const emptyDataStream = createEmptyDataStream();
 
   const stream = await streamContext.resumableStream(recentStreamId, () =>
     emptyDataStream.pipeThrough(new JsonToSseTransformStream())
@@ -82,40 +141,7 @@ export async function GET(
    * but the resumable stream has concluded at this point.
    */
   if (!stream) {
-    const messages = await getMessagesByChatId({ id: chatId });
-    const mostRecentMessage = messages.at(-1);
-
-    if (!mostRecentMessage) {
-      return new Response(emptyDataStream, { status: 200 });
-    }
-
-    if (mostRecentMessage.role !== "assistant") {
-      return new Response(emptyDataStream, { status: 200 });
-    }
-
-    const messageCreatedAt = new Date(mostRecentMessage.createdAt);
-
-    if (
-      differenceInSeconds(resumeRequestedAt, messageCreatedAt) >
-      RESUME_THRESHOLD_SECONDS
-    ) {
-      return new Response(emptyDataStream, { status: 200 });
-    }
-
-    const restoredStream = createUIMessageStream<ChatMessage>({
-      execute: ({ writer }) => {
-        writer.write({
-          type: "data-appendMessage",
-          data: JSON.stringify(mostRecentMessage),
-          transient: true,
-        });
-      },
-    });
-
-    return new Response(
-      restoredStream.pipeThrough(new JsonToSseTransformStream()),
-      { status: 200 }
-    );
+    return handleStreamResumption(chatId, resumeRequestedAt, emptyDataStream);
   }
 
   return new Response(stream, { status: 200 });

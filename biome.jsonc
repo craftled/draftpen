@@ -1,4 +1,14 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-  "extends": ["ultracite"]
+  "extends": ["ultracite/next", "ultracite/core"],
+  "linter": {
+    "rules": {
+      "style": {
+        "noMagicNumbers": "warn"
+      },
+      "performance": {
+        "noBarrelFile": "off"
+      }
+    }
+  }
 }

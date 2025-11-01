@@ -82,7 +82,7 @@ export const youtubeSearchTool = tool({
     }
 
     type ExaSearchOptions = {
-      type?: "auto" | "neural" | "keyword" | "hybrid" | "fast";
+      type?: "auto" | "neural" | "keyword" | "deep" | "fast";
       numResults?: number;
       includeDomains?: string[];
       startPublishedDate?: string;
@@ -102,7 +102,10 @@ export const youtubeSearchTool = tool({
       searchOptions.endPublishedDate = endDate;
     }
 
-    const searchResult = await exa.searchAndContents(query, searchOptions);
+    const searchResult = await exa.search(query, {
+      ...searchOptions,
+      contents: { text: true },
+    });
 
     // Deduplicate videos by ID to avoid redundant API calls
     const uniqueResults = searchResult.results.reduce((acc, result) => {

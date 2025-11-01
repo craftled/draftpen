@@ -416,18 +416,20 @@ class ExaSearchStrategy implements SearchStrategy {
           },
         });
 
-        const searchOptions: any = {
-          text: true,
-          type: currentQuality === "best" ? "hybrid" : "auto",
+        const searchOptions = {
+          contents: { text: true },
+          type: (currentQuality === "best" ? "deep" : "auto") as
+            | "auto"
+            | "deep",
           numResults: currentMaxResults < 10 ? 10 : currentMaxResults,
           livecrawl: "preferred",
           useAutoprompt: true,
-          category: currentTopic === "news" ? "news" : "",
+          ...(currentTopic === "news" ? { category: "news" as const } : {}),
         };
 
         // Domain include/exclude behavior removed
 
-        const data = await this.exa.searchAndContents(query, searchOptions);
+        const data = await this.exa.search(query, searchOptions);
 
         // Collect all images first
         const collectedImages: { url: string; description: string }[] = [];

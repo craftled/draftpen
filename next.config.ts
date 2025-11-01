@@ -26,7 +26,7 @@ const nextConfig: NextConfig = {
   },
 
   experimental: {
-    // Enable Turbopack filesystem caching for faster builds (Next.js 16 beta)
+    // Enable Turbopack filesystem caching for faster dev builds (Next.js 16+)
     turbopackFileSystemCacheForDev: true,
     optimizePackageImports: [
       "@phosphor-icons/react",

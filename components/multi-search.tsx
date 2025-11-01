@@ -484,9 +484,7 @@ const LoadingState: React.FC<{
 }> = ({ queries, annotations, args }) => {
   const _completedCount = annotations.length;
   const totalResults = annotations.reduce((sum, annotation) => {
-    const data = annotation.data as
-      | DataQueryCompletionPart["data"]
-      | undefined;
+    const data = annotation.data as DataQueryCompletionPart["data"] | undefined;
     return sum + (data?.resultsCount ?? 0);
   }, 0);
   const loadingQueryTagsRef = React.useRef<HTMLDivElement>(null);

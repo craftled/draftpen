@@ -150,7 +150,7 @@ const ComponentLoader = () => (
 type ScreenshotCaptureOutput = ChatTools["screenshot_capture"]["output"];
 
 const formatFileSize = (bytes: number | undefined): string | null => {
-  if (!bytes || !Number.isFinite(bytes)) {
+  if (!(bytes && Number.isFinite(bytes))) {
     return null;
   }
 
@@ -173,19 +173,19 @@ const ScreenshotResultCard: React.FC<{ result: ScreenshotCaptureOutput }> = ({
 }) => {
   if (!result) {
     return (
-      <div className="rounded-md border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
+      <div className="rounded-md border border-border bg-muted/40 p-3 text-muted-foreground text-sm">
         Screenshot result unavailable.
       </div>
     );
   }
 
-  if (!result.success || !result.screenshotUrl) {
+  if (!(result.success && result.screenshotUrl)) {
     const maybeError =
       typeof (result as { error?: unknown }).error === "string"
         ? (result as { error?: string }).error
         : null;
     return (
-      <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-900/20 dark:text-red-200">
+      <div className="rounded-md border border-red-200 bg-red-50 p-3 text-red-700 text-sm dark:border-red-900/60 dark:bg-red-900/20 dark:text-red-200">
         {maybeError || "Failed to capture screenshot. Please try again."}
       </div>
     );
@@ -252,9 +252,7 @@ const ScreenshotResultCard: React.FC<{ result: ScreenshotCaptureOutput }> = ({
   }
 
   if (capturedAtLabel) {
-    metadataItems.push(
-      <span key="captured">{capturedAtLabel}</span>
-    );
+    metadataItems.push(<span key="captured">{capturedAtLabel}</span>);
   }
 
   if (formatLabel) {
@@ -281,7 +279,7 @@ const ScreenshotResultCard: React.FC<{ result: ScreenshotCaptureOutput }> = ({
       </div>
 
       {metadataItems.length > 0 && (
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-muted-foreground text-xs">
           {metadataItems.map((item, index) => (
             <Fragment key={index}>
               {index > 0 && <span aria-hidden="true">•</span>}
@@ -295,7 +293,7 @@ const ScreenshotResultCard: React.FC<{ result: ScreenshotCaptureOutput }> = ({
         <div className="flex flex-wrap items-center gap-1">
           {optionBadges.map((badge) => (
             <span
-              className="rounded-full bg-muted px-2 py-0.5 text-[11px] uppercase tracking-wide text-muted-foreground"
+              className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground uppercase tracking-wide"
               key={badge}
             >
               {badge}
@@ -306,7 +304,8 @@ const ScreenshotResultCard: React.FC<{ result: ScreenshotCaptureOutput }> = ({
 
       {result.kind === "inline" && (
         <div className="rounded-md border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-900 dark:border-yellow-900/50 dark:bg-yellow-900/10 dark:text-yellow-200">
-          Provided as an inline data URL. Save the file if you need a persistent copy.
+          Provided as an inline data URL. Save the file if you need a persistent
+          copy.
         </div>
       )}
     </div>
@@ -902,7 +901,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                                   className="h-3 w-3 text-blue-500"
                                   weight="regular"
                                 />
-                                {(datetimeOutput?.timezone as string | undefined) ||
+                                {(datetimeOutput?.timezone as
+                                  | string
+                                  | undefined) ||
                                   new Intl.DateTimeFormat().resolvedOptions()
                                     .timeZone}
                               </div>
@@ -929,16 +930,20 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                                   Local
                                 </div>
                                 <div className="font-mono text-[11px] text-neutral-700 dark:text-neutral-300">
-                                  {(
-                                    datetimeOutput?.formatted as
-                                      | { iso_local?: string }
-                                      | undefined
-                                  )?.iso_local}
+                                  {
+                                    (
+                                      datetimeOutput?.formatted as
+                                        | { iso_local?: string }
+                                        | undefined
+                                    )?.iso_local
+                                  }
                                 </div>
                               </div>
                             )}
 
-                            {(datetimeOutput?.timestamp as string | undefined) && (
+                            {(datetimeOutput?.timestamp as
+                              | string
+                              | undefined) && (
                               <div className="rounded bg-neutral-50 p-3 dark:bg-neutral-900">
                                 <div className="mb-1 text-neutral-500 dark:text-neutral-400">
                                   Timestamp
@@ -1013,8 +1018,8 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   <TranslationTool
                     args={part.input}
                     key={`${messageIndex}-${partIndex}-tool`}
-                      result={part.output as any}
-                    />
+                    result={part.output as any}
+                  />
                 );
             }
             break;
@@ -1078,13 +1083,15 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   >
                     <AcademicPapersCard
                       results={
-                        ((part.output as any)?.results ?? []).map((result: any) => ({
-                          ...result,
-                          title:
-                            result.title ||
-                            ("name" in result ? String(result.name) : null) ||
-                            "Untitled",
-                        })) || []
+                        ((part.output as any)?.results ?? []).map(
+                          (result: any) => ({
+                            ...result,
+                            title:
+                              result.title ||
+                              ("name" in result ? String(result.name) : null) ||
+                              "Untitled",
+                          })
+                        ) || []
                       }
                     />
                   </Suspense>
@@ -1250,7 +1257,8 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                               Memory search failed
                             </h3>
                             <p className="mt-1 text-red-700 text-xs dark:text-red-300">
-                              {output?.error || "Unable to search memories right now."}
+                              {output?.error ||
+                                "Unable to search memories right now."}
                             </p>
                           </div>
                         </div>
@@ -1261,7 +1269,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
 
                 const results = (output?.results as any[]) ?? [];
                 const count =
-                  typeof output?.count === "number" ? output.count : results.length;
+                  typeof output?.count === "number"
+                    ? output.count
+                    : results.length;
 
                 if (results.length === 0) {
                   return (
@@ -1359,7 +1369,8 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                               Failed to add memory
                             </h3>
                             <p className="mt-1 text-red-700 text-xs dark:text-red-300">
-                              {output?.error || "Unable to add memory right now."}
+                              {output?.error ||
+                                "Unable to add memory right now."}
                             </p>
                           </div>
                         </div>
@@ -1430,46 +1441,46 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   </div>
                 );
               }
-          }
-          break;
+            }
+            break;
 
-        case "tool-screenshot_capture":
-          switch (part.state) {
-            case "input-streaming":
-              return (
-                <div
-                  className="text-neutral-500 text-sm"
-                  key={`${messageIndex}-${partIndex}-tool`}
-                >
-                  Capturing screenshot...
-                </div>
-              );
-            case "input-available":
-              return (
-                <div
-                  className="text-neutral-500 text-sm"
-                  key={`${messageIndex}-${partIndex}-tool`}
-                >
-                  Processing screenshot request...
-                </div>
-              );
-            case "output-available":
-              return (
-                <Suspense
-                  fallback={<ComponentLoader />}
-                  key={`${messageIndex}-${partIndex}-tool`}
-                >
-                  <ScreenshotResultCard result={part.output as any} />
-                </Suspense>
-              );
-          }
-          break;
+          case "tool-screenshot_capture":
+            switch (part.state) {
+              case "input-streaming":
+                return (
+                  <div
+                    className="text-neutral-500 text-sm"
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
+                    Capturing screenshot...
+                  </div>
+                );
+              case "input-available":
+                return (
+                  <div
+                    className="text-neutral-500 text-sm"
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
+                    Processing screenshot request...
+                  </div>
+                );
+              case "output-available":
+                return (
+                  <Suspense
+                    fallback={<ComponentLoader />}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
+                    <ScreenshotResultCard result={part.output as any} />
+                  </Suspense>
+                );
+            }
+            break;
 
-        case "tool-connectors_search":
-          switch (part.state) {
-            case "input-streaming":
-              return (
-                <div
+          case "tool-connectors_search":
+            switch (part.state) {
+              case "input-streaming":
+                return (
+                  <div
                     className="text-neutral-500 text-sm"
                     key={`${messageIndex}-${partIndex}-tool`}
                   >
@@ -1525,10 +1536,10 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     key={`${messageIndex}-${partIndex}-tool`}
                   >
                     <CurrencyConverter
-                    result={part.output as any}
-                    toolInvocation={{
-                      input: part.input,
-                      result: part.output as any,
+                      result={part.output as any}
+                      toolInvocation={{
+                        input: part.input,
+                        result: part.output as any,
                       }}
                     />
                   </Suspense>
@@ -1548,7 +1559,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   </div>
                 );
               case "input-available":
-              case "output-available":
+              case "output-available": {
                 const output = part.output as any;
                 return (
                   <div
@@ -1559,7 +1570,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                       <CodeInterpreterView
                         code={(part.input as any)?.code}
                         error={
-                          output && typeof output === "object" && "error" in output
+                          output &&
+                          typeof output === "object" &&
+                          "error" in output
                             ? String(output.error)
                             : undefined
                         }
@@ -1588,6 +1601,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     )}
                   </div>
                 );
+              }
             }
             break;
 
@@ -1915,7 +1929,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     text="Preparing greeting..."
                   />
                 );
-              case "output-available":
+              case "output-available": {
                 const output = part.output as any;
                 return (
                   <div
@@ -1926,9 +1940,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                       <div className="flex items-start gap-3">
                         {output?.timeEmoji && (
                           <div className="mt-0.5 flex h-5 w-5 items-center justify-center rounded-md bg-neutral-600">
-                            <span className="text-xs">
-                              {output.timeEmoji}
-                            </span>
+                            <span className="text-xs">{output.timeEmoji}</span>
                           </div>
                         )}
                         <div className="min-w-0 flex-1 space-y-2">
@@ -1954,6 +1966,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     </div>
                   </div>
                 );
+              }
             }
             break;
 
