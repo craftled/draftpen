@@ -186,7 +186,7 @@ function ProfileSection({
             isProUserActive && (
               <span
                 className={cn(
-                  "mt-2 inline-flex items-center gap-1.5 rounded-lg border-transparent px-2 pt-1 pb-2 font-baumans! leading-5 shadow-sm ring-1 ring-ring/35 ring-offset-1 ring-offset-background",
+                  "mt-2 inline-flex items-center gap-1.5 rounded-lg border-transparent px-2 pt-1 pb-2 font-sans leading-5 shadow-sm ring-1 ring-ring/35 ring-offset-1 ring-offset-background",
                   "bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground",
                   "dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground"
                 )}

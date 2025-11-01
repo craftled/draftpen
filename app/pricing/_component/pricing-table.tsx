@@ -125,7 +125,7 @@ export default function PricingTable({
         </Link>
 
         <div className="mb-16 text-center">
-          <h1 className="mb-4 font-be-vietnam-pro font-medium text-4xl text-foreground">
+          <h1 className="mb-4 font-sans font-medium text-4xl text-foreground">
             Pricing
           </h1>
           <p className="text-muted-foreground text-xl">

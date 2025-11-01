@@ -2,7 +2,7 @@ import "./globals.css";
 import "katex/dist/katex.min.css";
 
 import type { Metadata, Viewport } from "next";
-import { Baumans, Be_Vietnam_Pro, Inter } from "next/font/google";
+import localFont from "next/font/local";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { ClientAnalytics } from "@/components/client-analytics";
 import { Toaster } from "@/components/ui/sonner";
@@ -63,28 +63,12 @@ export const viewport: Viewport = {
   ],
 };
 
-const inter = Inter({
-  subsets: ["latin"],
+const inter = localFont({
+  src: "../node_modules/inter-ui/variable/InterVariable.woff2",
   variable: "--font-sans",
   preload: true,
-  weight: "variable",
   display: "swap",
-});
-
-const beVietnamPro = Be_Vietnam_Pro({
-  subsets: ["latin"],
-  variable: "--font-be-vietnam-pro",
-  preload: true,
-  display: "swap",
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-});
-
-const baumans = Baumans({
-  subsets: ["latin"],
-  variable: "--font-baumans",
-  preload: true,
-  display: "swap",
-  weight: ["400"],
+  weight: "100 900",
 });
 
 export default function RootLayout({
@@ -95,7 +79,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${beVietnamPro.variable} ${baumans.variable} font-sans antialiased`}
+        className={`${inter.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
         <NuqsAdapter>

@@ -2,7 +2,7 @@ import "katex/dist/katex.min.css";
 
 import { ArrowLeftRight, Check, Copy, Download, WrapText } from "lucide-react";
 import Marked, { type ReactRenderer } from "marked-react";
-import { Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import Image from "next/image";
 import Link from "next/link";
 import React, {
@@ -48,11 +48,12 @@ type CitationLink = {
   link: string;
 };
 
-const geistMono = Geist_Mono({
-  subsets: ["latin"],
+const geistMono = localFont({
+  src: "../node_modules/geist/dist/fonts/geist-mono/GeistMono-Regular.woff2",
   variable: "--font-mono",
   preload: true,
   display: "swap",
+  weight: "400",
 });
 
 const _isValidUrl = (str: string) => {

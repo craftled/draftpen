@@ -32,7 +32,7 @@ export default function GlobalError({
           />
         </div>
 
-        <h1 className="mb-4 font-be-vietnam-pro text-4xl text-neutral-800 dark:text-neutral-100">
+        <h1 className="mb-4 font-sans text-4xl text-neutral-800 dark:text-neutral-100">
           Something went wrong
         </h1>
         <p className="mb-8 text-lg text-neutral-600 dark:text-neutral-300">

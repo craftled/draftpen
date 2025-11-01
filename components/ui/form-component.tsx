@@ -110,7 +110,7 @@ import { Textarea } from "../ui/textarea";
 // Pro Badge Component
 const ProBadge = ({ className = "" }: { className?: string }) => (
   <span
-    className={`!border-none !outline-0 !ring-offset-background/50 !pb-2 inline-flex items-center gap-1 rounded-lg bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 px-2.5 pt-0.5 font-baumans text-foreground leading-3 shadow-sm ring-offset-1 sm:pt-1 dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground ${className}`}
+    className={`!border-none !outline-0 !ring-offset-background/50 !pb-2 inline-flex items-center gap-1 rounded-lg bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 px-2.5 pt-0.5 font-sans text-foreground leading-3 shadow-sm ring-offset-1 sm:pt-1 dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground ${className}`}
   >
     <span>pro</span>
   </span>
@@ -1167,7 +1167,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
             </DrawerTrigger>
             <DrawerContent className="flex max-h-[80vh] min-h-[60vh] flex-col">
               <DrawerHeader className="flex-shrink-0 pb-4">
-                <DrawerTitle className="flex items-center gap-2 text-left font-be-vietnam-pro font-medium text-lg">
+                <DrawerTitle className="flex items-center gap-2 text-left font-sans font-medium text-lg">
                   <HugeiconsIcon
                     color="currentColor"
                     icon={CpuIcon}
@@ -1225,7 +1225,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                         </div>
                       ) : (
                         <div className="flex flex-wrap items-center gap-3">
-                          <span className="font-be-vietnam-pro text-xl sm:text-2xl">
+                          <span className="font-sans text-xl sm:text-2xl">
                             Scira
                           </span>
                           <ProBadge className="!text-white !bg-white/20 !ring-white/30 font-extralight" />

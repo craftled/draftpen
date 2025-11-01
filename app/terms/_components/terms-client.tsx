@@ -41,7 +41,7 @@ export default function TermsClient({ priceUSD }: { priceUSD?: number }) {
             {/* Logo */}
             <motion.div className="text-center" variants={item}>
               <Link
-                className="inline-flex items-center gap-3 font-be-vietnam-pro font-bold"
+                className="inline-flex items-center gap-3 font-sans font-bold"
                 href="/"
               >
                 <div className="relative flex h-14 w-14 items-center justify-center rounded-full border bg-background/90 shadow-sm">
@@ -64,7 +64,7 @@ export default function TermsClient({ priceUSD }: { priceUSD?: number }) {
 
       {/* Main Content */}
       <div className="px-4 py-16">
-        <div className="prose dark:prose-invert prose-neutral container mx-auto max-w-3xl prose-headings:font-be-vietnam-pro prose-a:text-foreground prose-p:text-muted-foreground prose-headings:tracking-tight prose-a:no-underline hover:prose-a:text-foreground/80">
+        <div className="prose dark:prose-invert prose-neutral container mx-auto max-w-3xl prose-headings:font-sans prose-a:text-foreground prose-p:text-muted-foreground prose-headings:tracking-tight prose-a:no-underline hover:prose-a:text-foreground/80">
           <p className="text-lg">
             Welcome to Scira AI. These Terms of Service govern your use of our
             website and services. By using Scira AI, you agree to these terms in

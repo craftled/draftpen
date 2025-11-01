@@ -226,7 +226,7 @@ const Navbar = memo(
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="pointer-events-auto mr-1">
-                    <span className="inline-flex items-center gap-1 rounded-lg border-transparent bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 px-2.5 pt-0.5 pb-1.75 font-baumans! text-foreground leading-4 shadow-sm ring-1 ring-ring/35 ring-offset-1 ring-offset-background sm:pt-1 dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">
+                    <span className="inline-flex items-center gap-1 rounded-lg border-transparent bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 px-2.5 pt-0.5 pb-1.75 font-sans text-foreground leading-4 shadow-sm ring-1 ring-ring/35 ring-offset-1 ring-offset-background sm:pt-1 dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">
                       {(() =>
                         isInTrial && daysLeftInTrial > 0 ? (
                           <>

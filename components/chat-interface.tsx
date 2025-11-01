@@ -718,12 +718,12 @@ const ChatInterface = memo(
             {status === "ready" && messages.length === 0 && (
               <div className="m-0 mb-2 text-center">
                 <div className="inline-flex items-center gap-3">
-                  <h1 className="!mb-0 font-be-vietnam-pro! font-light text-4xl text-foreground tracking-tighter sm:text-5xl dark:text-foreground">
+                  <h1 className="!mb-0 font-sans font-light text-4xl text-foreground tracking-tighter sm:text-5xl dark:text-foreground">
                     Draftpen
                   </h1>
                   {isUserPro && (
                     <h1
-                      className="!px-3 !pt-1 !pb-2.5 !m-0 !mt-2 inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 font-baumans! text-2xl text-foreground leading-4 shadow-sm ring-1 ring-ring/35 ring-offset-1 ring-offset-background dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground"
+                      className="!px-3 !pt-1 !pb-2.5 !m-0 !mt-2 inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 font-sans text-2xl text-foreground leading-4 shadow-sm ring-1 ring-ring/35 ring-offset-1 ring-offset-background dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground"
                       suppressHydrationWarning
                     >
                       {isInTrial && daysLeftInTrial > 0 ? (

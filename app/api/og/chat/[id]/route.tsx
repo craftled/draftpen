@@ -25,15 +25,8 @@ export async function GET(
       "app/api/og/chat/[id]/fonts",
       "Inter-Regular.ttf"
     );
-    const beVietnamProFontPath = path.join(
-      process.cwd(),
-      "app/api/og/chat/[id]/fonts",
-      "BeVietnamPro-Medium.ttf"
-    );
 
     const interFontData = await fs.promises.readFile(interFontPath);
-    const beVietnamProFontData =
-      await fs.promises.readFile(beVietnamProFontPath);
 
     // If chat doesn't exist or isn't public, return a default OG image
     if (!chatWithUser || chatWithUser.visibility !== "public") {
@@ -81,7 +74,7 @@ export async function GET(
                 fontSize: 56,
                 color: "#ffffff",
                 letterSpacing: "-0.03em",
-                fontFamily: "BeVietnamPro",
+                fontFamily: "Inter",
                 fontWeight: 900,
                 marginBottom: 16,
                 textShadow: "0 3px 10px rgba(0,0,0,0.45)",
@@ -109,11 +102,6 @@ export async function GET(
             {
               name: "Inter",
               data: interFontData,
-              style: "normal",
-            },
-            {
-              name: "BeVietnamPro",
-              data: beVietnamProFontData,
               style: "normal",
             },
           ],
@@ -188,7 +176,7 @@ export async function GET(
                 color: "#fafafa",
                 lineHeight: 0.95,
                 letterSpacing: "-0.04em",
-                fontFamily: "BeVietnamPro",
+                fontFamily: "Inter",
                 marginBottom: 24,
                 textShadow: "0 6px 24px rgba(0,0,0,0.45)",
               }}
@@ -214,7 +202,7 @@ export async function GET(
                   style={{
                     fontSize: 18,
                     color: "#ffffff",
-                    fontFamily: "BeVietnamPro",
+                    fontFamily: "Inter",
                     fontWeight: 800,
                   }}
                 >
@@ -269,7 +257,7 @@ export async function GET(
                     justifyContent: "center",
                     color: "#ffffff",
                     fontWeight: 800,
-                    fontFamily: "BeVietnamPro",
+                    fontFamily: "Inter",
                     fontSize: 16,
                     border: "1px solid rgba(255,255,255,0.25)",
                   }}

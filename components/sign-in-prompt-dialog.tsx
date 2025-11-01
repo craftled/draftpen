@@ -224,7 +224,7 @@ export function SignInPromptDialog({
     return (
       <Drawer onOpenChange={onOpenChange} open={open}>
         <DrawerContent className="max-h-[85vh] px-6 pb-6">
-          <DrawerHeader className="px-0 pt-4 pb-0 font-be-vietnam-pro">
+          <DrawerHeader className="px-0 pt-4 pb-0 font-sans">
             <DrawerTitle className="font-medium text-lg">
               Sign in to continue
             </DrawerTitle>

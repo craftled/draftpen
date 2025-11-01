@@ -18,7 +18,7 @@ import {
 // Pro Badge Component
 const ProBadge = ({ className = "" }: { className?: string }) => (
   <span
-    className={`inline-flex items-center gap-1 rounded-lg border-transparent bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 px-2.5 pt-1.5 pb-2.5 font-baumans! text-foreground leading-3 shadow-sm ring-offset-1 ring-offset-background/50 dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground ${className}`}
+    className={`inline-flex items-center gap-1 rounded-lg border-transparent bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 px-2.5 pt-1.5 pb-2.5 font-sans text-foreground leading-3 shadow-sm ring-offset-1 ring-offset-background/50 dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground ${className}`}
   >
     <span>pro</span>
   </span>
@@ -49,7 +49,7 @@ export const PostMessageUpgradeDialog = React.memo(
             <div className="absolute right-6 bottom-6 left-6">
               <div className="mb-3" />
               <DialogTitle className="mb-2 flex items-center gap-3 text-white">
-                <span className="flex items-center gap-2 font-be-vietnam-pro font-medium text-4xl">
+                <span className="flex items-center gap-2 font-sans font-medium text-4xl">
                   scira
                   <ProBadge className="!text-white !bg-white/20 !ring-white/30 !tracking-normal font-light text-xl" />
                 </span>

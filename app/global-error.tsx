@@ -9,33 +9,17 @@ import {
   RefreshCw,
   TriangleAlert,
 } from "lucide-react";
-import { Baumans, Be_Vietnam_Pro, Inter } from "next/font/google";
+import localFont from "next/font/local";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 const COPY_FEEDBACK_DURATION_MS = 2500 as const;
 
-const inter = Inter({
-  subsets: ["latin"],
+const inter = localFont({
+  src: "../node_modules/inter-ui/variable/InterVariable.woff2",
   variable: "--font-sans",
-  weight: "variable",
-  display: "swap",
-  preload: true,
-});
-
-const beVietnamPro = Be_Vietnam_Pro({
-  subsets: ["latin"],
-  variable: "--font-be-vietnam-pro",
-  weight: ["300", "400", "500", "600", "700", "800"],
-  display: "swap",
-  preload: true,
-});
-
-const baumans = Baumans({
-  subsets: ["latin"],
-  variable: "--font-baumans",
-  weight: "400",
+  weight: "100 900",
   display: "swap",
   preload: true,
 });
@@ -89,7 +73,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${beVietnamPro.variable} ${baumans.variable} min-h-screen bg-background font-sans text-foreground antialiased`}
+        className={`${inter.variable} min-h-screen bg-background font-sans text-foreground antialiased`}
         suppressHydrationWarning
       >
         <div className="flex min-h-screen flex-col items-center justify-center p-6">
@@ -111,7 +95,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
                   <TriangleAlert className="size-8 text-destructive" />
                 </div>
 
-                <h1 className="font-be-vietnam-pro font-semibold text-3xl tracking-tight md:text-4xl">
+                <h1 className="font-sans font-semibold text-3xl tracking-tight md:text-4xl">
                   Something broke
                 </h1>
 

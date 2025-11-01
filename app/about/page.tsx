@@ -186,7 +186,7 @@ export default function AboutPage() {
             {/* Logo */}
             <Link className="group flex justify-items-end gap-1.5" href="/">
               <SciraLogo className="size-7 transition-transform group-hover:scale-110" />
-              <span className="font-be-vietnam-pro font-normal text-2xl tracking-tighter">
+              <span className="font-sans font-normal text-2xl tracking-tighter">
                 Scira
               </span>
             </Link>
@@ -263,7 +263,7 @@ export default function AboutPage() {
           <div className="space-y-6">
             <div className="mb-8 flex items-end justify-center gap-1">
               <SciraLogo className="size-12" />
-              <h1 className="font-be-vietnam-pro font-normal text-4xl tracking-tighter">
+              <h1 className="font-sans font-normal text-4xl tracking-tighter">
                 Scira
               </h1>
             </div>

@@ -405,7 +405,7 @@ export default function LookoutPage() {
                   size={32}
                   strokeWidth={1.5}
                 />
-                <h1 className="font-be-vietnam-pro font-semibold text-2xl">
+                <h1 className="font-sans font-semibold text-2xl">
                   Scira Lookout
                 </h1>
               </div>

@@ -49,7 +49,7 @@ export default function Loading() {
                   {/* Scira logo header */}
                   <div className="mb-2 flex items-center gap-2">
                     <div className="h-6 w-6 animate-pulse rounded bg-muted" />
-                    <div className="font-be-vietnam-pro font-semibold text-lg">
+                    <div className="font-sans font-semibold text-lg">
                       <div className="h-5 w-20 animate-pulse rounded bg-muted" />
                     </div>
                   </div>
@@ -105,7 +105,7 @@ export default function Loading() {
                 <div className="w-full">
                   <div className="mb-2 flex items-center gap-2">
                     <div className="h-6 w-6 animate-pulse rounded bg-muted" />
-                    <div className="font-be-vietnam-pro font-semibold text-lg">
+                    <div className="font-sans font-semibold text-lg">
                       <div className="h-5 w-20 animate-pulse rounded bg-muted" />
                     </div>
                   </div>
