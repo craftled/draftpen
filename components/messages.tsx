@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { deleteTrailingMessages } from "@/app/actions";
 import { EnhancedErrorDisplay, Message } from "@/components/message";
 import { MessagePartRenderer } from "@/components/message-parts";
-import { SciraLogoHeader } from "@/components/scira-logo-header";
 import type { ChatMessage, CustomUIDataTypes } from "@/lib/types";
 import type { ComprehensiveUserData } from "@/lib/user-data-server";
 
@@ -421,7 +420,6 @@ const Messages: React.FC<MessagesProps> = ({
           className={`flex items-start ${shouldReserveLoaderMinHeight ? "min-h-[calc(100vh-18rem)]" : ""} !m-0 !p-0`}
         >
           <div className="!m-0 !p-0 w-full">
-            <SciraLogoHeader />
             <div className="mt-2 ml-8 flex space-x-2">
               <div
                 className="h-2 w-2 animate-bounce rounded-full bg-muted-foreground dark:bg-muted-foreground"

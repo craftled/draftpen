@@ -70,7 +70,7 @@ import {
 import { useChatPrefetch } from "@/hooks/use-chat-prefetch";
 import type { User } from "@/lib/db/schema";
 import { cn } from "@/lib/utils";
-import { Button, buttonVariants } from "./ui/button";
+import { Button } from "./ui/button";
 
 // Constants
 const SCROLL_THRESHOLD = 0.8;
@@ -1293,12 +1293,11 @@ export function ChatHistoryButton({
       <TooltipTrigger asChild>
         <Button
           aria-label="Chat History"
-          className={cn(
-            buttonVariants({ variant: "ghost", size: "icon" }),
-            "!m-0 !p-0 size-6 rounded-full hover:bg-muted"
-          )}
+          className="!m-0 !p-0 size-6 rounded-full hover:bg-muted"
           onClick={onClickAction}
+          size="icon"
           type="button"
+          variant="ghost"
         >
           <HugeiconsIcon className="size-6" icon={SearchList02Icon} />
           <span className="sr-only">Chat History</span>

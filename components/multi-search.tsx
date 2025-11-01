@@ -364,6 +364,7 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
                 onError={() => handleImageError(image.url)}
                 sizes="(max-width: 768px) 50vw, 25vw"
                 src={image.url}
+                unoptimized
               />
             )}
 
@@ -430,6 +431,7 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
                     onError={() => handleImageError(currentImage.url)}
                     sizes="100vw"
                     src={currentImage.url}
+                    unoptimized
                   />
                 )}
               </div>
@@ -769,7 +771,7 @@ const MultiSearch = ({
   }
 
   return (
-    <div className="w-full space-y-4">
+    <div className="mt-4 w-full space-y-4">
       {/* Sources Accordion */}
       <Accordion
         className="w-full"

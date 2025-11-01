@@ -660,11 +660,11 @@ export const Message: React.FC<MessageProps> = ({
 
     // Very short messages (like single words or short phrases)
     if (length <= 20 && lines === 1) {
-      return "[&>*]:!text-lg sm:[&>*]:text-xl font-normal"; // Smaller on mobile
+      return "[&>*]:!text-base sm:[&>*]:text-lg font-normal"; // Smaller on mobile
     }
     // Short messages (one line, moderate length)
     if (length <= 120 && lines === 1) {
-      return "[&>*]:!text-base sm:[&>*]:!text-lg"; // Smaller on mobile
+      return "[&>*]:!text-sm sm:[&>*]:!text-base"; // Smaller on mobile
     }
     // Medium messages (2-3 lines or longer single line)
     if (lines <= 3 || length <= 200) {

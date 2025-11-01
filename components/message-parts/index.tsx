@@ -58,7 +58,6 @@ import {
 } from "@/components/ai-elements/tool";
 import { ChatTextHighlighter } from "@/components/chat-text-highlighter";
 import { ReasoningPartView } from "@/components/reasoning-part";
-import { SciraLogoHeader } from "@/components/scira-logo-header";
 import { ShareButton } from "@/components/share";
 import { SearchLoadingState } from "@/components/tool-invocation-list-view";
 import {
@@ -737,9 +736,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
           <div
             className="!m-0 !p-0"
             key={`${messageIndex}-${partIndex}-step-start-logo`}
-          >
-            <SciraLogoHeader />
-          </div>
+          />
         );
       }
       return <div key={`${messageIndex}-${partIndex}-step-start`} />;

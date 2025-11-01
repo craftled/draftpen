@@ -141,8 +141,6 @@ export function ShareButton({
     }
   };
 
-  const button = <Button {...getButtonProps()}>{getButtonContent()}</Button>;
-
   const tooltipContent =
     selectedVisibilityType === "public"
       ? "Manage sharing settings"
@@ -153,12 +151,23 @@ export function ShareButton({
       {variant === "icon" ? (
         <TooltipProvider>
           <Tooltip>
-            <TooltipTrigger asChild>{button}</TooltipTrigger>
+            <TooltipTrigger asChild>
+              <Button {...getButtonProps()}>{getButtonContent()}</Button>
+            </TooltipTrigger>
+            <TooltipContent>{tooltipContent}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : variant === "navbar" ? (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button {...getButtonProps()}>{getButtonContent()}</Button>
+            </TooltipTrigger>
             <TooltipContent>{tooltipContent}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
       ) : (
-        button
+        <Button {...getButtonProps()}>{getButtonContent()}</Button>
       )}
 
       <ShareDialog

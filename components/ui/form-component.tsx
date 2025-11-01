@@ -3830,8 +3830,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 <Textarea
                   autoFocus={!(isEnhancing || isTypewriting)}
                   className={cn(
-                    "w-full rounded-xl rounded-b-none md:text-base!",
-                    "text-base leading-relaxed",
+                    "w-full rounded-xl rounded-b-none md:text-sm!",
+                    "text-sm leading-relaxed",
                     "!bg-muted",
                     "!border-0",
                     "text-foreground",
