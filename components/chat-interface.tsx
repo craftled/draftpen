@@ -6,6 +6,7 @@ import { Crown02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { DefaultChatTransport } from "ai";
 import { Clock } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { parseAsString, useQueryState } from "nuqs";
 // React and React-related imports
@@ -718,21 +719,28 @@ const ChatInterface = memo(
             {status === "ready" && messages.length === 0 && (
               <div className="m-0 mb-2 text-center">
                 <div className="inline-flex items-center gap-3">
-                  <h1 className="!mb-0 font-light font-sans text-4xl text-foreground tracking-tighter sm:text-5xl dark:text-foreground">
+                  <Image
+                    alt="Draftpen"
+                    className="size-4 sm:size-5"
+                    height={20}
+                    src="/draftpen.svg"
+                    width={20}
+                  />
+                  <h1 className="!mb-0 font-normal font-sans text-xl text-foreground tracking-wide sm:text-2xl dark:text-foreground">
                     Draftpen
                   </h1>
                   {isUserPro && (
                     <h1
-                      className="!px-3 !pt-1 !pb-2.5 !m-0 !mt-2 inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 font-sans text-2xl text-foreground leading-4 shadow-sm ring-1 ring-ring/35 ring-offset-1 ring-offset-background dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground"
+                      className="!px-2.5 !pt-1 !pb-1.5 !m-0 !mt-1 inline-flex items-center gap-1 rounded-lg bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 font-sans text-sm text-foreground leading-3 shadow-sm ring-1 ring-ring/35 ring-offset-1 ring-offset-background dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground"
                       suppressHydrationWarning
                     >
                       {isInTrial && daysLeftInTrial > 0 ? (
                         <>
-                          <Clock className="h-4 w-4" />
+                          <Clock className="h-3 w-3" />
                           <span>{daysLeftInTrial}d trial</span>
                         </>
                       ) : (
-                        <span>pro</span>
+                        <span>Pro</span>
                       )}
                     </h1>
                   )}
