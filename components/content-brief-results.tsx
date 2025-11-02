@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Marked from "marked-react";
 
 type ContentBriefOutput = {
@@ -38,6 +38,81 @@ export default function ContentBriefResults({
     }
   };
 
+  // Generate stable keys for markdown elements
+  const getElementKey = useMemo(() => {
+    const contentHash = output.brief.slice(0, 50).replace(/[^a-zA-Z0-9]/g, "");
+    const counters = {
+      list: 0,
+      listItem: 0,
+      paragraph: 0,
+      heading: 0,
+    };
+
+    return (type: keyof typeof counters, index?: number) => {
+      const count = counters[type]++;
+      return `${contentHash}-${type}-${index ?? count}`;
+    };
+  }, [output.brief]);
+
+  const renderer = useMemo(
+    () => ({
+      link({ href, children }: { href: string; children: React.ReactNode }) {
+        return (
+          <a
+            href={href}
+            key={`link-${href}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+          >
+            {children}
+          </a>
+        );
+      },
+      list(children: React.ReactNode, ordered: boolean) {
+        const key = getElementKey("list");
+        const Tag = ordered ? "ol" : "ul";
+        return (
+          <Tag key={key} className={ordered ? "list-decimal" : "list-disc"}>
+            {children}
+          </Tag>
+        );
+      },
+      listItem(children: React.ReactNode, index: number) {
+        const key = getElementKey("listItem", index);
+        return (
+          <li key={key}>
+            {children}
+          </li>
+        );
+      },
+      paragraph(children: React.ReactNode) {
+        const key = getElementKey("paragraph");
+        return (
+          <p key={key}>
+            {children}
+          </p>
+        );
+      },
+      heading({
+        children,
+        level,
+      }: {
+        children: React.ReactNode;
+        level: number;
+      }) {
+        const key = getElementKey("heading");
+        const Tag = `h${level}` as keyof JSX.IntrinsicElements;
+        return (
+          <Tag key={key}>
+            {children}
+          </Tag>
+        );
+      },
+    }),
+    [getElementKey]
+  );
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between border-b border-neutral-200 pb-3 dark:border-neutral-800">
@@ -60,25 +135,7 @@ export default function ContentBriefResults({
       </div>
 
       <div className="prose prose-sm max-w-none dark:prose-invert">
-        <Marked
-          value={output.brief}
-          gfm
-          breaks
-          renderer={{
-            link({ href, children }) {
-              return (
-                <a
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                >
-                  {children}
-                </a>
-              );
-            },
-          }}
-        />
+        <Marked value={output.brief} gfm breaks renderer={renderer} />
       </div>
 
       <div className="mt-6 rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-900/50">

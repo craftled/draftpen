@@ -217,6 +217,40 @@ export const lookout = pgTable("lookout", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// Extracted pages from SERP
+export const extractedPage = pgTable("extracted_page", {
+  id: text("id").primaryKey().$defaultFn(() => generateId()),
+  extractionId: text("extraction_id").notNull(), // Groups pages from same extraction
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  url: text("url").notNull(),
+  title: text("title").notNull(),
+  metaDescription: text("meta_description"),
+  h1: text("h1"),
+  content: text("content").notNull(), // Full markdown
+  wordCount: integer("word_count").notNull(),
+  metadata: json("metadata").$type<{
+    author?: string;
+    publishedDate?: string;
+    image?: string;
+    favicon?: string;
+    language?: string;
+  }>(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Page analysis results
+export const pageAnalysis = pgTable("page_analysis", {
+  id: text("id").primaryKey().$defaultFn(() => generateId()),
+  pageId: text("page_id").notNull().references(() => extractedPage.id, { onDelete: "cascade" }),
+  introWordCount: integer("intro_word_count").notNull(),
+  fleschScore: real("flesch_score").notNull(),
+  headings: json("headings").$type<Array<{ level: number; text: string }>>().notNull(),
+  keywordFrequencies: json("keyword_frequencies").$type<Array<{ keyword: string; count: number }>>(),
+  entities: json("entities").$type<Array<{ text: string; type: string }>>(),
+  semanticKeywords: json("semantic_keywords").$type<string[]>(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export type User = InferSelectModel<typeof user>;
 export type Session = InferSelectModel<typeof session>;
 export type Account = InferSelectModel<typeof account>;
@@ -229,6 +263,8 @@ export type ExtremeSearchUsage = InferSelectModel<typeof extremeSearchUsage>;
 export type MessageUsage = InferSelectModel<typeof messageUsage>;
 export type CustomInstructions = InferSelectModel<typeof customInstructions>;
 export type Lookout = InferSelectModel<typeof lookout>;
+export type ExtractedPage = InferSelectModel<typeof extractedPage>;
+export type PageAnalysis = InferSelectModel<typeof pageAnalysis>;
 
 export const schema = {
   user,
@@ -243,4 +279,6 @@ export const schema = {
   messageUsage,
   customInstructions,
   lookout,
+  extractedPage,
+  pageAnalysis,
 } as const;

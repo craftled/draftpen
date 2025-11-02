@@ -169,53 +169,51 @@ const Navbar = memo(
         >
           {/* Share functionality using unified component */}
           {chatId &&
-            (user && isOwner ? (
-              /* Authenticated chat owners get share functionality */
-              isMounted && (
-                <ShareButtonNoSSR
-                  chatId={chatId}
-                  className="mr-1"
-                  disabled={false}
-                  isOwner={isOwner}
-                  onVisibilityChange={async (visibility) => {
-                    await Promise.resolve(onVisibilityChange(visibility));
-                  }}
-                  selectedVisibilityType={selectedVisibilityType}
-                  user={user}
-                  variant="navbar"
-                />
-              )
-            ) : (
-              /* Non-owners (authenticated or not) just see indicator */
-              selectedVisibilityType === "public" && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="inline-flex">
-                      <Button
-                        aria-disabled="true"
-                        className="pointer-events-none cursor-not-allowed border border-blue-200 bg-blue-50 opacity-80 dark:border-blue-800 dark:bg-blue-950/50"
-                        size="sm"
-                        tabIndex={-1}
-                        variant="secondary"
-                      >
-                        <GlobeHemisphereWestIcon
-                          className="text-blue-600 dark:text-blue-400"
-                          size={16}
-                        />
-                        <span className="font-medium text-blue-700 text-sm dark:text-blue-300">
-                          Shared
-                        </span>
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" sideOffset={4}>
-                    {user
-                      ? "This is someone else's shared page"
-                      : "This is a shared page"}
-                  </TooltipContent>
-                </Tooltip>
-              )
-            ))}
+            (user && isOwner
+              ? /* Authenticated chat owners get share functionality */
+                isMounted && (
+                  <ShareButtonNoSSR
+                    chatId={chatId}
+                    className="mr-1"
+                    disabled={false}
+                    isOwner={isOwner}
+                    onVisibilityChange={async (visibility) => {
+                      await Promise.resolve(onVisibilityChange(visibility));
+                    }}
+                    selectedVisibilityType={selectedVisibilityType}
+                    user={user}
+                    variant="navbar"
+                  />
+                )
+              : /* Non-owners (authenticated or not) just see indicator */
+                selectedVisibilityType === "public" && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex">
+                        <Button
+                          aria-disabled="true"
+                          className="pointer-events-none cursor-not-allowed border border-blue-200 bg-blue-50 opacity-80 dark:border-blue-800 dark:bg-blue-950/50"
+                          size="sm"
+                          tabIndex={-1}
+                          variant="secondary"
+                        >
+                          <GlobeHemisphereWestIcon
+                            className="text-blue-600 dark:text-blue-400"
+                            size={16}
+                          />
+                          <span className="font-medium text-blue-700 text-sm dark:text-blue-300">
+                            Shared
+                          </span>
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" sideOffset={4}>
+                      {user
+                        ? "This is someone else's shared page"
+                        : "This is a shared page"}
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
 
           {/* Subscription Status - show loading or Pro status only */}
           {user &&
@@ -235,13 +233,10 @@ const Navbar = memo(
                   Loading subscription status...
                 </TooltipContent>
               </Tooltip>
-            ) : hasActiveSubscription ? (
+            ) : hasActiveSubscription && isMounted ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button
-                    className="pointer-events-auto mr-1"
-                    type="button"
-                  >
+                  <button className="pointer-events-auto mr-1" type="button">
                     <span className="inline-flex items-center gap-1 rounded-lg border-transparent bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 px-2.5 pt-0.5 pb-1.75 font-sans text-foreground leading-4 shadow-sm ring-1 ring-ring/35 ring-offset-1 ring-offset-background sm:pt-1 dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">
                       {(() =>
                         isInTrial && daysLeftInTrial > 0 ? (

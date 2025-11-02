@@ -28,17 +28,26 @@ export const getSession = async (): Promise<AuthSession> => {
     }
   }
 
-  const session = await auth.api.getSession({
-    headers: requestHeaders,
-  });
+  try {
+    const session = await auth.api.getSession({
+      headers: requestHeaders,
+    });
 
-  // Only cache valid sessions with users
-  if (sessionToken && session?.user) {
-    const cacheKey = createSessionKey(sessionToken);
-    sessionCache.set(cacheKey, session);
+    // Only cache valid sessions with users
+    if (sessionToken && session?.user) {
+      const cacheKey = createSessionKey(sessionToken);
+      sessionCache.set(cacheKey, session);
+    }
+
+    return session ?? null;
+  } catch (error) {
+    // If session fetch fails, clear cache and return null
+    if (sessionToken) {
+      const cacheKey = createSessionKey(sessionToken);
+      sessionCache.delete(cacheKey);
+    }
+    return null;
   }
-
-  return session ?? null;
 };
 
 export const getUser = async (): Promise<User | null> => {

@@ -244,29 +244,69 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
   const { id } = params;
   const pageStartTime = Date.now();
 
-  // Get user first for ownership checks
-  const user = await getUser();
+  // Get user (don't fail if session temporarily unavailable)
+  let user;
+  try {
+    user = await getUser();
+  } catch (error) {
+    // Session fetch failed - continue without user, will check later
+    user = null;
+  }
 
-  // Use optimized combined query to get chat, user, and messages in fewer DB calls
-  const { chat, messages: messagesFromDb } =
-    await getChatWithUserAndInitialMessages({
+  // Retry fetching chat with backoff (handles race condition where chat is being created)
+  let chat: Chat | null = null;
+  let messagesFromDb: Message[] = [];
+  const maximumWaitMs = 5_000; // Shorter timeout for page load
+  let delayMs = 200;
+  const deadline = Date.now() + maximumWaitMs;
+
+  // First immediate attempt
+  const firstAttempt = await getChatWithUserAndInitialMessages({
+    id,
+    messageLimit: 20,
+    messageOffset: 0,
+  });
+  chat = firstAttempt.chat;
+  messagesFromDb = firstAttempt.messages;
+
+  // Retry if chat not found (might be still being created)
+  while (!chat && Date.now() < deadline) {
+    const remainingMs = deadline - Date.now();
+    await sleep(Math.min(delayMs, remainingMs));
+    const retryAttempt = await getChatWithUserAndInitialMessages({
       id,
       messageLimit: 20,
       messageOffset: 0,
     });
+    chat = retryAttempt.chat;
+    messagesFromDb = retryAttempt.messages;
+    delayMs = Math.min(delayMs * 2, maximumWaitMs);
+  }
 
   if (!chat) {
     notFound();
   }
 
-  // Check visibility and ownership
+  // Check visibility and ownership (only block if chat is private and we're sure user doesn't own it)
   if (chat.visibility === "private") {
-    if (!user) {
-      return notFound();
-    }
-
-    if (user.id !== chat.userId) {
-      return notFound();
+    // If we have user info, check ownership
+    if (user) {
+      if (user.id !== chat.userId) {
+        return notFound();
+      }
+    } else {
+      // No user info available - try one more time to get session
+      // This handles cases where session cache expired during long operations
+      try {
+        const retryUser = await getUser();
+        if (!retryUser || retryUser.id !== chat.userId) {
+          return notFound();
+        }
+        user = retryUser;
+      } catch {
+        // If retry fails, still block access for private chats
+        return notFound();
+      }
     }
   }
 

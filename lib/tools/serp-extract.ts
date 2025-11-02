@@ -1,8 +1,12 @@
 import FirecrawlApp from "@mendable/firecrawl-js";
-import { tool } from "ai";
+import { generateId, tool } from "ai";
 import Exa from "exa-js";
 import { z } from "zod";
+import { maindb } from "@/lib/db";
+import { extractedPage } from "@/lib/db/schema";
+import { calculateWordCount } from "@/lib/content-analysis";
 import { serverEnv } from "@/env/server";
+import { getUser } from "@/lib/auth-utils";
 
 const HTTP_PREFIX_RE = /^https?:\/\//;
 const MS_PER_SECOND = 1000 as const;
@@ -31,10 +35,9 @@ type ExtractedPage = {
 };
 
 type SerpExtractOutput = {
-  extracted: ExtractedPage[];
+  extractionId: string;
   summary: {
     totalPages: number;
-    totalChars: number;
     successCount: number;
     failedUrls: string[];
     source: "exa" | "firecrawl" | "mixed";
@@ -174,11 +177,6 @@ export const serpExtractTool = tool({
       }
     }
 
-    const totalChars = extracted.reduce(
-      (sum, page) => sum + page.content.length,
-      0
-    );
-
     // Log warning if not all URLs were extracted
     if (extracted.length < urls.length) {
       console.warn(
@@ -186,11 +184,40 @@ export const serpExtractTool = tool({
       );
     }
 
+    // Generate extraction ID
+    const extractionId = generateId();
+    
+    // Get user ID from auth context
+    const user = await getUser();
+    if (!user) {
+      throw new Error("User must be authenticated to extract SERP content");
+    }
+    const userId = user.id;
+
+    // Save all extracted pages to DB
+    for (const page of extracted) {
+      await maindb.insert(extractedPage).values({
+        extractionId,
+        userId,
+        url: page.url,
+        title: page.title,
+        metaDescription: page.metaDescription,
+        h1: page.h1,
+        content: page.content,
+        wordCount: calculateWordCount(page.content),
+        metadata: page.metadata,
+      });
+    }
+
+    const duration = (Date.now() - start) / MS_PER_SECOND;
+    console.log(
+      `[serp-extract] Completed in ${duration.toFixed(2)}s, extraction ID: ${extractionId}`
+    );
+
     return {
-      extracted,
+      extractionId,
       summary: {
         totalPages: extracted.length,
-        totalChars,
         successCount: extracted.length,
         failedUrls,
         source:
