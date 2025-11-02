@@ -32,7 +32,9 @@ export type SearchGroupId =
   | "connectors"
   | "screenshot"
   | "keywords"
-  | "serp";
+  | "serp"
+  | "serp-extract"
+  | "content-brief";
 
 // Search provider information for dynamic descriptions
 export const searchProviderInfo = {
@@ -98,6 +100,20 @@ export function getSearchGroups(searchProvider: SearchProvider = "parallel") {
       id: "serp" as const,
       name: "SERP",
       description: "Top 20 results with PAA & related (Serper.dev)",
+      icon: Search02Icon,
+      show: true,
+    },
+    {
+      id: "serp-extract" as const,
+      name: "SERP Extract",
+      description: "Extract full content from SERP ranking pages",
+      icon: Search02Icon,
+      show: true,
+    },
+    {
+      id: "content-brief" as const,
+      name: "Content Brief",
+      description: "Generate content briefs from SERP analysis",
       icon: Search02Icon,
       show: true,
     },

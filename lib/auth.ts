@@ -84,7 +84,7 @@ export const auth = betterAuth({
     google: {
       clientId: serverEnv.GOOGLE_CLIENT_ID,
       clientSecret: serverEnv.GOOGLE_CLIENT_SECRET,
-      redirectUri: `${process.env.NODE_ENV === "production" ? process.env.NEXT_PUBLIC_APP_URL : "http://localhost:3000"}/api/auth/callback/google`,
+      redirectUri: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/auth/callback/google`,
       mapProfileToUser: (profile: {
         given_name?: string;
         family_name?: string;

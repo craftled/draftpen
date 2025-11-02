@@ -113,6 +113,55 @@ const SerpResults = lazy(() =>
   }))
 );
 
+const SerpExtractResults = lazy(() =>
+  import("@/components/serp-extract-results").then((module) => ({
+    default: module.default,
+  }))
+);
+
+const ContentBriefResults = lazy(() =>
+  import("@/components/content-brief-results").then((module) => ({
+    default: module.default,
+  }))
+);
+
+// Content Brief Loading State with Progress Indicators
+const ContentBriefLoadingState = memo(() => {
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setElapsedSeconds((prev) => prev + 1);
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
+
+  const getProgressMessage = () => {
+    if (elapsedSeconds < 3) {
+      return "Calculating word counts and readability scores...";
+    }
+    if (elapsedSeconds < 8) {
+      return "Analyzing content structure and extracting keywords...";
+    }
+    if (elapsedSeconds < 12) {
+      return "Extracting entities and semantic keywords...";
+    }
+    if (elapsedSeconds < 16) {
+      return "Fetching keyword research data...";
+    }
+    return "Generating comprehensive content brief...";
+  };
+
+  return (
+    <SearchLoadingState color="blue" icon={Globe} text={getProgressMessage()} />
+  );
+});
+
+ContentBriefLoadingState.displayName = "ContentBriefLoadingState";
+
 const YouTubeSearchResults = lazy(() =>
   import("@/components/youtube-search-results").then((module) => ({
     default: module.YouTubeSearchResults,
@@ -1232,6 +1281,107 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     <ToolHeader
                       state={part.state}
                       title="SERP Checker"
+                      type={part.type as any}
+                    />
+                    <ToolContent>
+                      <ToolInput input={part.input} />
+                      <ToolOutput
+                        errorText={part.errorText}
+                        output={part.output as any}
+                      />
+                    </ToolContent>
+                  </Tool>
+                );
+            }
+            break;
+
+          case "tool-serp_extract":
+            switch (part.state) {
+              case "input-streaming":
+                return (
+                  <div
+                    className="text-neutral-500 text-sm"
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
+                    Preparing content extraction...
+                  </div>
+                );
+              case "input-available":
+                return (
+                  <SearchLoadingState
+                    color="blue"
+                    icon={Globe}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    text="Extracting content from URLs..."
+                  />
+                );
+              case "output-available":
+                return (
+                  <Suspense
+                    fallback={<ComponentLoader />}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
+                    <SerpExtractResults output={part.output as any} />
+                  </Suspense>
+                );
+              case "output-error":
+                return (
+                  <Tool
+                    defaultOpen={true}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
+                    <ToolHeader
+                      state={part.state}
+                      title="SERP Extract"
+                      type={part.type as any}
+                    />
+                    <ToolContent>
+                      <ToolInput input={part.input} />
+                      <ToolOutput
+                        errorText={part.errorText}
+                        output={part.output as any}
+                      />
+                    </ToolContent>
+                  </Tool>
+                );
+            }
+            break;
+
+          case "tool-content_brief":
+            switch (part.state) {
+              case "input-streaming":
+                return (
+                  <div
+                    className="text-neutral-500 text-sm"
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
+                    Preparing content brief generation...
+                  </div>
+                );
+              case "input-available":
+                return (
+                  <ContentBriefLoadingState
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  />
+                );
+              case "output-available":
+                return (
+                  <Suspense
+                    fallback={<ComponentLoader />}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
+                    <ContentBriefResults output={part.output as any} />
+                  </Suspense>
+                );
+              case "output-error":
+                return (
+                  <Tool
+                    defaultOpen={true}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  >
+                    <ToolHeader
+                      state={part.state}
+                      title="Content Brief"
                       type={part.type as any}
                     />
                     <ToolContent>

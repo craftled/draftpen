@@ -45,6 +45,7 @@ import { markdownJoinerTransform } from "@/lib/parser";
 import {
   academicSearchTool,
   createConnectorsSearchTool,
+  contentBriefTool,
   datetimeTool,
   extremeSearchTool,
   greetingTool,
@@ -54,6 +55,7 @@ import {
   retrieveTool,
   screenshotTool,
   serpCheckerTool,
+  serpExtractTool,
   textTranslateTool,
   webSearchTool,
   youtubeSearchTool,
@@ -396,6 +398,8 @@ export async function POST(req: Request) {
             greeting: greetingTool(timezone),
             keyword_research: keywordResearchTool,
             serp_checker: serpCheckerTool,
+            serp_extract: serpExtractTool,
+            content_brief: contentBriefTool,
             screenshot_capture: screenshotTool,
           };
 

@@ -171,18 +171,20 @@ const Navbar = memo(
           {chatId &&
             (user && isOwner ? (
               /* Authenticated chat owners get share functionality */
-              <ShareButtonNoSSR
-                chatId={chatId}
-                className="mr-1"
-                disabled={false}
-                isOwner={isOwner}
-                onVisibilityChange={async (visibility) => {
-                  await Promise.resolve(onVisibilityChange(visibility));
-                }}
-                selectedVisibilityType={selectedVisibilityType}
-                user={user}
-                variant="navbar"
-              />
+              isMounted && (
+                <ShareButtonNoSSR
+                  chatId={chatId}
+                  className="mr-1"
+                  disabled={false}
+                  isOwner={isOwner}
+                  onVisibilityChange={async (visibility) => {
+                    await Promise.resolve(onVisibilityChange(visibility));
+                  }}
+                  selectedVisibilityType={selectedVisibilityType}
+                  user={user}
+                  variant="navbar"
+                />
+              )
             ) : (
               /* Non-owners (authenticated or not) just see indicator */
               selectedVisibilityType === "public" && (
@@ -221,10 +223,13 @@ const Navbar = memo(
             (showProLoading ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="pointer-events-auto flex items-center gap-1.5 rounded-md border border-border bg-muted/50 px-3 py-1.5">
+                  <button
+                    className="pointer-events-auto flex items-center gap-1.5 rounded-md border border-border bg-muted/50 px-3 py-1.5"
+                    type="button"
+                  >
                     <div className="size-4 animate-pulse rounded-full bg-muted" />
                     <div className="hidden h-3 w-8 animate-pulse rounded bg-muted sm:block" />
-                  </div>
+                  </button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" sideOffset={4}>
                   Loading subscription status...
@@ -233,7 +238,10 @@ const Navbar = memo(
             ) : hasActiveSubscription ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="pointer-events-auto mr-1">
+                  <button
+                    className="pointer-events-auto mr-1"
+                    type="button"
+                  >
                     <span className="inline-flex items-center gap-1 rounded-lg border-transparent bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 px-2.5 pt-0.5 pb-1.75 font-sans text-foreground leading-4 shadow-sm ring-1 ring-ring/35 ring-offset-1 ring-offset-background sm:pt-1 dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">
                       {(() =>
                         isInTrial && daysLeftInTrial > 0 ? (
@@ -248,7 +256,7 @@ const Navbar = memo(
                           <span>pro</span>
                         ))()}
                     </span>
-                  </div>
+                  </button>
                 </TooltipTrigger>
                 <TooltipContent side="bottom" sideOffset={4}>
                   {isInTrial

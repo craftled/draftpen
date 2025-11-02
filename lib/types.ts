@@ -111,6 +111,12 @@ type keywordResearch = InferUITool<
 type screenshotCapture = InferUITool<
   typeof import("@/lib/tools")["screenshotTool"]
 >;
+type serpExtract = InferUITool<
+  typeof import("@/lib/tools")["serpExtractTool"]
+>;
+type contentBrief = InferUITool<
+  typeof import("@/lib/tools")["contentBriefTool"]
+>;
 
 // type mcpSearchTool = InferUITool<typeof mcpSearchTool>;
 
@@ -141,6 +147,8 @@ export type ChatTools = {
 
   code_context: codeContextTool;
   keyword_research: keywordResearch;
+  serp_extract: serpExtract;
+  content_brief: contentBrief;
 };
 
 export type CodeContextToolDefinition = codeContextTool;

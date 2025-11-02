@@ -9,6 +9,8 @@ export { redditSearchTool } from "./reddit-search";
 export { retrieveTool } from "./retrieve";
 export { screenshotTool } from "./screenshot";
 export { serpCheckerTool } from "./serp-checker";
+export { serpExtractTool } from "./serp-extract";
+export { contentBriefTool } from "./content-brief";
 export {
   type AddMemoryTool,
   createMemoryTools,
