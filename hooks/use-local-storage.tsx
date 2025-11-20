@@ -29,16 +29,18 @@ export function useLocalStorage<T>(
   key: string,
   defaultValue: T
 ): [T, (value: T | ((val: T) => T)) => void] {
-  // Initialize with the stored value immediately
-  const [storedValue, setStoredValue] = useState<T>(() =>
-    getStoredValue(key, defaultValue)
-  );
+  // Start with the default value on both server and first client render
+  // to avoid hydration mismatches. We sync from localStorage after mount.
+  const [storedValue, setStoredValue] = useState<T>(defaultValue);
 
-  // Listen for storage changes from other components/tabs
+  // Sync from localStorage and listen for changes from other components/tabs
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
+
+    // On mount (or when key/defaultValue change), read from localStorage
+    setStoredValue(getStoredValue(key, defaultValue));
 
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === key && e.newValue !== null) {
@@ -73,7 +75,7 @@ export function useLocalStorage<T>(
         handleCustomStorageChange as EventListener
       );
     };
-  }, [key]);
+  }, [key, defaultValue]);
 
   const setValue = useCallback(
     (value: T | ((val: T) => T)) => {
