@@ -151,11 +151,8 @@
     "typescript": "^5.9.3",
     "ultracite": "^6.3.4"
   },
-  "overrides": {
-    "react-is": "^19.0.0-rc-69d4b800-20241021"
-  },
   "engines": {
-    "bun": ">=1.2.23"
+    "bun": ">=1.3.2"
   },
-  "packageManager": "bun@1.2.23"
+  "packageManager": "bun@1.3.2"
 }

@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import Marked from "marked-react";
+import type { JSX } from "react";
+import { useMemo, useState } from "react";
 
 type ContentBriefOutput = {
   targetKeyword: string;
@@ -56,16 +57,16 @@ export default function ContentBriefResults({
 
   const renderer = useMemo(
     () => ({
-      link({ href, children }: { href: string; children: React.ReactNode }) {
+      link(href: string, text: React.ReactNode) {
         return (
           <a
+            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
             href={href}
             key={`link-${href}`}
-            target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+            target="_blank"
           >
-            {children}
+            {text}
           </a>
         );
       },
@@ -73,41 +74,23 @@ export default function ContentBriefResults({
         const key = getElementKey("list");
         const Tag = ordered ? "ol" : "ul";
         return (
-          <Tag key={key} className={ordered ? "list-decimal" : "list-disc"}>
+          <Tag className={ordered ? "list-decimal" : "list-disc"} key={key}>
             {children}
           </Tag>
         );
       },
-      listItem(children: React.ReactNode, index: number) {
-        const key = getElementKey("listItem", index);
-        return (
-          <li key={key}>
-            {children}
-          </li>
-        );
+      listItem(children: React.ReactNode[]) {
+        const key = getElementKey("listItem");
+        return <li key={key}>{children}</li>;
       },
       paragraph(children: React.ReactNode) {
         const key = getElementKey("paragraph");
-        return (
-          <p key={key}>
-            {children}
-          </p>
-        );
+        return <p key={key}>{children}</p>;
       },
-      heading({
-        children,
-        level,
-      }: {
-        children: React.ReactNode;
-        level: number;
-      }) {
+      heading(children: React.ReactNode, level: number) {
         const key = getElementKey("heading");
         const Tag = `h${level}` as keyof JSX.IntrinsicElements;
-        return (
-          <Tag key={key}>
-            {children}
-          </Tag>
-        );
+        return <Tag key={key}>{children}</Tag>;
       },
     }),
     [getElementKey]
@@ -115,31 +98,35 @@ export default function ContentBriefResults({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between border-b border-neutral-200 pb-3 dark:border-neutral-800">
+      <div className="flex items-center justify-between border-neutral-200 border-b pb-3 dark:border-neutral-800">
         <div>
-          <h3 className="text-lg font-semibold">Content Brief</h3>
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">
-            Target Keyword: <span className="font-medium">{output.targetKeyword}</span>
+          <h3 className="font-semibold text-lg">Content Brief</h3>
+          <p className="text-neutral-600 text-sm dark:text-neutral-400">
+            Target Keyword:{" "}
+            <span className="font-medium">{output.targetKeyword}</span>
             {output.monthlySearches && (
-              <> • Monthly Searches: {output.monthlySearches.toLocaleString()}</>
+              <>
+                {" "}
+                • Monthly Searches: {output.monthlySearches.toLocaleString()}
+              </>
             )}
           </p>
         </div>
         <button
+          className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 font-medium text-sm transition-colors hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:bg-neutral-800"
           onClick={handleCopy}
-          className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium transition-colors hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:bg-neutral-800"
           type="button"
         >
           {copied ? "Copied!" : "Copy Brief"}
         </button>
       </div>
 
-      <div className="prose prose-sm max-w-none dark:prose-invert">
-        <Marked value={output.brief} gfm breaks renderer={renderer} />
+      <div className="prose prose-sm dark:prose-invert max-w-none">
+        <Marked breaks gfm renderer={renderer} value={output.brief} />
       </div>
 
       <div className="mt-6 rounded-lg border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-900/50">
-        <h4 className="mb-2 text-sm font-semibold">Quick Stats</h4>
+        <h4 className="mb-2 font-semibold text-sm">Quick Stats</h4>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <span className="text-neutral-600 dark:text-neutral-400">
@@ -174,4 +161,3 @@ export default function ContentBriefResults({
     </div>
   );
 }
-

@@ -1,6 +1,7 @@
+import type { FlexibleSchema } from "@ai-sdk/provider-utils";
 import { generateObject, tool } from "ai";
 import { eq } from "drizzle-orm";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { modelProvider } from "@/ai/providers";
 import { serverEnv } from "@/env/server";
 import {
@@ -332,7 +333,11 @@ export const contentBriefTool = tool({
       })
       .optional()
       .describe("SERP data from serp_checker tool output (optional)"),
-  }),
+  }) as unknown as FlexibleSchema<{
+    targetKeyword: string;
+    extractionId: string;
+    serpResults?: SerpData;
+  }>,
   execute: async ({
     targetKeyword,
     extractionId,

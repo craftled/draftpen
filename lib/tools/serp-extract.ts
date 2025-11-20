@@ -1,12 +1,13 @@
+import type { FormatOption } from "@mendable/firecrawl-js";
 import FirecrawlApp from "@mendable/firecrawl-js";
 import { generateId, tool } from "ai";
 import Exa from "exa-js";
 import { z } from "zod";
-import { maindb } from "@/lib/db";
-import { extractedPage } from "@/lib/db/schema";
-import { calculateWordCount } from "@/lib/content-analysis";
 import { serverEnv } from "@/env/server";
 import { getUser } from "@/lib/auth-utils";
+import { calculateWordCount } from "@/lib/content-analysis";
+import { maindb } from "@/lib/db";
+import { extractedPage } from "@/lib/db/schema";
 
 const HTTP_PREFIX_RE = /^https?:\/\//;
 const MS_PER_SECOND = 1000 as const;
@@ -83,8 +84,10 @@ export const serpExtractTool = tool({
 
           extracted.push({
             url: item.url,
-            title: item.title || item.url.split("/").pop() || "Retrieved Content",
-            metaDescription: item.summary || undefined,
+            title:
+              item.title || item.url.split("/").pop() || "Retrieved Content",
+            metaDescription:
+              (item as { summary?: string }).summary || undefined,
             h1,
             content: item.text, // Full content, no truncation
             contentPreview,
@@ -120,18 +123,21 @@ export const serpExtractTool = tool({
         try {
           const urlWithoutHttps = url.replace(HTTP_PREFIX_RE, "");
           const isReddit = url.includes("reddit.com");
-          
+
           // Reddit URLs need special handling - they're JavaScript-heavy SPAs
           const scrapeOptions = {
-            formats: ["markdown"] as const,
+            formats: ["markdown"] as FormatOption[],
             proxy: "auto" as const,
             storeInCache: true,
-            parsers: ["pdf"] as const,
+            parsers: ["pdf"],
             // For Reddit, add wait time for JavaScript rendering
             ...(isReddit ? { waitFor: 3000 } : {}),
           };
 
-          const scrapeResponse = await firecrawl.scrape(urlWithoutHttps, scrapeOptions);
+          const scrapeResponse = await firecrawl.scrape(
+            urlWithoutHttps,
+            scrapeOptions
+          );
 
           if (scrapeResponse.markdown) {
             const h1 = extractH1(scrapeResponse.markdown);
@@ -146,21 +152,23 @@ export const serpExtractTool = tool({
                 scrapeResponse.metadata?.title ||
                 url.split("/").pop() ||
                 "Retrieved Content",
-              metaDescription: scrapeResponse.metadata?.description || undefined,
+              metaDescription:
+                scrapeResponse.metadata?.description || undefined,
               h1,
               content: scrapeResponse.markdown, // Full content, no truncation
               contentPreview,
               metadata: {
-                author: scrapeResponse.metadata?.author || undefined,
+                author:
+                  (scrapeResponse.metadata?.author as string) || undefined,
                 publishedDate:
                   (scrapeResponse.metadata?.publishedDate as string) ||
                   undefined,
                 image:
-                  scrapeResponse.metadata?.image ||
-                  scrapeResponse.metadata?.ogImage ||
+                  (scrapeResponse.metadata?.image as string) ||
+                  (scrapeResponse.metadata?.ogImage as string) ||
                   undefined,
                 favicon: `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=128`,
-                language: scrapeResponse.metadata?.language || "en",
+                language: (scrapeResponse.metadata?.language as string) || "en",
               },
             });
             usedFirecrawl = true;
@@ -186,7 +194,7 @@ export const serpExtractTool = tool({
 
     // Generate extraction ID
     const extractionId = generateId();
-    
+
     // Get user ID from auth context
     const user = await getUser();
     if (!user) {
@@ -230,4 +238,3 @@ export const serpExtractTool = tool({
     };
   },
 });
-

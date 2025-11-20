@@ -294,7 +294,7 @@ export default function LookoutPage() {
           isProStatusLoading={isProStatusLoading}
           isProUser={isProUser}
           showProBadge={false}
-          user={user}
+          user={user ?? null}
         />
         <div className="flex flex-1 flex-col justify-center py-8">
           <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
@@ -311,7 +311,7 @@ export default function LookoutPage() {
       <ProUpgradeScreen
         isProStatusLoading={isProStatusLoading}
         isProUser={isProUser}
-        user={user}
+        user={user ?? null}
       />
     );
   }
@@ -389,7 +389,7 @@ export default function LookoutPage() {
           isProStatusLoading={isProStatusLoading}
           isProUser={isProUser}
           showProBadge={true}
-          user={user}
+          user={user ?? null}
         />
 
         {/* Main Content */}

@@ -1,12 +1,14 @@
 #!/usr/bin/env bun
+
 /**
  * Test full content brief generation end-to-end
  * Usage: bun scripts/test-brief-generation.ts <extractionId> <targetKeyword>
  */
 
-import { maindb } from "../lib/db";
-import { extractedPage } from "../lib/db/schema";
+import { generateObject } from "ai";
 import { eq } from "drizzle-orm";
+import { modelProvider } from "../ai/providers";
+import { serverEnv } from "../env/server";
 import {
   calculateFleschReadingEase,
   calculateWordCount,
@@ -14,19 +16,20 @@ import {
   extractIntroduction,
   extractKeywordFrequencies,
 } from "../lib/content-analysis";
-import { generateObject } from "ai";
-import { modelProvider } from "../ai/providers";
-import { serverEnv } from "../env/server";
+import { maindb } from "../lib/db";
+import { extractedPage } from "../lib/db/schema";
 
 const extractionId = process.argv[2];
 const targetKeyword = process.argv[3] || "best affiliate software";
 
 if (!extractionId) {
-  console.error("Usage: bun scripts/test-brief-generation.ts <extractionId> [targetKeyword]");
+  console.error(
+    "Usage: bun scripts/test-brief-generation.ts <extractionId> [targetKeyword]"
+  );
   process.exit(1);
 }
 
-console.log(`\n📝 Generating Content Brief\n`);
+console.log("\n📝 Generating Content Brief\n");
 console.log(`Extraction ID: ${extractionId}`);
 console.log(`Target Keyword: ${targetKeyword}\n`);
 
@@ -77,7 +80,13 @@ try {
       entities: z.array(
         z.object({
           text: z.string(),
-          type: z.enum(["person", "company", "product", "technology", "concept"]),
+          type: z.enum([
+            "person",
+            "company",
+            "product",
+            "technology",
+            "concept",
+          ]),
         })
       ),
       semanticKeywords: z.array(z.string()),
@@ -125,11 +134,13 @@ Extract:
 
       if (res.ok) {
         const json = await res.json();
-        if (json.status_code === 20000 && json.tasks?.[0]?.result) {
-          keywordVariants = json.tasks[0].result.map((item) => ({
-            keyword: item.keyword || "",
-            search_volume: item.search_volume,
-          }));
+        if (json.status_code === 20_000 && json.tasks?.[0]?.result) {
+          keywordVariants = json.tasks[0].result.map(
+            (item: { keyword?: string; search_volume?: number }) => ({
+              keyword: item.keyword || "",
+              search_volume: item.search_volume,
+            })
+          );
         }
       }
     }
@@ -144,10 +155,12 @@ Extract:
     pages.reduce((sum, p) => sum + p.wordCount, 0) / pages.length
   );
   const avgIntroWordCount = Math.round(
-    analysisResults.reduce((sum, a) => sum + a.introWordCount, 0) / analysisResults.length
+    analysisResults.reduce((sum, a) => sum + a.introWordCount, 0) /
+      analysisResults.length
   );
   const topPageFleschScore = analysisResults[0]?.fleschScore || 0;
-  const topKeywords = analysisResults[0]?.keywordFrequencies?.slice(0, 10) || [];
+  const topKeywords =
+    analysisResults[0]?.keywordFrequencies?.slice(0, 10) || [];
 
   // Generate markdown brief
   const brief = `## 1. Header Information
@@ -165,7 +178,10 @@ Word Count: The average word count of the top 5 competing pages is ${avgWordCoun
 ## 3. Competitor Analysis
 
 Competing Pages:
-${pages.slice(0, 5).map((p, i) => `${i + 1}. [${p.title}](${p.url})`).join("\n")}
+${pages
+  .slice(0, 5)
+  .map((p, i) => `${i + 1}. [${p.title}](${p.url})`)
+  .join("\n")}
 
 ## 4. Top Competing Page Analysis
 
@@ -186,30 +202,53 @@ Key insights:
 Average word count of article intros: ${avgIntroWordCount} words.
 
 Keywords mentioned in introductions:
-${llmAnalysis.object.semanticKeywords.slice(0, 5).map((k) => `- ${k}`).join("\n")}
+${llmAnalysis.object.semanticKeywords
+  .slice(0, 5)
+  .map((k) => `- ${k}`)
+  .join("\n")}
 
 ## 6. Keyword Strategy
 
 Keyword Variants:
-${keywordVariants.slice(0, 5).map((kv) => `- "${kv.keyword}" (Monthly Searches: ${kv.search_volume || "N/A"})`).join("\n")}
+${keywordVariants
+  .slice(0, 5)
+  .map(
+    (kv) => `- "${kv.keyword}" (Monthly Searches: ${kv.search_volume || "N/A"})`
+  )
+  .join("\n")}
 
 ## 7. Content Structure
 
 Suggested Subheaders:
-${analysisResults[0]?.headings.filter((h) => h.level === 2).slice(0, 5).map((h) => `- H2: ${h.text}`).join("\n") || "- H2: [To be determined]"}
+${
+  analysisResults[0]?.headings
+    .filter((h) => h.level === 2)
+    .slice(0, 5)
+    .map((h) => `- H2: ${h.text}`)
+    .join("\n") || "- H2: [To be determined]"
+}
 
 ## 8. Entities and Semantic Keywords
 
 Key Entities:
-${llmAnalysis.object.entities.slice(0, 10).map((e) => `- ${e.text} (${e.type})`).join("\n")}
+${llmAnalysis.object.entities
+  .slice(0, 10)
+  .map((e) => `- ${e.text} (${e.type})`)
+  .join("\n")}
 
 Semantic Keywords:
-${llmAnalysis.object.semanticKeywords.slice(0, 10).map((k) => `- ${k}`).join("\n")}
+${llmAnalysis.object.semanticKeywords
+  .slice(0, 10)
+  .map((k) => `- ${k}`)
+  .join("\n")}
 
 ## 9. Content Gaps
 
 Opportunities to cover:
-${llmAnalysis.object.contentGaps.slice(0, 5).map((gap) => `- ${gap}`).join("\n")}
+${llmAnalysis.object.contentGaps
+  .slice(0, 5)
+  .map((gap) => `- ${gap}`)
+  .join("\n")}
 `;
 
   console.log("=".repeat(80));
@@ -224,4 +263,3 @@ ${llmAnalysis.object.contentGaps.slice(0, 5).map((gap) => `- ${gap}`).join("\n")
   }
   process.exit(1);
 }
-
