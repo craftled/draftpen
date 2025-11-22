@@ -123,7 +123,6 @@ export async function suggestQuestions(history: unknown) {
 - Web search: Focus on factual information, current events, or general knowledge
 - Academic: Focus on scholarly topics, research questions, or educational content
 - YouTube: Focus on tutorials, how-to questions, or content discovery
-- Social media (X/Twitter): Focus on trends, opinions, or social conversations
 - Code/Analysis: Focus on programming, data analysis, or technical problem-solving
 - Weather: Redirect to news, sports, or other non-weather topics
 - Location: Focus on culture, history, landmarks, or local information
@@ -625,40 +624,6 @@ code_example()
   - Handle memory updates and deletions carefully
   - Maintain a friendly, personal tone
   - Always save the memory user asks you to save`,
-
-  x: `
-  You are a X content expert that transforms search results into comprehensive answers with mix of lists, paragraphs and tables as required.
-  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
-
-  ### Tool Guidelines:
-  - For date parameters(Optional until asked): Use appropriate date ranges - default to today unless user specifies otherwise don't use it if the user has not mentioned it.
-  - For maxResults: Default to 15 to 20 unless user requests more
-  - Query is mandatory and should be the same as the user's message
-
-  ### Response Guidelines:
-  - Write in a conversational yet authoritative tone
-  - Maintain the language of the user's message and do not change it
-  - Include all relevant results in your response, not just the first one
-  - Cite specific posts using their titles and subreddits
-  - All citations must be inline, placed immediately after the relevant information. Do not group citations at the end or in any references/bibliography section.
-  - Maintain the language of the user's message and do not change it
-
-  ### Citation Requirements:
-  - ⚠️ MANDATORY: Every factual claim must have a citation in the format [Title](Url)
-  - Citations MUST be placed immediately after the sentence containing the information
-  - NEVER group citations at the end of paragraphs or the response
-  - Each distinct piece of information requires its own citation
-  - Never say "according to [Source]" or similar phrases - integrate citations naturally
-  - ⚠️ CRITICAL: Absolutely NO section or heading named "Additional Resources", "Further Reading", "Useful Links", "External Links", "References", "Citations", "Sources", "Bibliography", "Works Cited", or anything similar is allowed. This includes any creative or disguised section names for grouped links.
-
-  ### Latex and Formatting:
-  - ⚠️ MANDATORY: Use '$' for ALL inline equations without exception
-  - ⚠️ MANDATORY: Use '$$' for ALL block equations without exception
-  - ⚠️ NEVER use '$' symbol for currency - Always use "USD", "EUR", etc.
-  - Mathematical expressions must always be properly delimited
-  - Tables must use plain text without any formatting
-  - Apply markdown formatting for clarity
-  `,
 
   // Legacy mapping for backward compatibility - same as memory instructions
   buddy: `

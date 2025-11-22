@@ -7,7 +7,6 @@ import {
   Database02Icon,
   GlobalSearchIcon,
   MicroscopeIcon,
-  NewTwitterIcon,
   RedditIcon,
   Search02Icon,
   YoutubeIcon,
@@ -21,7 +20,6 @@ export function cn(...inputs: ClassValue[]) {
 
 export type SearchGroupId =
   | "web"
-  | "x"
   | "academic"
   | "youtube"
   | "reddit"
@@ -59,13 +57,6 @@ export function getSearchGroups(searchProvider: SearchProvider = "parallel") {
       name: "Web",
       description: getWebSearchDescription(searchProvider),
       icon: GlobalSearchIcon,
-      show: true,
-    },
-    {
-      id: "x" as const,
-      name: "X",
-      description: "Search X posts",
-      icon: NewTwitterIcon,
       show: true,
     },
     {
