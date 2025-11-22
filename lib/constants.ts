@@ -5,7 +5,7 @@ export const SEARCH_LIMITS = {
 } as const;
 
 export const PRICING = {
-  PRO_MONTHLY: 15, // USD
+  PRO_MONTHLY: 99, // USD
 } as const;
 
 export const CURRENCIES = {

@@ -49,15 +49,15 @@ type PricingTableProps = {
 const FAQ_ITEMS = [
   {
     value: "item-1",
-    question: "What is Scira?",
+    question: "What is Draftpen?",
     answer:
-      "Scira is an open-source AI-powered search engine that uses RAG (Retrieval-Augmented Generation) and search grounding to provide accurate, up-to-date answers from reliable sources.",
+      "Draftpen is an AI-first content writing platform that helps you research and draft human-level content. It combines powerful AI models with live research tools, document connectors, and long-term memory to streamline your writing workflow.",
   },
   {
     value: "item-2",
     question: "What's included in the subscription?",
     answer:
-      "Draftpen is a pro-only service at $99/month with a 7-day free trial. You get unlimited searches, access to all premium AI models (GPT-5.1, GPT-5 nano, and Claude 4.5 Sonnet), PDF document analysis, web research with real-time data, and priority support.",
+      "Draftpen Pro costs $99/month with a 7-day free trial. You get unlimited AI-powered writing and research, access to all premium AI models (GPT-5.1, GPT-5 nano, and Claude 4.5 Sonnet), PDF and document analysis, web research with real-time data, scheduled research automation (Lookouts), and priority support.",
   },
   {
     value: "item-3",
@@ -73,15 +73,15 @@ const FAQ_ITEMS = [
   },
   {
     value: "item-5",
-    question: "What AI models does Scira use?",
+    question: "What AI models does Draftpen support?",
     answer:
-      "Scira uses a range of advanced AI models including OpenAI GPT and Claude to provide the best possible answers for different types of queries.",
+      "Draftpen supports multiple advanced AI models including OpenAI GPT-5.1, GPT-5 nano, and Anthropic Claude 4.5 Sonnet. You can switch between models to find the best fit for your writing task.",
   },
   {
     value: "item-6",
-    question: "How does Scira ensure information accuracy?",
+    question: "How does Draftpen help with research?",
     answer:
-      "Scira combines RAG technology with search grounding to retrieve information from reliable sources and verify it before providing answers. Each response includes source attribution for transparency.",
+      "Draftpen includes integrated research tools like web search, academic search, YouTube and Reddit lookups, keyword research with SEO metrics, and the ability to sync your Google Drive and Notion workspaces. All research results are automatically cited and can be used directly in your writing.",
   },
 ] as const;
 
@@ -214,23 +214,27 @@ export default function PricingTable({
               <ul className="space-y-3">
                 <li className="flex items-center">
                   <div className="mr-3 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
-                  Unlimited searches
+                  Unlimited AI writing
                 </li>
                 <li className="flex items-center">
                   <div className="mr-3 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
-                  All AI models
+                  All premium AI models
                 </li>
                 <li className="flex items-center">
                   <div className="mr-3 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
-                  PDF analysis
+                  Document & PDF analysis
+                </li>
+                <li className="flex items-center">
+                  <div className="mr-3 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
+                  Live web research
+                </li>
+                <li className="flex items-center">
+                  <div className="mr-3 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
+                  Scheduled research (Lookouts)
                 </li>
                 <li className="flex items-center">
                   <div className="mr-3 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
                   Priority support
-                </li>
-                <li className="flex items-center">
-                  <div className="mr-3 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
-                  Scira Lookout
                 </li>
               </ul>
 
@@ -273,7 +277,7 @@ export default function PricingTable({
               Frequently Asked Questions
             </h2>
             <p className="mx-auto max-w-2xl text-muted-foreground">
-              Find answers to common questions about Scira
+              Find answers to common questions about Draftpen
             </p>
           </div>
 
@@ -291,7 +295,7 @@ export default function PricingTable({
               Have more questions?{" "}
               <a
                 className="text-primary transition-colors hover:text-primary/80"
-                href="mailto:zaid@scira.ai"
+                href="mailto:support@draftpen.com"
               >
                 Contact us
               </a>
@@ -303,7 +307,7 @@ export default function PricingTable({
                   Ready to get started?
                 </p>
                 <p className="text-muted-foreground text-xs">
-                  Join thousands using Scira
+                  Start writing better content with Draftpen
                 </p>
               </div>
               <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
@@ -349,7 +353,7 @@ export default function PricingTable({
             Questions?{" "}
             <a
               className="text-foreground hover:underline"
-              href="mailto:zaid@scira.ai"
+              href="mailto:support@draftpen.com"
             >
               Get in touch
             </a>
