@@ -10,6 +10,11 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { toast } from "sonner";
+
+// Force dynamic rendering - this page requires authentication and client-side state
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import {
   AlertDialog,
   AlertDialogAction,
