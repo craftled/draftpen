@@ -442,10 +442,7 @@ const UserProfile = memo(
                 variant="default"
               >
                 <SignInIcon className="mr-1.5 size-3.5" />
-                <span>Sign in</span>
-                <span className="ml-1.5 hidden rounded-full bg-primary-foreground/15 px-1.5 py-0.5 text-[9px] text-primary-foreground/90 sm:inline">
-                  Free
-                </span>
+                <span>Start free trial</span>
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom" sideOffset={4}>
