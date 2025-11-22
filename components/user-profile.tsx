@@ -124,6 +124,13 @@ const NavigationMenu = memo(() => {
           </a>
         </DropdownMenuItem>
 
+        <DropdownMenuItem asChild className="cursor-pointer">
+          <Link className="flex w-full items-center gap-2" href="/changelog">
+            <EyeIcon size={16} />
+            <span>Changelog</span>
+          </Link>
+        </DropdownMenuItem>
+
         <DropdownMenuItem className="cursor-pointer py-1 hover:bg-transparent!">
           <div
             className="flex w-full items-center justify-between px-0"

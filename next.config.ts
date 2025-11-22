@@ -50,7 +50,13 @@ const nextConfig: NextConfig = {
       static: 180,
     },
   },
-  serverExternalPackages: ["@aws-sdk/client-s3", "@aws-sdk/lib-storage"],
+  serverExternalPackages: [
+    "@aws-sdk/client-s3",
+    "@aws-sdk/lib-storage",
+    "better-auth",
+    "@polar-sh/better-auth",
+    "@polar-sh/sdk",
+  ],
   transpilePackages: [
     "geist",
     "shiki",
@@ -58,6 +64,21 @@ const nextConfig: NextConfig = {
     "@t3-oss/env-nextjs",
     "@t3-oss/env-core",
   ],
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Prevent server-only modules from being bundled in client
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        "node:async_hooks": false,
+        async_hooks: false,
+        fs: false,
+        net: false,
+        tls: false,
+        crypto: false,
+      };
+    }
+    return config;
+  },
   // Optimize production builds
   productionBrowserSourceMaps: false,
   poweredByHeader: false,
