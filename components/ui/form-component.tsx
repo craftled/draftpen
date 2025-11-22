@@ -462,9 +462,9 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
         currentModelExists &&
         currentModelRequiresPro &&
         !isProUser &&
-        selectedModel !== "gpt5-mini"
+        selectedModel !== "gpt5-1"
       ) {
-        setSelectedModel("gpt5-mini");
+        setSelectedModel("gpt5-1");
 
         // Show a toast notification to inform the user
         toast.info(

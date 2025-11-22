@@ -11,8 +11,6 @@ import {
   FileTextIcon,
   GearIcon,
   GithubLogoIcon,
-  InfoIcon,
-  InstagramLogoIcon,
   ShieldIcon,
   SignInIcon,
   SignOutIcon,
@@ -117,12 +115,12 @@ const NavigationMenu = memo(() => {
         <DropdownMenuItem asChild className="cursor-pointer">
           <a
             className="flex w-full items-center gap-2"
-            href={"https://draftpen.com/"}
+            href={"https://draftpen.com/pricing"}
             rel="noopener"
             target="_blank"
           >
             <CodeIcon size={16} />
-            <span>API</span>
+            <span>Pricing</span>
           </a>
         </DropdownMenuItem>
 
@@ -140,13 +138,6 @@ const NavigationMenu = memo(() => {
         </DropdownMenuItem>
         <DropdownMenuSeparator />
 
-        {/* About and Information */}
-        <DropdownMenuItem asChild className="cursor-pointer">
-          <Link className="flex w-full items-center gap-2" href="/about">
-            <InfoIcon size={16} />
-            <span>About</span>
-          </Link>
-        </DropdownMenuItem>
         {/* Blog */}
         <DropdownMenuItem asChild className="cursor-pointer">
           <Link className="flex w-full items-center gap-2" href="/blog">
@@ -176,7 +167,7 @@ const NavigationMenu = memo(() => {
         <DropdownMenuItem asChild className="cursor-pointer">
           <a
             className="flex w-full items-center gap-2"
-            href={"https://git.new/scira"}
+            href={"https://github.com/craftled/draftpen"}
             rel="noopener"
             target="_blank"
           >
@@ -187,7 +178,7 @@ const NavigationMenu = memo(() => {
         <DropdownMenuItem asChild className="cursor-pointer">
           <a
             className="flex w-full items-center gap-2"
-            href={"https://x.com/sciraai"}
+            href={"https://x.com/draftpen"}
             rel="noopener"
             target="_blank"
           >
@@ -195,32 +186,13 @@ const NavigationMenu = memo(() => {
             <span>X.com</span>
           </a>
         </DropdownMenuItem>
+
         <DropdownMenuItem asChild className="cursor-pointer">
           <a
             className="flex w-full items-center gap-2"
-            href={"https://www.instagram.com/draftpen"}
-            rel="noopener"
-            target="_blank"
-          >
-            <InstagramLogoIcon size={16} />
-            <span>Instagram</span>
-          </a>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild className="cursor-pointer">
-          <a
-            className="flex w-full items-center gap-2"
-            href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=OPENAI_API_KEY,ANTHROPIC_API_KEY,DATABASE_URL,BETTER_AUTH_SECRET,GITHUB_CLIENT_ID,GITHUB_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,TWITTER_CLIENT_ID,TWITTER_CLIENT_SECRET,REDIS_URL,ELEVENLABS_API_KEY,EXA_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,SANDBOX_TEMPLATE_ID,CRON_SECRET,BLOB_READ_WRITE_TOKEN,MEM0_API_KEY,MEM0_ORG_ID,MEM0_PROJECT_ID,SMITHERY_API_KEY,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,SCIRA_PUBLIC_API_KEY,NEXT_PUBLIC_SCIRA_PUBLIC_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function"
-            rel="noopener"
-            target="_blank"
-          >
-            <VercelIcon size={14} />
-            <span>Deploy with Vercel</span>
-          </a>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild className="cursor-pointer">
-          <a
-            className="flex w-full items-center gap-2"
-            href={"https://scira.userjot.com"}
+            href={
+              "https://twitter.com/messages/compose?recipient_id=1793734738722635776"
+            }
             rel="noopener"
             target="_blank"
           >

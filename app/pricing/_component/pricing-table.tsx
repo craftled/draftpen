@@ -1,12 +1,18 @@
 "use client";
 
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  ProAccordion,
+  ProAccordionContent,
+  ProAccordionItem,
+  ProAccordionTrigger,
+} from "@/components/ui/pro-accordion";
 import { authClient } from "@/lib/auth-client";
 import { PRICING } from "@/lib/constants";
 
@@ -39,6 +45,45 @@ type PricingTableProps = {
   user: ComprehensiveUserData | null;
   priceUSD?: number; // from server (Polar), optional fallback to PRICING
 };
+
+const FAQ_ITEMS = [
+  {
+    value: "item-1",
+    question: "What is Scira?",
+    answer:
+      "Scira is an open-source AI-powered search engine that uses RAG (Retrieval-Augmented Generation) and search grounding to provide accurate, up-to-date answers from reliable sources.",
+  },
+  {
+    value: "item-2",
+    question: "What's included in the subscription?",
+    answer:
+      "Draftpen is a pro-only service at $99/month with a 7-day free trial. You get unlimited searches, access to all premium AI models (GPT-5.1, GPT-5 nano, and Claude 4.5 Sonnet), PDF document analysis, web research with real-time data, and priority support.",
+  },
+  {
+    value: "item-3",
+    question: "Are there any discounts available?",
+    answer:
+      "We occasionally offer discount codes for special promotions. You can apply any available discount codes during checkout through Polar.",
+  },
+  {
+    value: "item-4",
+    question: "Can I cancel my subscription anytime?",
+    answer:
+      "Yes, you can cancel your Pro subscription at any time. Your benefits will continue until the end of your current billing period.",
+  },
+  {
+    value: "item-5",
+    question: "What AI models does Scira use?",
+    answer:
+      "Scira uses a range of advanced AI models including OpenAI GPT and Claude to provide the best possible answers for different types of queries.",
+  },
+  {
+    value: "item-6",
+    question: "How does Scira ensure information accuracy?",
+    answer:
+      "Scira combines RAG technology with search grounding to retrieve information from reliable sources and verify it before providing answers. Each response includes source attribution for transparency.",
+  },
+] as const;
 
 export default function PricingTable({
   subscriptionDetails,
@@ -191,7 +236,11 @@ export default function PricingTable({
 
               {hasProAccess() ? (
                 <div className="space-y-4">
-                  <Button className="w-full" onClick={handleManageSubscription}>
+                  <Button
+                    className="w-full"
+                    onClick={handleManageSubscription}
+                    type="button"
+                  >
                     Manage subscription
                   </Button>
                   {getProAccessSource() === "polar" &&
@@ -207,6 +256,7 @@ export default function PricingTable({
                 <Button
                   className="group w-full"
                   onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG)}
+                  type="button"
                 >
                   Start 7-day free trial
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -215,6 +265,70 @@ export default function PricingTable({
             </CardContent>
           </Card>
         </div>
+
+        {/* FAQ Section */}
+        <section className="mt-16 rounded-2xl border border-border/40 bg-muted/30 px-6 py-12">
+          <div className="mb-10 text-center">
+            <h2 className="mb-3 font-semibold text-2xl">
+              Frequently Asked Questions
+            </h2>
+            <p className="mx-auto max-w-2xl text-muted-foreground">
+              Find answers to common questions about Scira
+            </p>
+          </div>
+
+          <ProAccordion className="w-full" collapsible type="single">
+            {FAQ_ITEMS.map(({ value, question, answer }) => (
+              <ProAccordionItem key={value} value={value}>
+                <ProAccordionTrigger>{question}</ProAccordionTrigger>
+                <ProAccordionContent>{answer}</ProAccordionContent>
+              </ProAccordionItem>
+            ))}
+          </ProAccordion>
+
+          <div className="mt-10 space-y-6 text-center">
+            <p className="text-muted-foreground">
+              Have more questions?{" "}
+              <a
+                className="text-primary transition-colors hover:text-primary/80"
+                href="mailto:zaid@scira.ai"
+              >
+                Contact us
+              </a>
+            </p>
+
+            <div className="mx-auto flex max-w-lg flex-col gap-4 rounded-xl border border-border/40 bg-muted/40 px-4 py-4 sm:flex-row sm:items-center sm:px-6">
+              <div className="flex-1 text-center sm:text-left">
+                <p className="font-medium text-foreground text-sm">
+                  Ready to get started?
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  Join thousands using Scira
+                </p>
+              </div>
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                <Button
+                  className="w-full px-4 py-2 text-sm sm:w-auto"
+                  onClick={() => router.push("/")}
+                  size="sm"
+                  type="button"
+                >
+                  Start now
+                  <Search className="ml-1 h-3 w-3" />
+                </Button>
+                <Button
+                  className="w-full px-4 py-2 text-sm sm:w-auto"
+                  onClick={() => router.push("/pricing")}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  View pricing
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* Footer */}
         <div className="mt-16 space-y-4 text-center">

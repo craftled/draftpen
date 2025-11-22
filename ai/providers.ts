@@ -13,16 +13,11 @@ const DEFAULT_MAX_OUTPUT_TOKENS = 8000 as const;
 
 export const modelProvider = customProvider({
   languageModels: {
-    gpt5: gateway("openai/gpt-5"),
-    "gpt5-mini": gateway("openai/gpt-5-mini"),
+    // OpenAI GPT-5 family
+    "gpt5-1": gateway("openai/gpt-5.1"),
     "gpt5-nano": gateway("openai/gpt-5-nano"),
-    o3: gateway("openai/o3"),
-
-    // Utility/aux models (not shown in UI)
-    "gpt4-1-nano": gateway("openai/gpt-4.1-nano"),
 
     // Anthropic (routed via AI Gateway)
-    "claude-3-5-haiku": gateway("anthropic/claude-3-5-haiku-20241022"),
     "claude-4-5-sonnet": gateway("anthropic/claude-sonnet-4-5-20250929"),
   },
 });
@@ -55,19 +50,20 @@ export type Model = {
 };
 
 const defaultModelEntry: Model = {
-  value: "gpt5-mini",
-  label: "GPT 5 Mini (Default)",
-  description: "Draftpen's free default model powered by GPT 5 Mini",
+  value: "gpt5-1",
+  label: "GPT 5.1 (Default)",
+  description:
+    "Draftpen's primary GPT 5.1 model for high-quality writing and research",
   vision: true,
   reasoning: true,
   experimental: false,
-  category: "Free",
+  category: "Pro",
   pdf: true,
-  pro: false,
-  requiresAuth: false,
+  pro: true,
+  requiresAuth: true,
   freeUnlimited: false,
   maxOutputTokens: 16_000,
-  fast: true,
+  fast: false,
   isNew: true,
 };
 
@@ -77,13 +73,14 @@ export const models: Model[] = [
   {
     value: "gpt5-nano",
     label: "GPT 5 Nano",
-    description: "OpenAI's smallest flagship LLM",
+    description:
+      "OpenAI's efficient GPT 5 nano model for simpler and more deterministic tasks",
     vision: true,
     reasoning: true,
     experimental: false,
-    category: "Free",
+    category: "Pro",
     pdf: true,
-    pro: false,
+    pro: true,
     requiresAuth: true,
     freeUnlimited: false,
     maxOutputTokens: 16_000,
@@ -91,58 +88,10 @@ export const models: Model[] = [
   },
 
   {
-    value: "gpt5-mini",
-    label: "GPT 5 Mini",
-    description: "OpenAI's small flagship LLM",
-    vision: true,
-    reasoning: true,
-    experimental: false,
-    category: "Pro",
-    pdf: true,
-    pro: true,
-    requiresAuth: true,
-    freeUnlimited: false,
-    maxOutputTokens: 16_000,
-    fast: false,
-    isNew: true,
-  },
-  {
-    value: "gpt5",
-    label: "GPT 5",
-    description: "OpenAI's flagship LLM",
-    vision: true,
-    reasoning: true,
-    experimental: false,
-    category: "Pro",
-    pdf: true,
-    pro: true,
-    requiresAuth: true,
-    freeUnlimited: false,
-    maxOutputTokens: 16_000,
-    fast: false,
-    isNew: true,
-  },
-  {
-    value: "o3",
-    label: "o3",
-    description: "OpenAI's advanced LLM",
-    vision: true,
-    reasoning: true,
-    experimental: false,
-    category: "Pro",
-    pdf: true,
-    pro: true,
-    requiresAuth: true,
-    freeUnlimited: false,
-    maxOutputTokens: 16_000,
-    fast: false,
-    isNew: true,
-  },
-
-  {
     value: "claude-4-5-sonnet",
     label: "Claude 4.5 Sonnet",
-    description: "Anthropic's most advanced LLM",
+    description:
+      "Anthropic's most advanced LLM for creative and nuanced writing",
     vision: true,
     reasoning: false,
     experimental: false,

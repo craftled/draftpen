@@ -68,7 +68,7 @@ const ChatInterface = memo(
 
     const [selectedModel, setSelectedModel] = useLocalStorage(
       "selected-model",
-      "gpt5-mini"
+      "gpt5-1"
     );
     const [selectedGroup, setSelectedGroup] = useLocalStorage<SearchGroupId>(
       "scira-selected-group",
@@ -228,12 +228,8 @@ const ChatInterface = memo(
 
       // If current model requires pro but user is not pro, switch to default
       // Also prevent infinite loops by ensuring we're not already on the default model
-      if (
-        currentModelRequiresPro &&
-        !isUserPro &&
-        selectedModel !== "gpt5-mini"
-      ) {
-        setSelectedModel("gpt5-mini");
+      if (currentModelRequiresPro && !isUserPro && selectedModel !== "gpt5-1") {
+        setSelectedModel("gpt5-1");
 
         // Show a toast notification to inform the user
         toast.info(
@@ -726,12 +722,12 @@ const ChatInterface = memo(
                     src="/draftpen.svg"
                     width={20}
                   />
-                  <h1 className="!mb-0 font-normal font-sans text-xl text-foreground tracking-wide sm:text-2xl dark:text-foreground">
+                  <h1 className="!mb-0 font-normal font-sans text-foreground text-xl tracking-wide sm:text-2xl dark:text-foreground">
                     Draftpen
                   </h1>
                   {isUserPro && (
                     <h1
-                      className="!px-2.5 !pt-1 !pb-1.5 !m-0 !mt-1 inline-flex items-center gap-1 rounded-lg bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 font-sans text-sm text-foreground leading-3 shadow-sm ring-1 ring-ring/35 ring-offset-1 ring-offset-background dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground"
+                      className="!px-2.5 !pt-1 !pb-1.5 !m-0 !mt-1 inline-flex items-center gap-1 rounded-lg bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 font-sans text-foreground text-sm leading-3 shadow-sm ring-1 ring-ring/35 ring-offset-1 ring-offset-background dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground"
                       suppressHydrationWarning
                     >
                       {isInTrial && daysLeftInTrial > 0 ? (

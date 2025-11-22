@@ -12,7 +12,7 @@ To the open-source community and [Scira](https://github.com/zaidmukaddam/scira) 
 
 ### AI drafting workspace
 
-- **Multi-model chat**: Stream responses from OpenAI GPT-4o, GPT-5 variants, and Anthropic Claude through the Vercel AI SDK with reasoning, throttle control, and auto-resume.
+- **Multi-model chat**: Stream responses from OpenAI GPT-5.1, GPT-5 nano, and Anthropic Claude 4.5 Sonnet through the Vercel AI SDK with reasoning, throttle control, and auto-resume.
 - **Context controls**: Toggle custom instructions, surface suggested follow-up questions, and preserve chat history with visibility and share controls (private or public).
 - **Polished UX**: PWA install prompts, keyboard-driven command palette, and proactive usage limits keep the writing flow uninterrupted.
 
@@ -41,8 +41,8 @@ To the open-source community and [Scira](https://github.com/zaidmukaddam/scira) 
 
 ## LLM Models Supported
 
-- **Anthropic**: Claude 4 Sonnet
-- **OpenAI**: GPT-4o, o4-mini, o3 (with reasoning capabilities)
+- **Anthropic**: Claude 4.5 Sonnet
+- **OpenAI**: GPT-5.1, GPT-5 nano
 
 ## Tech stack
 

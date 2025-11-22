@@ -142,7 +142,7 @@ export async function suggestQuestions(history: unknown) {
     .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
     .join("\n");
 
-  const modelsToTry = ["gpt5-mini", "claude-4-5-sonnet"] as const;
+  const modelsToTry = ["gpt5-1", "claude-4-5-sonnet"] as const;
 
   for (const modelId of modelsToTry) {
     try {
@@ -174,7 +174,7 @@ export async function checkImageModeration(images: string[]) {
   }));
 
   const { text } = await generateText({
-    model: modelProvider.languageModel("gpt5-mini"),
+    model: modelProvider.languageModel("gpt5-nano"),
     messages,
   });
   return text;
@@ -186,7 +186,7 @@ export async function generateTitleFromUserMessage({
   message: UIMessage;
 }) {
   const { text: title } = await generateText({
-    model: modelProvider.languageModel("gpt4-1-nano"),
+    model: modelProvider.languageModel("gpt5-nano"),
     system: `You are an expert title generator. You are given a message and you need to generate a short title based on it.
 
     - you will generate a short title based on the first message a user begins a conversation with
@@ -232,9 +232,7 @@ Guidelines (MANDATORY):
 - Just return the improved prompt text in plain text format, no other text or commentary or markdown or anything else!!`;
 
     const { text } = await generateText({
-      model: modelProvider.languageModel("gpt5-mini"),
-      temperature: 0.6,
-      topP: 0.95,
+      model: modelProvider.languageModel("gpt5-1"),
       maxOutputTokens: 1024,
       system,
       prompt: raw,

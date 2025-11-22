@@ -68,7 +68,6 @@ const MS_PER_SECOND = 1000 as const;
 
 const STOP_STEP_COUNT = 5 as const;
 const MAX_RETRIES = 10 as const;
-const BUDGET_TOKENS = 4000 as const;
 
 // Gateway provider configuration constants
 const GATEWAY_ONLY_PROVIDERS: readonly string[] = ["openai", "anthropic"];
@@ -327,39 +326,18 @@ export async function POST(req: Request) {
                   parallelToolCalls: false,
                 }
               : {}),
-            ...((model === "gpt5" ||
-            model === "gpt5-mini" ||
-            model === "o3" ||
-            model === "gpt5-nano" ||
-            model === "gpt5-codex"
+            ...((model === "gpt5-1" || model === "gpt5-nano"
               ? {
-                  reasoningEffort:
-                    model === "gpt5-nano" ||
-                    model === "gpt5" ||
-                    model === "gpt5-mini"
-                      ? "minimal"
-                      : "medium",
+                  reasoningEffort: model === "gpt5-nano" ? "minimal" : "medium",
                   parallelToolCalls: false,
                   store: false,
                   reasoningSummary: "detailed",
-                  textVerbosity:
-                    model === "o3" || model === "gpt5-codex"
-                      ? "medium"
-                      : "high",
+                  textVerbosity: model === "gpt5-nano" ? "medium" : "high",
                 }
               : {}) satisfies OpenAIResponsesProviderOptions),
           },
 
           anthropic: {
-            ...(model === "claude-4-5-sonnet-think"
-              ? {
-                  sendReasoning: true,
-                  thinking: {
-                    type: "enabled",
-                    budgetTokens: BUDGET_TOKENS,
-                  },
-                }
-              : {}),
             disableParallelToolUse: true,
           } satisfies AnthropicProviderOptions,
         },
@@ -429,7 +407,7 @@ export async function POST(req: Request) {
           }
 
           const { object: repairedArgs } = await generateObject({
-            model: modelProvider.languageModel("gpt5-mini"),
+            model: modelProvider.languageModel("gpt5-nano"),
             schema: tool.inputSchema,
             prompt: [
               `The model tried to call the tool "${toolCall.toolName}"` +

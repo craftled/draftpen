@@ -175,7 +175,7 @@ export async function POST(req: Request) {
             parts: userMessage.parts,
             attachments: [],
             createdAt: new Date(),
-            model: "gpt5-mini",
+            model: "gpt5-1",
             completionTime: null,
             inputTokens: null,
             outputTokens: null,
@@ -199,7 +199,7 @@ export async function POST(req: Request) {
 
         // Start streaming
         const result = streamText({
-          model: modelProvider.languageModel("gpt5-mini"),
+          model: modelProvider.languageModel("gpt5-1"),
           messages: convertToModelMessages([userMessage]),
           stopWhen: stepCountIs(2),
           maxRetries: 10,
@@ -579,7 +579,7 @@ $$
                 const processingTime =
                   (Date.now() - streamStartTime) / MS_PER_SECOND;
                 return {
-                  model: "gpt5-mini",
+                  model: "gpt5-1",
                   completionTime: processingTime,
                   createdAt: new Date().toISOString(),
                   totalTokens: part.totalUsage?.totalTokens ?? null,
@@ -609,7 +609,7 @@ $$
                 createdAt: new Date(),
                 attachments: [],
                 chatId,
-                model: "gpt5-mini",
+                model: "gpt5-1",
                 completionTime: message.metadata?.completionTime ?? 0,
                 inputTokens: message.metadata?.inputTokens ?? 0,
                 outputTokens: message.metadata?.outputTokens ?? 0,
