@@ -2,7 +2,6 @@
 
 import {
   Camera01Icon,
-  ChattingIcon,
   ConnectIcon,
   Database02Icon,
   GlobalSearchIcon,
@@ -23,7 +22,6 @@ export type SearchGroupId =
   | "academic"
   | "youtube"
   | "reddit"
-  | "chat"
   | "memory"
   | "connectors"
   | "screenshot"
@@ -112,13 +110,6 @@ export function getSearchGroups(searchProvider: SearchProvider = "parallel") {
       name: "Academic",
       description: "Search academic papers powered by Exa",
       icon: MicroscopeIcon,
-      show: true,
-    },
-    {
-      id: "chat" as const,
-      name: "Chat",
-      description: "Talk to the model directly.",
-      icon: ChattingIcon,
       show: true,
     },
     {

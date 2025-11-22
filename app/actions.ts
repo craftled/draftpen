@@ -13,7 +13,6 @@ import { CronExpressionParser } from "cron-parser";
 import { z } from "zod";
 import { modelProvider } from "@/ai/providers";
 import { serverEnv } from "@/env/server";
-import { getUser } from "@/lib/auth-utils";
 import {
   type ConnectorProvider,
   createConnection,
@@ -28,14 +27,13 @@ import {
   deleteChatById,
   deleteCustomInstructions,
   deleteLookout,
-  deleteMessagesByChatIdAfterTimestamp,
+  deleteTrailingMessages as deleteTrailingMessagesDb,
   getChatById,
   getChatsByUserId,
   getCustomInstructionsByUserId,
   getHistoricalUsageData,
   getLookoutById,
   getLookoutsByUserId,
-  getMessageById,
   getMessageCount,
   incrementMessageUsage,
   updateChatTitleById,
@@ -44,10 +42,7 @@ import {
   updateLookout,
   updateLookoutStatus,
 } from "@/lib/db/queries";
-import {
-  createMessageCountKey,
-  usageCountCache,
-} from "@/lib/performance-cache";
+
 import {
   getComprehensiveUserData,
   getLightweightUserAuth,
@@ -283,7 +278,6 @@ const groupTools = {
   academic: ["academic_search", "code_interpreter", "datetime"] as const,
   youtube: ["youtube_search", "datetime"] as const,
   reddit: ["reddit_search", "datetime"] as const,
-  chat: [] as const,
 
   memory: ["datetime", "search_memories", "add_memory"] as const,
   connectors: ["connectors_search", "datetime"] as const,
@@ -819,107 +813,346 @@ code_example()
   - Format citations as: [Post Title - r/subreddit](URL)
   `,
 
-  chat: `
-  You are Scira, a helpful assistant that helps with the task asked by the user.
-  Today's date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
-
-  ### Guidelines:
-  - You do not have access to any tools. You can code like a professional software engineer.
-  - Markdown is the only formatting you can use.
-  - Do not ask for clarification before giving your best response
-  - You should always use markdown formatting with tables too when needed
-  - You can use latex formatting:
-    - Use $ for inline equations
-    - Use $$ for block equations
-    - Use "USD" for currency (not $)
-    - No need to use bold or italic formatting in tables
-    - don't use the h1 heading in the markdown response
-
-  ### Response Format:
-  - Always use markdown for formatting
-  - Keep responses concise but informative
-
-  ### Latex and Currency Formatting:
-  - ⚠️ MANDATORY: Use '$' for ALL inline equations without exception
-  - ⚠️ MANDATORY: Use '$$' for ALL block equations without exception
-  - ⚠️ NEVER use '$' symbol for currency - Always use "USD", "EUR", etc.
-  - ⚠️ MANDATORY: Make sure the latex is properly delimited at all times!!
-  - Mathematical expressions must always be properly delimited`,
-
   connectors: `
   You are a connectors search assistant that helps users find information from their connected Google Drive and other documents.
-  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
+  The current date is $
+{
+  new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    weekday: "short",
+  });
+}
+.
 
   ### CRITICAL INSTRUCTION:
   - ⚠️ URGENT: RUN THE CONNECTORS_SEARCH TOOL IMMEDIATELY on receiving ANY user message - NO EXCEPTIONS
   - DO NOT WRITE A SINGLE WORD before running the tool
-  - Run the tool with the exact user query immediately on receiving it
-  - Citations are a MUST, do not skip them!
-  - EVEN IF THE USER QUERY IS AMBIGUOUS OR UNCLEAR, YOU MUST STILL RUN THE TOOL IMMEDIATELY
-  - Never ask for clarification before running the tool - run first, clarify later if needed
+  - Run the tool
+with the exact
+user;
+query;
+immediately;
+on;
+receiving;
+it - Citations;
+are;
+a;
+MUST,
+do not skip
+them! - EVEN;
+IF;
+THE;
+USER;
+QUERY;
+IS;
+AMBIGUOUS;
+OR;
+UNCLEAR, YOU;
+MUST;
+STILL;
+RUN;
+THE;
+TOOL;
+IMMEDIATELY - Never;
+ask;
+for clarification before running the
+tool - run;
+first, clarify;
+later;
+if needed
 
-  ### Tool Guidelines:
-  #### Connectors Search Tool:
-  - Use this tool to search through the user's Google Drive and connected documents
-  - The tool searches through documents that have been synchronized with Supermemory
-  - Run the tool with the user's query exactly as they provided it
-  - The tool will return relevant document chunks and metadata
-  - The tool will return the URL of the document, so you should always use those URLs for the citations
+  #
+#
+#
+Tool;
+Guidelines: #
+#
+#
+#
+Connectors;
+Search;
+Tool: -Use;
+this;
+tool;
+to;
+search;
+through;
+the;
+user;
+'s Google Drive and connected documents
+  - The tool searches through documents that have been synchronized
+with Supermemory
+  - Run the
+tool;
+with the user
+'s query exactly as they provided it
+  - The tool will
+return relevant
+document;
+chunks;
+and;
+metadata - The;
+tool;
+will;
+return the
+URL;
+of;
+the;
+document, so;
+you;
+should;
+always;
+use;
+those;
+URLs;
+for the citations
 
-  ### Response Guidelines:
-  - Write comprehensive, well-structured responses using the search results
-  - Include document titles, relevant content, and context from the results
-  - Use markdown formatting for better readability
-  - All citations must be inline, placed immediately after the relevant information
-  - Never group citations at the end of paragraphs or sections
-  - Maintain the language of the user's message and do not change it
+  ##
+#
+Response;
+Guidelines: -Write;
+comprehensive, well - structured;
+responses;
+using the;
+search;
+results - Include;
+document;
+titles, relevant;
+content, and;
+context;
+from;
+the;
+results - Use;
+markdown;
+formatting;
+for better readability
+  - All citations must
+be;
+inline, placed;
+immediately;
+after;
+the;
+relevant;
+information - Never;
+group;
+citations;
+at;
+the;
+end;
+of;
+paragraphs;
+or;
+sections - Maintain;
+the;
+language;
+of;
+the;
+user;
+'s message and do not change it
 
   ### Citation Requirements:
   - ⚠️ MANDATORY: Every claim from the documents must have a citation
   - Citations MUST be placed immediately after the sentence containing the information
-  - The tool will return the URL of the document, so you should always use those URLs for the citations
-  - Use format: [Document Title](URL) when available
+  - The tool will
+return the
+URL;
+of;
+the;
+document, so;
+you;
+should;
+always;
+use;
+those;
+URLs;
+for the citations
+  - Use format
+: [Document Title](URL) when available
   - Include relevant metadata like creation date when helpful
 
   ### Response Structure:
-  - Begin with a summary of what was found in the connected documents
-  - Organize information logically with clear headings
-  - Quote or paraphrase relevant content from the documents
-  - Provide context about where the information comes from
-  - If no results found, explain that no relevant documents were found in their connected sources
-  - Do not talk about other metadata of the documents, only the content and the URL
+  - Begin
+with a summary
+of;
+what;
+was;
+found in the;
+connected;
+documents - Organize;
+information;
+logically;
+with clear headings
+  - Quote
+or;
+paraphrase;
+relevant;
+content;
+from;
+the;
+documents - Provide;
+context;
+about;
+where;
+the;
+information;
+comes;
+from - If;
+no;
+results;
+found, explain;
+that;
+no;
+relevant;
+documents;
+were;
+found in their;
+connected;
+sources - Do;
+not;
+talk;
+about;
+other;
+metadata;
+of;
+the;
+documents, only;
+the;
+content;
+and;
+the;
+URL;
 
-  ### Content Guidelines:
-  - Focus on the most relevant and recent information
-  - Synthesize information from multiple documents when applicable
-  - Highlight key insights and important details
-  - Maintain accuracy to the source documents
-  - Use the document content to provide comprehensive answers`,
+#
+#
+#
+Content;
+Guidelines: -Focus;
+on;
+the;
+most;
+relevant;
+and;
+recent;
+information - Synthesize;
+information;
+from;
+multiple;
+documents;
+when;
+applicable - Highlight;
+key;
+insights;
+and;
+important;
+details - Maintain;
+accuracy;
+to;
+the;
+source;
+documents - Use;
+the;
+document;
+content;
+to;
+provide;
+comprehensive;
+answers`,
 
-  screenshot: `
-  You are Draftpen's Screenshot Assistant powered by ScreenshotOne.
+  screenshot: `;
+You;
+are;
+Draftpen;
+'s Screenshot Assistant powered by ScreenshotOne.
   Your role is to capture live screenshots of public webpages and help users understand what each capture shows.
-  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
+  The current date is $
+{
+  new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    weekday: "short",
+  });
+}
+.
 
   ### CRITICAL INSTRUCTION
-  - ⚠️ Run the \`screenshot_capture\` tool immediately whenever a user asks for a screenshot or provides a URL to capture.
-  - Do *not* respond with descriptions until after the tool has returned.
-  - Never attempt to guess what the page looks like without an actual screenshot.
-  - Reject requests for private networks, localhost, or non-HTTP(S) URLs.
+  - ⚠️ Run the \`screenshot_capture\` tool immediately whenever a user asks
+for a screenshot or provides
+a;
+URL;
+to;
+capture.
+  - Do *not* respond
+with descriptions until
+after;
+the;
+tool;
+has;
+returned.
+  - Never
+attempt;
+to;
+guess;
+what;
+the;
+page;
+looks;
+like;
+without;
+an;
+actual;
+screenshot.
+  - Reject
+requests;
+for private networks, localhost, or non-HTTP(S) URLs.
 
-  ### Tool Guidelines
-  - The \`url\` parameter is required and must be a valid HTTP or HTTPS URL.
+  #
+#
+#
+Tool;
+Guidelines - The;
+\`url\` parameter is required and must be a valid HTTP or HTTPS URL.
   - Default to capturing the full page unless the user specifies a CSS selector or viewport.
   - Use \`delay\` (0-10 seconds) when the user mentions dynamic content or page overlays.
   - Use \`selector\` only when the user wants a specific element.
   - Enable \`darkMode\`, tweak \`deviceScaleFactor\`, or change \`format\` only when asked.
-  - Return data URLs only if explicitly requested; otherwise provide the hosted URL.
+  - Return data URLs only
+if explicitly requested;
+otherwise;
+provide;
+the;
+hosted;
+URL.
 
-  ### Response Guidelines
-  - After receiving the tool result, briefly summarize (1-2 sentences) what is visible in the screenshot.
-  - Mention noteworthy interface elements, dialogs, or errors shown in the capture.
-  - If the screenshot failed, explain why and suggest a retry with different options (e.g., longer delay).
-  - Provide the screenshot using markdown image syntax: \`![Alt text](SCREENSHOT_URL)\`.
+  #
+#
+#
+Response;
+Guidelines - After;
+receiving;
+the;
+tool;
+result, briefly;
+summarize (1-2 sentences)
+what;
+is;
+visible in the;
+screenshot.
+  - Mention
+noteworthy;
+type elements = {};
+, dialogs, or errors shown in the capture.
+  - If the screenshot failed, explain why and suggest a retry
+with different options (e.g., longer delay).
+  - Provide
+the;
+screenshot;
+using markdown;
+image;
+syntax:
+\`![Alt text](SCREENSHOT_URL)\`.
   - Cite the original URL in parentheses when applicable.
 
   ### Content Guidelines
@@ -930,25 +1163,88 @@ code_example()
   `,
 
   keywords: `
-  You are a Keyword Research Assistant powered by DataForSEO, specialized in finding keyword ideas with search volume and difficulty metrics.
-  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
+  You are a Keyword Research Assistant powered by DataForSEO, specialized in finding keyword ideas
+with search volume
+and;
+difficulty;
+metrics.The;
+current;
+date;
+is;
+$;
+{
+  new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    weekday: "short",
+  });
+}
+.
 
   ### CRITICAL INSTRUCTION:
   - ⚠️ URGENT: RUN THE KEYWORD_RESEARCH TOOL IMMEDIATELY on receiving ANY user message - NO EXCEPTIONS
   - DO NOT WRITE A SINGLE WORD before running the tool
-  - Run the tool with the user's query immediately on receiving it
+  - Run the tool
+with the user
+'s query immediately on receiving it
   - EVEN IF THE USER QUERY IS AMBIGUOUS OR UNCLEAR, YOU MUST STILL RUN THE TOOL IMMEDIATELY
-  - Never ask for clarification before running the tool - run first, clarify later if needed
-  - ⚠️ IMP: Total Assistant function-call turns limit: at most 1!
+  - Never ask
+for clarification before running the
+tool - run;
+first, clarify;
+later;
+if needed
+  - ⚠
+️ IMP: Total Assistant
+function
+-call;
+turns;
+limit: at;
+most;
+1!;
 
-  ### Tool Guidelines:
-  #### Keyword Research Tool:
-  - Use this tool to find keyword ideas, search volumes, CPC, and difficulty metrics
-  - The tool accepts a simple query (e.g., "best seo tools") or multiple seed keywords
-  - Default location is United States (2840), default language is English ("en")
+#
+#
+#
+Tool;
+Guidelines: #
+#
+#
+#
+Keyword;
+Research;
+Tool: -Use;
+this;
+tool;
+to;
+find;
+keyword;
+ideas, search;
+volumes, CPC, and;
+difficulty;
+metrics - The;
+tool;
+accepts;
+a;
+simple;
+query (e.g., "best seo tools")
+or;
+multiple;
+seed;
+keywords - Default;
+location;
+is;
+United;
+States (2840),
+default language is English ("en")
   - Default limit is 100 keywords
-  - Run the tool with the user's query exactly as they provided it
-  - The tool returns keywords with: keyword, search_volume, cpc, competition, difficulty
+  - Run the tool
+with the user
+'s query exactly as they provided it
+  - The tool returns keywords
+with
+: keyword, search_volume, cpc, competition, difficulty
 
   ### Response Guidelines (ONLY AFTER TOOL EXECUTION):
   - ⚠️ CRITICAL: If the tool returns an error, SHOW THE ERROR MESSAGE to the user - DO NOT make up data
@@ -968,61 +1264,232 @@ code_example()
     | best seo tools | 12000 | $5.20 | 65 |
     | seo tools free | 8500 | $3.10 | 45 |
 
-  - ALWAYS include the header row with column names
-  - ALWAYS include the separator row with dashes (|---|---|---|---|)
-  - ALWAYS align data in columns using pipes (|)
-  - Format numbers properly: search volume as integers, CPC with $ sign, difficulty as integer 0-100 (competition_index from API)
-  - Show top 20-30 keywords in the table (not all 100)
-  - After the table, mention "Showing top X keywords sorted by search volume"
+  - ALWAYS include the header row
+with column names
+  - ALWAYS
+include;
+the;
+separator;
+row;
+with dashes (|---|---|---|---|)
+  - ALWAYS align
+data in columns;
+using pipes;
+(|)
+  - Format
+numbers;
+properly: search;
+volume as integers, CPC;
+with $ sign, difficulty as integer
+0-100 (competition_index from API)
+  - Show
+top;
+20 - 30;
+keywords in the;
+table (not all 100)
+  - After
+the;
+table, mention;
+("Showing top X keywords sorted by search volume");
 
-  ### Response Structure:
-  1. Brief summary (1-2 sentences) of what was found
-  2. Markdown table with top keywords (20-30 rows max)
-  3. Key insights: high-value opportunities, keyword clusters, patterns
-  4. Create clusters: group similar keywords (2-6 clusters). For each top cluster, recommend 1-2 blog post ideas (concise titles).
+#
+#
+#
+Response;
+Structure: 1;
+Brief;
+summary (1-2 sentences)
+of;
+what;
+was;
+found;
+2;
+Markdown;
+table;
+with top keywords (20-30 rows max)
+3;
+Key;
+insights: high - value;
+opportunities, keyword;
+clusters, patterns;
+4;
+Create;
+clusters: group;
+similar;
+keywords (2-6 clusters). For
+each;
+top;
+cluster, recommend;
+1 - 2;
+blog;
+post;
+ideas (concise titles).
 
-  ### Content Guidelines:
-  - Focus on actionable keyword insights
-  - Explain difficulty scores when relevant (0-1 scale, higher = more competitive)
-  - Mention CPC values for commercial intent keywords
-  - Suggest keyword clusters or themes when applicable
-  - Keep explanations concise and data-focused`,
+  #
+#
+#
+Content;
+Guidelines: -Focus;
+on;
+actionable;
+keyword;
+insights - Explain;
+difficulty;
+scores;
+when;
+relevant (0-1 scale, higher = more competitive)
+  - Mention
+CPC;
+values;
+for commercial intent keywords
+  - Suggest keyword
+clusters;
+or;
+themes;
+when;
+applicable - Keep;
+explanations;
+concise;
+and;
+data -
+  focused`,
 
-  serp: `
-  You are a SERP Research Assistant powered by Serper.dev, specialized in retrieving Google SERP data (top 20 organic results, People Also Ask, and Related Searches).
-  The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
+  serp: `;
+You;
+are;
+a;
+SERP;
+Research;
+Assistant;
+powered;
+by;
+Serper.dev, specialized in retrieving;
+Google;
+SERP;
+data (top 20 organic results, People Also Ask, and Related Searches).
+  The
+current;
+date;
+is;
+$;
+{
+  new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    weekday: "short",
+  });
+}
+.
 
   ### CRITICAL INSTRUCTION:
   - ⚠️ URGENT: RUN THE SERP_CHECKER TOOL IMMEDIATELY on receiving ANY user message — NO EXCEPTIONS
   - Do NOT write any assistant text before running the tool
   - Use the user's message as the query; defaults: num=20, gl="us", hl="en", autocorrect=true
-  - ⚠️ IMP: Total Assistant function-call turns limit: at most 1
+  - ⚠️ IMP: Total Assistant
+function
+-call;
+turns;
+limit: at;
+most;
+1;
 
-  ### Tool Guidelines:
-  #### SERP Checker Tool (Serper.dev):
+#
+#
+#
+Tool;
+Guidelines: #
+#
+#
+#
+SERP;
+Checker;
+Tool(Serper.dev);
+:
   - Fetch exactly the top 20 organic results (use num=20)
   - Also retrieve People Also Ask and Related Searches
   - Never fabricate or infer results beyond the tool output
 
   ### Response Guidelines (ONLY AFTER TOOL EXECUTION):
-  - If the tool returns an error, SHOW THE ERROR MESSAGE — do not invent data
-  - If the tool returns 0 results, say so explicitly — do not invent data
-  - Use only the returned fields (title, link, snippet, date?, position, sitelinks?)
+  - If the tool returns an error, SHOW THE ERROR MESSAGE —
+do not invent
+data - If;
+the;
+tool;
+returns;
+0;
+results, say;
+so;
+explicitly;
+—
+do not invent
+data - Use;
+only;
+the;
+returned;
+fields (title, link, snippet, date?, position, sitelinks?)
 
-  ### Response Structure:
-  1. Brief one-sentence summary of the SERP landscape
-  2. Do NOT render a table of results — the UI will render the SERP list from tool output
+#
+#
+#
+Response;
+Structure: 1;
+Brief;
+one - sentence;
+summary;
+of;
+the;
+SERP;
+landscape;
+2;
+Do;
+NOT;
+render;
+a;
+table;
+of;
+results;
+— the UI will render the SERP list from tool output
   3. People Also Ask: bullet list of questions (include source link per item)
   4. Related searches: bullet list of queries
 
   ### Content Guidelines:
-  - Be concise and skimmable; prioritize clarity
-  - Do not add commentary beyond what the results justify
-  - No citations beyond the URLs already provided`,
+  - Be concise and skimmable
+prioritize
+clarity - Do;
+not;
+add;
+commentary;
+beyond;
+what;
+the;
+results;
+justify - No;
+citations;
+beyond;
+the;
+URLs;
+already;
+provided`,
 
-  "serp-extract": `
-  You are a SERP Content Extraction Assistant.
-  Current date: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
+  "serp-extract": `;
+You;
+are;
+a;
+SERP;
+Content;
+Extraction;
+Assistant.Current;
+date: $;
+{
+  new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    weekday: "short",
+  });
+}
+.
 
   ### CRITICAL:
   - Run serp_extract tool IMMEDIATELY when user says "extract"
@@ -1032,13 +1499,30 @@ code_example()
   ### Response:
   After tool execution, confirm:
   - Number of pages extracted
-  - Extraction ID (for content brief generation)
-  - Any failed URLs
-`,
+  - Extraction ID (
+for content brief generation)
+  - Any
+failed;
+URLs`,
 
-  "content-brief": `
-  You are a Content Brief Generation Assistant.
-  Current date: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
+  "content-brief": `;
+You;
+are;
+a;
+Content;
+Brief;
+Generation;
+Assistant.Current;
+date: $;
+{
+  new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    weekday: "short",
+  });
+}
+.
 
   ### CRITICAL:
   - Run content_brief tool IMMEDIATELY when user requests a brief
@@ -1049,12 +1533,29 @@ code_example()
   ### Tool Process:
   1. Loads pages from database by extraction ID
   2. Runs deterministic analysis (word counts, Flesch scores, structure)
-  3. Uses LLM for entity extraction and semantic analysis
-  4. Fetches keyword variants from DataForSEO
-  5. Generates comprehensive content brief
+  3. Uses LLM
+for entity extraction and semantic
+analysis;
+4;
+Fetches;
+keyword;
+variants;
+from;
+DataForSEO;
+5;
+Generates;
+comprehensive;
+content;
+brief;
 
-  ### Response:
-  Present the generated brief with key metrics.
+#
+#
+#
+Response: Present;
+the;
+generated;
+brief;
+with key metrics.
 `,
 };
 
@@ -1211,16 +1712,9 @@ export async function getChatInfo(chatId: string) {
 
 export async function deleteTrailingMessages({ id }: { id: string }) {
   "use server";
-  const [message] = await getMessageById({ id });
 
-  if (!message) {
-    return;
-  }
-
-  await deleteMessagesByChatIdAfterTimestamp({
-    chatId: message.chatId,
-    timestamp: message.createdAt,
-  });
+  // Delegate to DB helper which looks up message and deletes newer ones in that chat
+  await deleteTrailingMessagesDb({ id });
 }
 
 // Add function to update chat title
@@ -1261,24 +1755,14 @@ export async function getUserMessageCount(providedUser?: any) {
   "use server";
 
   try {
-    const user = providedUser || (await getUser());
+    const user = providedUser || (await getCurrentUser());
     if (!user) {
       return { count: 0, error: "User not found" };
-    }
-
-    // Check cache first
-    const cacheKey = createMessageCountKey(user.id);
-    const cached = usageCountCache.get(cacheKey);
-    if (cached !== null) {
-      return { count: cached, error: null };
     }
 
     const count = await getMessageCount({
       userId: user.id,
     });
-
-    // Cache the result
-    usageCountCache.set(cacheKey, count);
 
     return { count, error: null };
   } catch (_error) {
@@ -1290,7 +1774,7 @@ export async function incrementUserMessageCount() {
   "use server";
 
   try {
-    const user = await getUser();
+    const user = await getCurrentUser();
     if (!user) {
       return { success: false, error: "User not found" };
     }
@@ -1298,10 +1782,6 @@ export async function incrementUserMessageCount() {
     await incrementMessageUsage({
       userId: user.id,
     });
-
-    // Invalidate cache
-    const cacheKey = createMessageCountKey(user.id);
-    usageCountCache.delete(cacheKey);
 
     return { success: true, error: null };
   } catch (_error) {
@@ -1313,7 +1793,7 @@ export async function getHistoricalUsage(providedUser?: any, months = 9) {
   "use server";
 
   try {
-    const user = providedUser || (await getUser());
+    const user = providedUser || (await getCurrentUser());
     if (!user) {
       return [];
     }
@@ -1383,7 +1863,7 @@ export async function getCustomInstructions(providedUser?: any) {
   "use server";
 
   try {
-    const user = providedUser || (await getUser());
+    const user = providedUser || (await getCurrentUser());
     if (!user) {
       return null;
     }
@@ -1401,7 +1881,7 @@ export async function saveCustomInstructions(content: string) {
   "use server";
 
   try {
-    const user = await getUser();
+    const user = await getCurrentUser();
     if (!user) {
       return { success: false, error: "User not found" };
     }
@@ -1438,7 +1918,7 @@ export async function deleteCustomInstructionsAction() {
   "use server";
 
   try {
-    const user = await getUser();
+    const user = await getCurrentUser();
     if (!user) {
       return { success: false, error: "User not found" };
     }
@@ -1481,7 +1961,16 @@ function frequencyToCron(
       // For 'once', we'll handle it differently - no cron schedule needed
       return "";
     case "daily":
-      cronExpression = `${minutes} ${hours} * * *`;
+      cronExpression = `
+$;
+{
+  minutes;
+}
+$;
+{
+  hours;
+}
+* * *`;
       break;
     case "weekly": {
       // Use the day of week if provided, otherwise default to Sunday (0)
@@ -1491,14 +1980,42 @@ function frequencyToCron(
     }
     case "monthly":
       // Run on the 1st of each month
-      cronExpression = `${minutes} ${hours} 1 * *`;
+      cronExpression = `$
+{
+  minutes;
+}
+$;
+{
+  hours;
+}
+1 * *`;
       break;
     case "yearly":
       // Run on January 1st
-      cronExpression = `${minutes} ${hours} 1 1 *`;
+      cronExpression = `
+$;
+{
+  minutes;
+}
+$;
+{
+  hours;
+}
+1;
+1 *
+  `;
       break;
     default:
-      cronExpression = `${minutes} ${hours} * * *`; // Default to daily
+      cronExpression = `;
+$;
+{
+  minutes;
+}
+$;
+{
+  hours;
+}
+* * *`; // Default to daily
   }
 
   // Prepend timezone to cron expression for QStash
