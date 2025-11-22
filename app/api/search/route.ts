@@ -33,7 +33,6 @@ import {
 import {
   createStreamId,
   getChatById,
-  incrementExtremeSearchUsage,
   incrementMessageUsage,
   saveChat,
   saveMessages,
@@ -44,10 +43,9 @@ import { ChatSDKError } from "@/lib/errors";
 import { markdownJoinerTransform } from "@/lib/parser";
 import {
   academicSearchTool,
-  createConnectorsSearchTool,
   contentBriefTool,
+  createConnectorsSearchTool,
   datetimeTool,
-  extremeSearchTool,
   greetingTool,
   keywordResearchTool,
   // mcpSearchTool,
@@ -171,7 +169,6 @@ export async function POST(req: Request) {
     error?: unknown;
     isProUser: boolean;
     messageCount?: number;
-    extremeSearchUsage?: number;
     subscriptionData?: {
       hasSubscription: boolean;
       subscription?: unknown;
@@ -234,7 +231,6 @@ export async function POST(req: Request) {
       canProceed: true,
       isProUser: true,
       messageCount: 0,
-      extremeSearchUsage: 0,
       subscriptionData: user?.polarSubscription
         ? {
             hasSubscription: true,
@@ -249,7 +245,6 @@ export async function POST(req: Request) {
       canProceed: true,
       isProUser: false,
       messageCount: 0,
-      extremeSearchUsage: 0,
       subscriptionData: null,
       shouldBypassLimits: false,
     });
@@ -394,7 +389,6 @@ export async function POST(req: Request) {
 
             text_translate: textTranslateTool,
             datetime: datetimeTool,
-            extreme_search: extremeSearchTool(dataStream),
             greeting: greetingTool(timezone),
             keyword_research: keywordResearchTool,
             serp_checker: serpCheckerTool,
@@ -476,19 +470,6 @@ export async function POST(req: Request) {
               try {
                 if (!shouldBypassRateLimits(model, user)) {
                   await incrementMessageUsage({ userId: user.id });
-                }
-
-                // Track extreme search usage if used
-                if (group === "extreme") {
-                  const extremeSearchUsed = event.steps?.some((step) =>
-                    step.toolCalls?.some(
-                      (toolCall) =>
-                        toolCall && toolCall.toolName === "extreme_search"
-                    )
-                  );
-                  if (extremeSearchUsed) {
-                    await incrementExtremeSearchUsage({ userId: user.id });
-                  }
                 }
               } catch (_error) {
                 /* non-fatal background task failure */

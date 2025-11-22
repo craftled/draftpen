@@ -1,7 +1,6 @@
 // /lib/utils.ts
 
 import {
-  AtomicPowerIcon,
   Camera01Icon,
   ChattingIcon,
   ConnectIcon,
@@ -27,7 +26,6 @@ export type SearchGroupId =
   | "youtube"
   | "reddit"
   | "chat"
-  | "extreme"
   | "memory"
   | "connectors"
   | "screenshot"
@@ -131,14 +129,6 @@ export function getSearchGroups(searchProvider: SearchProvider = "parallel") {
       description: "Talk to the model directly.",
       icon: ChattingIcon,
       show: true,
-    },
-    {
-      id: "extreme" as const,
-      name: "Extreme",
-      description: "Deep research with multiple sources and analysis",
-      icon: AtomicPowerIcon,
-      show: true,
-      requireAuth: true,
     },
     {
       id: "memory" as const,

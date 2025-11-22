@@ -10,12 +10,7 @@ import {
   RedditLogoIcon,
   SigmaIcon,
 } from "@phosphor-icons/react";
-import {
-  type DataUIPart,
-  isToolUIPart,
-  type ReasoningUIPart,
-  type UIToolInvocation,
-} from "ai";
+import { type DataUIPart, isToolUIPart, type ReasoningUIPart } from "ai";
 import isEqual from "fast-deep-equal";
 import {
   ArrowUpRight,
@@ -85,7 +80,6 @@ import type {
   CodeContextToolInput,
   CodeContextToolOutput,
   CustomUIDataTypes,
-  DataExtremeSearchPart,
   DataQueryCompletionPart,
 } from "@/lib/types";
 import type { ComprehensiveUserData } from "@/lib/user-data-server";
@@ -96,11 +90,6 @@ const InteractiveChart = lazy(() => import("@/components/interactive-charts"));
 const MultiSearch = lazy(() => import("@/components/multi-search"));
 const AcademicPapersCard = lazy(() => import("@/components/academic-papers"));
 const RedditSearch = lazy(() => import("@/components/reddit-search"));
-const ExtremeSearch = lazy(() =>
-  import("@/components/extreme-search").then((module) => ({
-    default: module.ExtremeSearch,
-  }))
-);
 const CurrencyConverter = lazy(() =>
   import("@/components/currency_conv").then((module) => ({
     default: module.CurrencyConverter,
@@ -1030,44 +1019,6 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   </div>
                 );
               }
-            }
-            break;
-
-          case "tool-extreme_search":
-            switch (part.state) {
-              case "input-streaming":
-                return (
-                  <div
-                    className="text-neutral-500 text-sm"
-                    key={`${messageIndex}-${partIndex}-tool`}
-                  >
-                    Preparing extreme search...
-                  </div>
-                );
-              case "input-available":
-              case "output-available":
-                return (
-                  <Suspense
-                    fallback={<ComponentLoader />}
-                    key={`${messageIndex}-${partIndex}-tool`}
-                  >
-                    <ExtremeSearch
-                      annotations={
-                        (annotations?.filter(
-                          (annotation) =>
-                            annotation.type === "data-extreme_search"
-                        ) as DataExtremeSearchPart[]) || []
-                      }
-                      toolInvocation={
-                        part as unknown as UIToolInvocation<
-                          ReturnType<
-                            typeof import("@/lib/tools")["extremeSearchTool"]
-                          >
-                        >
-                      }
-                    />
-                  </Suspense>
-                );
             }
             break;
 

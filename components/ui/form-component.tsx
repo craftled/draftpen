@@ -3,12 +3,10 @@
 
 import type { UseChatHelpers } from "@ai-sdk/react";
 import {
-  AtomicPowerIcon,
   ConnectIcon,
   CpuIcon,
   Crown02Icon,
   DocumentAttachmentIcon,
-  GlobalSearchIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Brain, Eye, FilePdf, LockIcon } from "@phosphor-icons/react";
@@ -1954,7 +1952,6 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
     const { data: session } = useSession();
     const [open, setOpen] = useState(false);
     const isMobile = useIsMobile();
-    const isExtreme = selectedGroup === "extreme";
 
     // Get search provider from localStorage with reactive updates
     const [searchProvider] = useLocalStorage<SearchProvider>(
@@ -1979,9 +1976,6 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
             return false;
           }
           // Don't filter out Pro-only groups, show them with Pro indicator
-          if (group.id === "extreme") {
-            return false; // Exclude extreme from dropdown
-          }
           return true;
         }),
       [dynamicSearchGroups, session]
@@ -1991,33 +1985,6 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
       () => visibleGroups.find((group) => group.id === selectedGroup),
       [visibleGroups, selectedGroup]
     );
-
-    const handleToggleExtreme = useCallback(() => {
-      if (isExtreme) {
-        // Switch back to web mode
-        const webGroup = dynamicSearchGroups.find(
-          (group) => group.id === "web"
-        );
-        if (webGroup) {
-          onGroupSelect(webGroup);
-        }
-      } else {
-        // Check if user is authenticated before allowing extreme mode
-        if (!session) {
-          // Redirect to sign in page
-          window.location.href = "/sign-in";
-          return;
-        }
-
-        // Switch to extreme mode
-        const extremeGroup = dynamicSearchGroups.find(
-          (group) => group.id === "extreme"
-        );
-        if (extremeGroup) {
-          onGroupSelect(extremeGroup);
-        }
-      }
-    }, [isExtreme, onGroupSelect, dynamicSearchGroups, session]);
 
     // Shared handler for group selection
     const handleGroupSelect = useCallback(
@@ -2069,37 +2036,14 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
     );
 
     // Handle opening the dropdown/drawer
-    const handleOpenChange = useCallback(
-      (newOpen: boolean) => {
-        if (newOpen && isExtreme) {
-          // If trying to open in extreme mode, switch back to web mode instead
-          const webGroup = dynamicSearchGroups.find(
-            (group) => group.id === "web"
-          );
-          if (webGroup) {
-            onGroupSelect(webGroup);
-          }
-          return;
-        }
-        setOpen(newOpen);
-      },
-      [isExtreme, onGroupSelect, dynamicSearchGroups]
-    );
+    const handleOpenChange = useCallback((newOpen: boolean) => {
+      setOpen(newOpen);
+    }, []);
 
     // Handle group selector button click (mobile only)
     const handleGroupSelectorClick = useCallback(() => {
-      if (isExtreme) {
-        // Switch back to web mode when clicking groups in extreme mode
-        const webGroup = dynamicSearchGroups.find(
-          (group) => group.id === "web"
-        );
-        if (webGroup) {
-          onGroupSelect(webGroup);
-        }
-      } else {
-        setOpen(true);
-      }
-    }, [isExtreme, onGroupSelect, dynamicSearchGroups]);
+      setOpen(true);
+    }, []);
 
     // Shared content component
     const GroupSelectionContent = () => (
@@ -2188,18 +2132,13 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                   <DrawerTrigger asChild>
                     <Button
                       aria-expanded={open}
-                      className={cn(
-                        "!m-0 !px-1.5 !rounded-md flex h-6 cursor-pointer items-center gap-1.5 transition-all",
-                        isExtreme
-                          ? "text-muted-foreground hover:bg-accent"
-                          : "bg-accent text-foreground hover:bg-accent/80"
-                      )}
+                      className="!m-0 !px-1.5 !rounded-md flex h-6 cursor-pointer items-center gap-1.5 bg-accent text-foreground transition-all hover:bg-accent/80"
                       onClick={handleGroupSelectorClick}
                       role="combobox"
                       size="sm"
                       variant="ghost"
                     >
-                      {selectedGroupData && !isExtreme && (
+                      {selectedGroupData && (
                         <>
                           <HugeiconsIcon
                             color="currentColor"
@@ -2210,21 +2149,11 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                           <ChevronsUpDown className="size-4.5 opacity-50" />
                         </>
                       )}
-                      {isExtreme && (
-                        <HugeiconsIcon
-                          color="currentColor"
-                          icon={GlobalSearchIcon}
-                          size={30}
-                          strokeWidth={2}
-                        />
-                      )}
                     </Button>
                   </DrawerTrigger>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-[220px] p-2" side="bottom">
-                  {isExtreme ? (
-                    <p className="text-xs">Switch back to search modes</p>
-                  ) : selectedGroupData ? (
+                  {selectedGroupData ? (
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-1.5">
                         <div className="rounded bg-primary p-0.5">
@@ -2345,17 +2274,12 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                   <PopoverTrigger asChild>
                     <Button
                       aria-expanded={open}
-                      className={cn(
-                        "!m-0 !px-1.5 !rounded-md flex h-6 cursor-pointer items-center gap-1.5 transition-all",
-                        isExtreme
-                          ? "text-muted-foreground hover:bg-accent"
-                          : "bg-accent text-foreground hover:bg-accent/80"
-                      )}
+                      className="!m-0 !px-1.5 !rounded-md flex h-6 cursor-pointer items-center gap-1.5 bg-accent text-foreground transition-all hover:bg-accent/80"
                       role="combobox"
                       size="sm"
                       variant="ghost"
                     >
-                      {selectedGroupData && !isExtreme && (
+                      {selectedGroupData && (
                         <>
                           <HugeiconsIcon
                             color="currentColor"
@@ -2366,21 +2290,11 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                           <ChevronsUpDown className="size-4.5 opacity-50" />
                         </>
                       )}
-                      {isExtreme && (
-                        <HugeiconsIcon
-                          color="currentColor"
-                          icon={GlobalSearchIcon}
-                          size={30}
-                          strokeWidth={2}
-                        />
-                      )}
                     </Button>
                   </PopoverTrigger>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-[220px] p-2" side="bottom">
-                  {isExtreme ? (
-                    <p className="text-xs">Switch back to search modes</p>
-                  ) : selectedGroupData ? (
+                  {selectedGroupData ? (
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-1.5">
                         <div className="rounded bg-primary p-0.5">
@@ -2449,76 +2363,6 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
               </PopoverContent>
             </Popover>
           )}
-
-          {/* Extreme Mode Side */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                className={cn(
-                  "flex h-6 items-center gap-1.5 rounded-md px-3 transition-all",
-                  isExtreme
-                    ? "bg-accent text-foreground hover:bg-accent/80"
-                    : session
-                      ? "text-muted-foreground hover:bg-accent"
-                      : "cursor-pointer text-muted-foreground/50"
-                )}
-                onClick={handleToggleExtreme}
-                size="sm"
-                variant="ghost"
-              >
-                <HugeiconsIcon
-                  color="currentColor"
-                  icon={AtomicPowerIcon}
-                  size={30}
-                  strokeWidth={2}
-                />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-[220px] p-2" side="bottom">
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-1.5">
-                  <div className="rounded bg-primary p-0.5">
-                    <HugeiconsIcon
-                      className="text-primary-foreground"
-                      icon={AtomicPowerIcon}
-                      size={14}
-                      strokeWidth={2}
-                    />
-                  </div>
-                  <p className="font-semibold text-xs">
-                    {isExtreme
-                      ? "Extreme Search Active"
-                      : session
-                        ? "Extreme Search"
-                        : "Sign in Required"}
-                  </p>
-                </div>
-                <p className="text-[11px] text-secondary leading-snug">
-                  Deep research with multiple sources and in-depth analysis with
-                  3x sources
-                </p>
-                {!isProUser && (
-                  <div className="border-border/50 border-t pt-1">
-                    <a
-                      className="group flex cursor-pointer items-start gap-1 rounded py-1 transition-colors"
-                      href="/pricing"
-                    >
-                      <HugeiconsIcon
-                        className="flex-shrink-0 text-secondary transition-transform group-hover:scale-110"
-                        icon={Crown02Icon}
-                        size={14}
-                        strokeWidth={2}
-                      />
-                      <span className="flex items-center gap-0.5 font-semibold text-[11px] text-secondary group-hover:underline">
-                        Get unlimited searches with Pro
-                        <ArrowUpRight className="group-hover:-translate-y-0.5 size-3 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100" />
-                      </span>
-                    </a>
-                  </div>
-                )}
-              </div>
-            </TooltipContent>
-          </Tooltip>
         </div>
       </div>
     );

@@ -22,7 +22,6 @@ import {
   createStreamId,
   getLookoutById,
   getUserById,
-  incrementExtremeSearchUsage,
   saveChat,
   saveMessages,
   updateChatTitleById,
@@ -33,8 +32,6 @@ import {
 import { type Lookout, subscription } from "@/lib/db/schema";
 import { sendLookoutCompletionEmail } from "@/lib/email";
 
-// Import extreme search tool
-import { extremeSearchTool } from "@/lib/tools";
 import type { ChatMessage } from "@/lib/types";
 
 // Timing and formatting constants
@@ -206,7 +203,7 @@ export async function POST(req: Request) {
           messages: convertToModelMessages([userMessage]),
           stopWhen: stepCountIs(2),
           maxRetries: 10,
-          activeTools: ["extreme_search"],
+          activeTools: [],
           system: `# Scira AI Scheduled Research Assistant
 
 You are an advanced research assistant focused on deep analysis and comprehensive understanding with focus to be backed by citations in a 3-page research paper format.
@@ -391,9 +388,7 @@ $$
 - ❌ **SHORT RESPONSES**: Never write brief responses - aim for 3-page research paper format
 - ❌ **BULLET-POINT RESPONSES**: Use paragraphs for main content, bullets only for Key Points section`,
           toolChoice: "auto",
-          tools: {
-            extreme_search: extremeSearchTool(dataStream),
-          },
+          tools: {},
           onChunk(event) {
             if (event.chunk.type === "tool-call") {
               /* no-op: tool invocations are handled by tool-specific streams */
@@ -417,17 +412,6 @@ $$
                   chatId,
                   title: `Scheduled: ${title}`,
                 });
-
-                // Track extreme search usage
-                const extremeSearchUsed = event.steps?.some((step) =>
-                  step.toolCalls?.some(
-                    (toolCall) => toolCall.toolName === "extreme_search"
-                  )
-                );
-
-                if (extremeSearchUsed) {
-                  await incrementExtremeSearchUsage({ userId: userResult.id });
-                }
 
                 // Calculate run duration
                 runDuration = Date.now() - requestStartTime;

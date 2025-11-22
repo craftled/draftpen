@@ -138,21 +138,6 @@ export const subscription = pgTable("subscription", {
   userId: text("userId").references(() => user.id),
 });
 
-// Extreme search usage tracking table
-export const extremeSearchUsage = pgTable("extreme_search_usage", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => generateId()),
-  userId: text("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-  searchCount: integer("search_count").notNull().default(0),
-  date: timestamp("date").notNull().defaultNow(),
-  resetAt: timestamp("reset_at").notNull(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
-
 // Message usage tracking table
 export const messageUsage = pgTable("message_usage", {
   id: text("id")
@@ -219,9 +204,13 @@ export const lookout = pgTable("lookout", {
 
 // Extracted pages from SERP
 export const extractedPage = pgTable("extracted_page", {
-  id: text("id").primaryKey().$defaultFn(() => generateId()),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => generateId()),
   extractionId: text("extraction_id").notNull(), // Groups pages from same extraction
-  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
   url: text("url").notNull(),
   title: text("title").notNull(),
   metaDescription: text("meta_description"),
@@ -240,12 +229,20 @@ export const extractedPage = pgTable("extracted_page", {
 
 // Page analysis results
 export const pageAnalysis = pgTable("page_analysis", {
-  id: text("id").primaryKey().$defaultFn(() => generateId()),
-  pageId: text("page_id").notNull().references(() => extractedPage.id, { onDelete: "cascade" }),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => generateId()),
+  pageId: text("page_id")
+    .notNull()
+    .references(() => extractedPage.id, { onDelete: "cascade" }),
   introWordCount: integer("intro_word_count").notNull(),
   fleschScore: real("flesch_score").notNull(),
-  headings: json("headings").$type<Array<{ level: number; text: string }>>().notNull(),
-  keywordFrequencies: json("keyword_frequencies").$type<Array<{ keyword: string; count: number }>>(),
+  headings: json("headings")
+    .$type<Array<{ level: number; text: string }>>()
+    .notNull(),
+  keywordFrequencies: json("keyword_frequencies").$type<
+    Array<{ keyword: string; count: number }>
+  >(),
   entities: json("entities").$type<Array<{ text: string; type: string }>>(),
   semanticKeywords: json("semantic_keywords").$type<string[]>(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -259,7 +256,6 @@ export type Chat = InferSelectModel<typeof chat>;
 export type Message = InferSelectModel<typeof message>;
 export type Stream = InferSelectModel<typeof stream>;
 export type Subscription = InferSelectModel<typeof subscription>;
-export type ExtremeSearchUsage = InferSelectModel<typeof extremeSearchUsage>;
 export type MessageUsage = InferSelectModel<typeof messageUsage>;
 export type CustomInstructions = InferSelectModel<typeof customInstructions>;
 export type Lookout = InferSelectModel<typeof lookout>;
@@ -275,7 +271,6 @@ export const schema = {
   message,
   stream,
   subscription,
-  extremeSearchUsage,
   messageUsage,
   customInstructions,
   lookout,

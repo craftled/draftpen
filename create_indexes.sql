@@ -5,10 +5,6 @@
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_message_usage_user_date
 ON message_usage(user_id, date);
 
--- 2. EXTREME SEARCH USAGE - Critical (user_id + date range queries)
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_extreme_search_usage_user_date
-ON extreme_search_usage(user_id, date);
-
 -- 3. SUBSCRIPTION - Critical (userId lookups for Pro checks)
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_subscription_user_id
 ON subscription("userId");
@@ -48,10 +44,6 @@ ON "user"(id);
 -- 12. MESSAGE USAGE TODAY - Optimize daily usage lookups
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_message_usage_today
 ON message_usage(user_id, date DESC, message_count);
-
--- 13. EXTREME SEARCH USAGE MONTH - Optimize monthly usage lookups
-CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_extreme_usage_month
-ON extreme_search_usage(user_id, date DESC, search_count);
 
 -- 14. PAYMENT USER LOOKUP - Payment history queries
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_payment_user_id
@@ -111,4 +103,3 @@ ON payment(subscription_id) WHERE subscription_id IS NOT NULL;
 
 -- Optional: Clean up old usage data to improve performance
 -- DELETE FROM message_usage WHERE date < NOW() - INTERVAL '7 days';
--- DELETE FROM extreme_search_usage WHERE date < NOW() - INTERVAL '3 months';

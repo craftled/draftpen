@@ -1,7 +1,7 @@
 export { academicSearchTool } from "./academic-search";
 export { createConnectorsSearchTool } from "./connectors-search";
+export { contentBriefTool } from "./content-brief";
 export { datetimeTool } from "./datetime";
-export { extremeSearchTool } from "./extreme-search";
 export { greetingTool } from "./greeting";
 export { keywordResearchTool } from "./keyword-research";
 // export { mcpSearchTool } from './mcp-search';
@@ -10,7 +10,6 @@ export { retrieveTool } from "./retrieve";
 export { screenshotTool } from "./screenshot";
 export { serpCheckerTool } from "./serp-checker";
 export { serpExtractTool } from "./serp-extract";
-export { contentBriefTool } from "./content-brief";
 export {
   type AddMemoryTool,
   createMemoryTools,

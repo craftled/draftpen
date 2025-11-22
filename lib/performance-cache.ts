@@ -139,8 +139,6 @@ export const createUserKey = (token: string) => `user:${token}`;
 export const createSubscriptionKey = (userId: string) =>
   `subscription:${userId}`;
 export const createMessageCountKey = (userId: string) => `msg-count:${userId}`;
-export const createExtremeCountKey = (userId: string) =>
-  `extreme-count:${userId}`;
 export const createProUserKey = (userId: string) => `pro-user:${userId}`;
 
 // Extract session token from headers
@@ -198,7 +196,6 @@ export function computeAndCacheProUserStatus(
 export function invalidateUserCaches(userId: string) {
   subscriptionCache.delete(createSubscriptionKey(userId));
   usageCountCache.delete(createMessageCountKey(userId));
-  usageCountCache.delete(createExtremeCountKey(userId));
   proUserStatusCache.delete(createProUserKey(userId));
   // Invalidate the db cache
   db.$cache.invalidate({ tables: [user, subscription] });

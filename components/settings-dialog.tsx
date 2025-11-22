@@ -15,7 +15,6 @@ import {
   ArrowClockwiseIcon,
   CalendarIcon,
   FloppyDiskIcon,
-  LightningIcon,
   MagnifyingGlassIcon,
   RobotIcon,
   TrashIcon,
@@ -37,7 +36,6 @@ import {
   deleteCustomInstructionsAction,
   getConnectorSyncStatusAction,
   getCustomInstructions,
-  getExtremeSearchUsageCount,
   getHistoricalUsage,
   getSubDetails,
   getUserMessageCount,
@@ -675,16 +673,13 @@ function UsageSection({ user }: any) {
   } = useQuery({
     queryKey: ["usageData"],
     queryFn: async () => {
-      const [searchCount, extremeSearchCount, subscriptionDetails] =
-        await Promise.all([
-          getUserMessageCount(),
-          getExtremeSearchUsageCount(),
-          getSubDetails(),
-        ]);
+      const [searchCount, subscriptionDetails] = await Promise.all([
+        getUserMessageCount(),
+        getSubDetails(),
+      ]);
 
       return {
         searchCount,
-        extremeSearchCount,
         subscriptionDetails,
       };
     },
@@ -704,7 +699,6 @@ function UsageSection({ user }: any) {
   });
 
   const searchCount = usageData?.searchCount;
-  const extremeSearchCount = usageData?.extremeSearchCount;
 
   // Generate loading stars data that matches real data structure
   const loadingStars = useMemo(() => {
@@ -801,7 +795,7 @@ function UsageSection({ user }: any) {
         </Button>
       </div>
 
-      <div className={cn("grid grid-cols-2", isMobile ? "gap-2" : "gap-3")}>
+      <div className={cn("grid grid-cols-1", isMobile ? "gap-2" : "gap-3")}>
         <div
           className={cn(
             "space-y-1 rounded-lg bg-muted/50",
@@ -839,43 +833,6 @@ function UsageSection({ user }: any) {
             </div>
           )}
           <p className="text-[10px] text-muted-foreground">Regular searches</p>
-        </div>
-
-        <div
-          className={cn(
-            "space-y-1 rounded-lg bg-muted/50",
-            isMobile ? "p-2.5" : "p-3"
-          )}
-        >
-          <div className="flex items-center justify-between">
-            <span
-              className={cn(
-                "text-muted-foreground",
-                isMobile ? "text-[11px]" : "text-xs"
-              )}
-            >
-              Extreme
-            </span>
-            <LightningIcon className={isMobile ? "h-3 w-3" : "h-3.5 w-3.5"} />
-          </div>
-          {usageLoading ? (
-            <Skeleton
-              className={cn(
-                "font-semibold",
-                isMobile ? "h-4 text-base" : "h-5 text-lg"
-              )}
-            />
-          ) : (
-            <div
-              className={cn(
-                "font-semibold",
-                isMobile ? "text-base" : "text-lg"
-              )}
-            >
-              {extremeSearchCount?.count || 0}
-            </div>
-          )}
-          <p className="text-[10px] text-muted-foreground">This month</p>
         </div>
       </div>
 

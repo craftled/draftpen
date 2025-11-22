@@ -15,41 +15,6 @@ export type DataQueryCompletionPart = {
   };
 };
 
-export type DataExtremeSearchPart = {
-  type: "data-extreme_search";
-  data:
-    | {
-        kind: "plan";
-        status: { title: string };
-        plan?: Array<{ title: string; todos: string[] }>;
-      }
-    | {
-        kind: "query";
-        queryId: string;
-        query: string;
-        status: "started" | "reading_content" | "completed" | "error";
-      }
-    | {
-        kind: "source";
-        queryId: string;
-        source: { title: string; url: string; favicon?: string };
-      }
-    | {
-        kind: "content";
-        queryId: string;
-        content: { title: string; url: string; text: string; favicon?: string };
-      }
-    | {
-        kind: "code";
-        codeId: string;
-        title: string;
-        code: string;
-        status: "running" | "completed" | "error";
-        result?: string;
-        charts?: unknown[];
-      };
-};
-
 export const messageMetadataSchema = z.object({
   createdAt: z.string(),
   model: z.string(),
@@ -75,9 +40,6 @@ type greeting = InferUITool<
 >;
 type webSearch = InferUITool<
   ReturnType<typeof import("@/lib/tools")["webSearchTool"]>
->;
-type extremeSearch = InferUITool<
-  ReturnType<typeof import("@/lib/tools")["extremeSearchTool"]>
 >;
 type youtubeSearch = InferUITool<
   typeof import("@/lib/tools")["youtubeSearchTool"]
@@ -111,9 +73,7 @@ type keywordResearch = InferUITool<
 type screenshotCapture = InferUITool<
   typeof import("@/lib/tools")["screenshotTool"]
 >;
-type serpExtract = InferUITool<
-  typeof import("@/lib/tools")["serpExtractTool"]
->;
+type serpExtract = InferUITool<typeof import("@/lib/tools")["serpExtractTool"]>;
 type contentBrief = InferUITool<
   typeof import("@/lib/tools")["contentBriefTool"]
 >;
@@ -137,7 +97,6 @@ export type ChatTools = {
   // Flight tracker removed
   datetime: datetime;
   // mcp_search: mcpSearchTool;
-  extreme_search: extremeSearch;
   greeting: greeting;
 
   connectors_search: connectorsSearch;
@@ -165,7 +124,6 @@ export type CustomUIDataTypes = {
     resultsCount: number;
     imagesCount: number;
   };
-  extreme_search: DataExtremeSearchPart["data"];
 };
 
 export type ChatMessage = UIMessage<
