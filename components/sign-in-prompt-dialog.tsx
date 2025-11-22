@@ -181,25 +181,6 @@ export function SignInPromptDialog({
         })}
       </div>
 
-      {/* Divider */}
-      <div className="relative my-4">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-border border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs">
-          <span className="bg-background px-2 text-muted-foreground">or</span>
-        </div>
-      </div>
-
-      {/* Guest Option */}
-      <Button
-        className="h-10 w-full font-normal text-sm"
-        onClick={() => onOpenChange(false)}
-        variant="ghost"
-      >
-        Continue without account
-      </Button>
-
       {/* Legal */}
       <p className="mt-4 text-center text-muted-foreground text-xs">
         By continuing, you accept our{" "}
@@ -247,27 +228,6 @@ export function SignInPromptDialog({
                 );
               })}
             </div>
-
-            {/* Divider */}
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-border border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs">
-                <span className="bg-background px-2 text-muted-foreground">
-                  or
-                </span>
-              </div>
-            </div>
-
-            {/* Guest Option */}
-            <Button
-              className="h-10 w-full font-normal text-sm"
-              onClick={() => onOpenChange(false)}
-              variant="ghost"
-            >
-              Continue without account
-            </Button>
 
             {/* Legal */}
             <p className="mt-4 text-center text-muted-foreground text-xs">
